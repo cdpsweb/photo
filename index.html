@@ -713,7 +713,7 @@
             }
         }
 
-        // --- ZIP Download Logic (v5.2) ---
+        // --- ZIP Download Logic (v5.4 Fix) ---
         async function downloadAllCurrentPhotos() {
             if (!currentAlbumPhotos.length) return;
             
@@ -730,29 +730,37 @@
                 const folderName = currentAlbumNameStr || "album_download";
                 const folder = zip.folder(folderName);
                 
+                let successCount = 0;
+
                 // Fetch all images
                 const promises = currentAlbumPhotos.map(async (photo, i) => {
                     try {
-                        // Use high-res preview URL (often handles CORS better than downloadUrl)
-                        // Using sz=w2000 for good quality but not full original size to save bandwidth/CORS issues
-                        // Note: If CORS blocks this, we might need a proxy or backend change.
-                        // Drive thumbnail links usually allow CORS.
-                        const fetchUrl = photo.url.replace('=s800', '=s2500').replace('&sz=w800', '&sz=w2500');
+                        // FIX v5.4: Use lh3 link for CORS support on blobs
+                        const fetchUrl = `https://lh3.googleusercontent.com/d/${photo.id}=s2500`;
                         
                         const response = await fetch(fetchUrl);
                         if (!response.ok) throw new Error('Network error');
                         const blob = await response.blob();
                         
-                        // Create filename
-                        const ext = blob.type.split('/')[1] || 'jpg';
+                        // Detect extension
+                        let ext = 'jpg';
+                        if (blob.type === 'image/png') ext = 'png';
+                        else if (blob.type === 'image/gif') ext = 'gif';
+                        
                         const filename = `${folderName}_${i + 1}.${ext}`;
                         folder.file(filename, blob);
+                        successCount++;
                     } catch (err) {
                         console.error(`Failed to load image ${i}`, err);
                     }
                 });
 
                 await Promise.all(promises);
+
+                if (successCount === 0) {
+                     alert("下載失敗：無法抓取照片檔案 (可能因瀏覽器安全性限制)。\n建議改用單張下載功能。");
+                     return;
+                }
 
                 const content = await zip.generateAsync({type:"blob"});
                 saveAs(content, `${folderName}.zip`);
