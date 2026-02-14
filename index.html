@@ -457,6 +457,7 @@
                 const json = await safeFetchJson(url);
                 if (json.status === "success") {
                     allData = json.data;
+                    // Sort: Date (8 digits) Desc
                     allData.sort((a, b) => {
                         const getDigits = s => {
                             const d = s.replace(/\D/g, '');
@@ -468,11 +469,12 @@
                     });
                     
                     showAlbumList();
+                    populateAdminAlbumSelect();
                     // Update current view if inside an album
                     if(!document.getElementById('photoView').classList.contains('hidden')) {
                         const updatedAlbum = allData.find(a => a.name === currentAlbumNameStr);
                         if(updatedAlbum) showPhotos(updatedAlbum.id);
-                        else showAlbumList();
+                        else showAlbumList(); // album deleted?
                     }
                 } else { throw new Error(json.message); }
             } catch (err) {
@@ -495,6 +497,7 @@
             const view = document.getElementById('albumView');
             view.innerHTML = '';
             
+            // Allow empty state for admin to create albums
             if(allData.length === 0 && !adminToken) {
                 document.getElementById('emptyState').classList.remove('hidden');
                 return;
@@ -506,6 +509,7 @@
                 const col = document.createElement('div');
                 col.className = 'col-12 col-md-4 col-lg-3';
                 
+                // Admin Buttons
                 let adminBtns = "";
                 if(adminToken) {
                     adminBtns = `
@@ -516,7 +520,7 @@
                         </div>`;
                 }
 
-                const coverImg = album.cover || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PC9zdmc+';
+                const coverImg = album.cover || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PC9zdmc+'; // Placeholder if empty
 
                 col.innerHTML = `
                     <div class="album-card" onclick="showPhotos('${album.id}')">
@@ -547,8 +551,10 @@
             document.getElementById('currentAlbumName').innerText = album.name;
             document.getElementById('currentAlbumName').classList.remove('hidden');
             
+            // Admin: Show upload button in header
             if(adminToken) {
                 document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
+                // Update click handler to current album
                 document.getElementById('uploadToAlbumBtn').onclick = () => openUploadModal(album.name);
             }
 
@@ -579,13 +585,26 @@
 
         // --- Admin Logic ---
 
+        // NEW: Show Admin Panel directly when in setup mode
+        function showAdminPanel(showSettings = false) {
+            const panel = document.getElementById('adminPanel');
+            panel.classList.remove('hidden');
+            if(showSettings) {
+                 document.getElementById('configArea').classList.remove('hidden');
+            }
+            // Scroll to top to see panel
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         function openLoginModal() {
             document.getElementById('adminPassword').value = "";
-            if(!SCRIPT_URL) { 
-                new bootstrap.Modal(document.getElementById('loginModal')).show();
-            } else {
-                new bootstrap.Modal(document.getElementById('loginModal')).show();
+            // Initial Setup Bypass
+            if (!SCRIPT_URL) {
+                alert("初次使用，請先設定 API 網址。");
+                showAdminPanel(true); // Open panel directly
+                return;
             }
+            new bootstrap.Modal(document.getElementById('loginModal')).show();
         }
 
         async function verifyAdmin() {
@@ -599,12 +618,11 @@
                     adminToken = pwd;
                     document.getElementById('adminPassword').value = "";
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
-                    document.getElementById('adminPanel').classList.remove('hidden'); 
-                    if(!SCRIPT_URL || document.getElementById('settingGasUrl').value === "") {
-                        toggleConfigArea(true);
-                    }
+                    
+                    showAdminPanel(); // Use unified function
+                    
                     alert("登入成功！");
-                    fetchAlbums(true);
+                    fetchAlbums(true); // Refresh to show controls
                 } else { alert("密碼錯誤"); }
             } catch(e) { alert("驗證失敗: " + e.message); }
             finally { showLoading(false); }
@@ -649,6 +667,7 @@
             callApi({ action: 'deletePhoto', id: id, password: adminToken });
         }
 
+        // Generic API Caller
         async function callApi(payload, successMsg) {
             showLoading(true);
             try {
@@ -663,6 +682,7 @@
             finally { showLoading(false); }
         }
 
+        // Upload Logic
         function openUploadModal(preselectName = null) {
             const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
             document.getElementById('uploadTargetName').innerText = preselectName || currentAlbumNameStr || "未選擇";
@@ -712,6 +732,7 @@
             else el.classList.add('hidden');
         }
 
+        // --- Standard Helpers ---
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -751,6 +772,7 @@
             newI.onload = () => { img.src = url; img.style.opacity = '1'; };
             newI.src = url;
             document.getElementById('downloadLink').href = p.downloadUrl;
+            
             document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
             const active = document.querySelector(`.thumb-item[data-idx="${currentPhotoIndex}"]`);
             if(active) active.classList.add('active');
