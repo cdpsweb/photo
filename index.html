@@ -634,32 +634,36 @@
         const STORAGE_KEY_TITLE = "gas_album_title_v5";
         const SESSION_KEY_VIEWER = "is_viewer_mode";
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // 1. Check for Config in URL (Smart Link)
+        // --- Fast UI Toggle (Run immediately) ---
+        (function() {
+            // 1. Check URL for Smart Link
             const urlParams = new URLSearchParams(window.location.search);
             const ref = urlParams.get('ref');
+            
             if(ref) {
                 try {
                     const decoded = atob(ref);
+                    // Use a temporary key or overwrite local?
+                    // Smart link forces overwrite to ensure viewer sees correct content
                     localStorage.setItem(STORAGE_KEY_URL, decoded);
-                    // Mark as viewer mode for this session
                     sessionStorage.setItem(SESSION_KEY_VIEWER, "true");
                     
-                    // Optional: Remove query param from URL for cleaner look (without reloading)
+                    // Clean URL
                     const newUrl = window.location.pathname;
                     window.history.replaceState({}, document.title, newUrl);
                 } catch(e) { console.error("Invalid Smart Link"); }
             }
 
-            // v6.6 Update: Show Label & Hide Settings Button if in viewer mode
+            // 2. Toggle UI based on Session Mode
             if (sessionStorage.getItem(SESSION_KEY_VIEWER) === "true") {
-                const btnSettings = document.querySelector('.btn-settings');
-                const labelViewer = document.getElementById('viewerModeLabel');
-                
-                if (btnSettings) btnSettings.classList.add('d-none'); // Hide Settings
-                if (labelViewer) labelViewer.classList.remove('d-none'); // Show Label
+                // Add a style tag to hide settings button immediately to prevent FOUC
+                const style = document.createElement('style');
+                style.innerHTML = '.btn-settings { display: none !important; } #viewerModeLabel { display: inline-block !important; }';
+                document.head.appendChild(style);
             }
+        })();
 
+        document.addEventListener('DOMContentLoaded', () => {
             loadSettings();
             initShareUi();
             
