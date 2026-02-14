@@ -643,10 +643,14 @@
                 if (json.status === "success") {
                     allData = json.data;
                     
-                    // 全域排序設定 (v5.7 Optimized)
-                    // 依據相簿名稱 (日期) 由大到小排列 (Desc)
-                    // 使用 numeric: true 確保數字排序正確 (例如 113 > 112)
-                    allData.sort((a, b) => b.name.localeCompare(a.name, 'zh-TW', { numeric: true }));
+                    // 全域排序設定 (v5.8 強制倒序)
+                    // 使用 numeric: true 處理日期/數字，確保 '113-10' 排在 '113-5' 之前
+                    allData.sort((a, b) => {
+                        const nameA = String(a.name || "");
+                        const nameB = String(b.name || "");
+                        // b compare a -> 降序 (Descending)
+                        return nameB.localeCompare(nameA, 'zh-TW', { numeric: true, sensitivity: 'base' });
+                    });
 
                     showAlbumList();
                 } else { throw new Error(json.message); }
