@@ -127,10 +127,6 @@
         .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
         .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; }
 
-        /* Admin Panel Styles (for Modal) */
-        .admin-section-title { font-family: var(--font-mono); font-size: 0.8rem; color: var(--brand-accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; }
-        .admin-section-title::after { content: ''; flex-grow: 1; height: 1px; background: rgba(255,64,129,0.2); margin-left: 10px; }
-
         /* Progress Modal Styles */
         .progress-container { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin-top: 1rem; }
         .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
@@ -180,9 +176,17 @@
                     <span style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
                         <i class="bi bi-shield-check me-1"></i> 管理者模式
                     </span>
-                    <button class="btn-oled btn-sm" onclick="openAdminModal()">
-                        <i class="bi bi-gear-fill me-1"></i> 後台
+                    
+                    <!-- NEW: Create Album Button -->
+                    <button class="btn-oled btn-sm btn-oled-accent" onclick="openCreateAlbumModal()">
+                        <i class="bi bi-folder-plus me-1"></i> 建立相簿
                     </button>
+
+                    <!-- Renamed Settings Button -->
+                    <button class="btn-oled btn-sm" onclick="openAdminModal()">
+                        <i class="bi bi-gear-fill me-1"></i> 系統設定
+                    </button>
+                    
                     <button class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()">
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
@@ -253,49 +257,49 @@
         </div>
     </div>
 
-    <!-- Admin Control Modal (Unified Popup) -->
-    <div class="modal fade" id="adminControlModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+    <!-- NEW: Create Album Modal (Standalone) -->
+    <div class="modal fade" id="createAlbumModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-sliders me-2"></i>管理者控制台</h5>
+                    <h5 class="modal-title">建立新相簿</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control mb-3" id="createAlbumName" placeholder="例如:20260507_運動會">
+                    <p class="small text-white-50 text-center mb-3">* 建立後請在相簿卡片上點擊「上傳」新增照片。</p>
+                    <button class="btn-oled btn-oled-accent w-100" onclick="createAlbum()">確認建立</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modified Admin/Settings Modal -->
+    <div class="modal fade" id="adminControlModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-gear-wide-connected me-2"></i>系統設定</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="row g-4">
-                        <!-- Create Album Section -->
-                        <div class="col-md-6 border-end border-secondary">
-                            <div class="admin-section-title">相簿管理</div>
-                            <div class="d-flex gap-2 mb-3">
-                                <input type="text" class="form-control" id="createAlbumName" placeholder="例如:20260507_運動會">
-                                <button class="btn-oled btn-oled-accent text-nowrap" onclick="createAlbum()">
-                                    <i class="bi bi-folder-plus me-1"></i> 建立
-                                </button>
-                            </div>
-                            <p class="small text-white-50">* 建立後請在下方列表點擊「上傳」新增照片。</p>
+                    <div class="mb-3">
+                        <label class="form-label small">API服務端點 (GAS URL)</label>
+                        <input type="url" class="form-control form-control-sm" id="settingGasUrl" placeholder="https://script.google.com/...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">網頁標題</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
+                            <button class="btn-oled btn-sm" onclick="saveSettings()">儲存</button>
                         </div>
-
-                        <!-- System Config Section -->
-                        <div class="col-md-6">
-                            <div class="admin-section-title">系統設定</div>
-                            <div class="mb-2">
-                                <label class="form-label small">API服務端點 (GAS URL)</label>
-                                <input type="url" class="form-control form-control-sm" id="settingGasUrl" placeholder="https://script.google.com/...">
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">網頁標題</label>
-                                <div class="input-group input-group-sm">
-                                    <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
-                                    <button class="btn-oled btn-sm" onclick="saveSettings()">儲存</button>
-                                </div>
-                            </div>
-                            <div class="d-flex gap-2 mt-3">
-                                <button class="btn-oled btn-sm" onclick="initShareUi(); new bootstrap.Modal(document.getElementById('shareModal')).show()">
-                                    <i class="bi bi-share me-1"></i> 取得分享連結
-                                </button>
-                                <button class="btn-oled btn-sm btn-oled-danger ms-auto" onclick="clearSettings()">清除設定</button>
-                            </div>
-                        </div>
+                    </div>
+                    <hr style="border-color: var(--border-subtle);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button class="btn-oled btn-sm" onclick="initShareUi(); new bootstrap.Modal(document.getElementById('shareModal')).show()">
+                            <i class="bi bi-share me-1"></i> 取得分享連結
+                        </button>
+                        <button class="btn-oled btn-sm btn-oled-danger" onclick="clearSettings()">清除本機設定</button>
                     </div>
                 </div>
             </div>
@@ -737,6 +741,12 @@
             initShareUi(); 
         }
 
+        // NEW: Open specific small modal for Create Album
+        function openCreateAlbumModal() {
+            document.getElementById('createAlbumName').value = "";
+            new bootstrap.Modal(document.getElementById('createAlbumModal')).show();
+        }
+
         function openLoginModal() {
             document.getElementById('adminPassword').value = "";
             if(!SCRIPT_URL) { 
@@ -784,6 +794,10 @@
         async function createAlbum() {
             const name = document.getElementById('createAlbumName').value.trim();
             if(!name) return alert("請輸入相簿名稱");
+            
+            // Close the small modal
+            bootstrap.Modal.getInstance(document.getElementById('createAlbumModal')).hide();
+            
             callApi({ action: 'createAlbum', albumName: name, password: adminToken }, "相簿建立成功！");
         }
 
@@ -813,7 +827,7 @@
                 const json = await res.json();
                 if(json.status === "success") {
                     if(successMsg) alert(successMsg);
-                    document.getElementById('createAlbumName').value = ""; 
+                    // document.getElementById('createAlbumName').value = ""; // Handled in modal open
                     fetchAlbums(true);
                 } else {
                     alert("操作失敗: " + json.message);
