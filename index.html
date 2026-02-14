@@ -91,7 +91,7 @@
         /* Inputs & Modals */
         .modal-content { background-color: var(--bg-secondary); border: 1px solid var(--border-subtle); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         .modal-header, .modal-footer { border-color: var(--border-subtle); }
-        .modal-title { color: var(--text-primary); }
+        .modal-title { color: var(--text-primary); font-weight: bold; }
         .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
         .form-control, .form-select { background-color: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 0.8rem; }
         .form-control:focus, .form-select:focus { background-color: var(--bg-tertiary); border-color: var(--brand-primary); color: var(--text-primary); box-shadow: none; }
@@ -101,9 +101,13 @@
         .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
         .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; }
 
+        /* Tabs in Admin Modal */
+        .nav-tabs { border-bottom: 1px solid var(--border-subtle); }
+        .nav-tabs .nav-link { color: var(--text-muted); border: none; border-bottom: 2px solid transparent; transition: 0.3s; font-family: var(--font-mono); }
+        .nav-tabs .nav-link:hover { color: var(--text-primary); }
+        .nav-tabs .nav-link.active { background: transparent; color: var(--brand-primary); border-bottom: 2px solid var(--brand-primary); }
+
         /* Admin Styles */
-        .admin-panel { border: 1px solid var(--brand-accent); background: rgba(255, 64, 129, 0.02); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 2rem; position: relative; }
-        .admin-badge { position: absolute; top: -12px; left: 20px; background: var(--bg-primary); color: var(--brand-accent); padding: 0 10px; font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); }
         .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
         .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
         .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
@@ -144,8 +148,10 @@
                 <span id="viewerModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
                 </span>
-                <button class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openSettingsModal()" title="系統設定">
-                    <i class="bi bi-sliders"></i>
+                
+                <!-- Admin Login Button (New Location) -->
+                <button class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openLoginModal()" title="管理者登入">
+                    <i class="bi bi-key-fill"></i>
                 </button>
             </div>
         </div>
@@ -154,50 +160,6 @@
     <!-- Main Content -->
     <div class="container-fluid px-lg-5 py-5">
         
-        <!-- Admin Dashboard (Hidden by default) -->
-        <div id="adminView" class="admin-panel hidden">
-            <div class="admin-badge">ADMIN_CONSOLE</div>
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="mb-0">上傳管理後台</h4>
-                <button class="btn-oled btn-sm" onclick="logoutAdmin()">登出</button>
-            </div>
-            
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <label class="form-label">選擇或建立相簿</label>
-                    <div class="input-group mb-2">
-                        <select class="form-select" id="uploadAlbumSelect" onchange="handleAlbumSelect()">
-                            <option value="new">+ 建立新相簿...</option>
-                            <!-- Existing albums populated via JS -->
-                        </select>
-                    </div>
-                    <input type="text" class="form-control hidden" id="newAlbumName" placeholder="輸入新相簿名稱 (例如: 1130520 校慶)">
-                </div>
-                <div class="col-md-8">
-                    <label class="form-label">選擇照片 (支援多選)</label>
-                    <input type="file" class="form-control" id="uploadFiles" multiple accept="image/*">
-                </div>
-            </div>
-            
-            <div class="d-flex justify-content-end mt-4">
-                <button id="startUploadBtn" class="btn-oled btn-oled-accent px-4" onclick="startBatchUpload()">
-                    <i class="bi bi-cloud-upload me-2"></i> 開始上傳
-                </button>
-            </div>
-
-            <!-- Upload Status -->
-            <div id="uploadStatus" class="hidden">
-                <div class="progress-container">
-                    <div id="uploadProgressBar" class="progress-bar"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-2 font-monospace small text-muted">
-                    <span id="uploadProgressText">準備中...</span>
-                    <span id="uploadCount">0/0</span>
-                </div>
-                <div id="uploadLog" class="log-area"></div>
-            </div>
-        </div>
-
         <!-- Navigation Header -->
         <div id="navHeader" class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
             <div>
@@ -216,10 +178,12 @@
         <div id="albumView" class="row g-4"></div>
         <div id="photoView" class="row g-3 hidden"></div>
         <div id="emptyState" class="text-center py-5 hidden"><h2 class="text-muted font-monospace">查無資料 (NO_DATA)</h2></div>
+        
+        <!-- Initial Setup State -->
         <div id="setupState" class="text-center py-5 hidden">
             <h1 class="display-4 mb-3">系統初始化</h1>
-            <p class="text-muted">請設定服務端點。</p>
-            <button class="btn-oled btn-oled-accent px-5" onclick="openSettingsModal()">開始設定</button>
+            <p class="text-muted">尚未設定服務端點。</p>
+            <button class="btn-oled btn-oled-accent px-5" onclick="openAdminDashboard('settings')">開始設定</button>
         </div>
     </div>
 
@@ -231,51 +195,97 @@
     </footer>
 
     <!-- Modals -->
-    <!-- Settings Modal -->
-    <div class="modal fade" id="settingsModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">系統設定</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label">API服務端點 (GAS URL)</label>
-                        <input type="url" class="form-control" id="settingGasUrl">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">網頁標題</label>
-                        <input type="text" class="form-control" id="settingPageTitle">
-                    </div>
-                    <div class="d-grid gap-2 mt-4">
-                        <button class="btn-oled" onclick="saveSettings()">儲存並重啟</button>
-                        <button class="btn-oled btn-oled-accent" onclick="openLoginModal()">
-                            <i class="bi bi-shield-lock me-2"></i> 管理者登入
-                        </button>
-                        <hr class="border-secondary">
-                        <button class="btn-oled btn-oled-danger" onclick="clearSettings()">清除設定</button>
-                    </div>
-                    
-                    <div class="text-center mt-3 pt-3 border-top border-secondary">
-                        <p class="small text-muted mb-2">存取 QR CODE (智慧連結)</p>
-                        <div id="qrcode" class="d-flex justify-content-center mb-3 bg-white p-2 rounded w-auto d-inline-block"></div>
-                        <div class="input-group input-group-sm">
-                            <input type="text" class="form-control text-center" id="shareLinkInput" readonly>
-                            <button class="btn btn-outline-secondary" onclick="copyShareLink()">複製</button>
-                        </div>
-                        <p class="mt-2 small text-danger font-monospace fw-bold">* 此連結已包含您的設定，掃描後可直接存取相簿。</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Login Modal -->
     <div class="modal fade" id="loginModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
-                <div class="modal-header border-0"><h5 class="modal-title">驗證身分</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header border-0"><h5 class="modal-title">管理者驗證</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <input type="password" class="form-control text-center mb-3" id="adminPassword" placeholder="輸入管理者密碼">
+                    <input type="password" class="form-control text-center mb-3" id="adminPassword" placeholder="請輸入密碼">
                     <button class="btn-oled w-100" onclick="verifyAdmin()">登入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard Modal (Consolidated) -->
+    <div class="modal fade" id="adminDashboardModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-shield-lock-fill me-2"></i>管理者後台</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="logoutAdmin()"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs nav-fill" id="adminTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" id="tab-upload" data-bs-toggle="tab" data-bs-target="#content-upload" type="button">相簿上傳</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="tab-settings" data-bs-toggle="tab" data-bs-target="#content-settings" type="button">系統設定</button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Tab Content -->
+                    <div class="tab-content p-4">
+                        <!-- Upload Tab -->
+                        <div class="tab-pane fade show active" id="content-upload">
+                            <div class="row g-4">
+                                <div class="col-md-5">
+                                    <label class="form-label">選擇或建立相簿</label>
+                                    <select class="form-select mb-2" id="uploadAlbumSelect" onchange="handleAlbumSelect()">
+                                        <option value="new">+ 建立新相簿...</option>
+                                    </select>
+                                    <input type="text" class="form-control hidden" id="newAlbumName" placeholder="輸入名稱 (例: 1130520 校慶)">
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label">選擇照片</label>
+                                    <input type="file" class="form-control" id="uploadFiles" multiple accept="image/*">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end mt-4">
+                                <button id="startUploadBtn" class="btn-oled btn-oled-accent px-4" onclick="startBatchUpload()">
+                                    <i class="bi bi-cloud-upload me-2"></i> 開始上傳
+                                </button>
+                            </div>
+                            <!-- Upload Progress -->
+                            <div id="uploadStatus" class="hidden mt-3">
+                                <div class="progress-container"><div id="uploadProgressBar" class="progress-bar"></div></div>
+                                <div class="d-flex justify-content-between mt-2 font-monospace small text-muted">
+                                    <span id="uploadProgressText">準備中...</span><span id="uploadCount">0/0</span>
+                                </div>
+                                <div id="uploadLog" class="log-area"></div>
+                            </div>
+                        </div>
+
+                        <!-- Settings Tab -->
+                        <div class="tab-pane fade" id="content-settings">
+                            <div class="mb-3">
+                                <label class="form-label font-monospace">API服務端點 (GAS URL)</label>
+                                <input type="url" class="form-control" id="settingGasUrl" placeholder="https://script.google.com/...">
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label font-monospace">網頁標題</label>
+                                <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
+                            </div>
+                            
+                            <button class="btn-oled w-100 mb-4" onclick="saveSettings()">儲存設定並重啟</button>
+                            
+                            <hr style="border-color: var(--border-subtle);">
+                            
+                            <div class="text-center">
+                                <p class="text-secondary small font-monospace mb-2">存取 QR CODE (智慧連結)</p>
+                                <div id="qrcode" class="d-flex justify-content-center mb-3 bg-white p-2 rounded w-auto d-inline-block"></div>
+                                <div class="input-group input-group-sm mb-3">
+                                    <input type="text" class="form-control text-center" id="shareLinkInput" readonly>
+                                    <button class="btn btn-outline-secondary" onclick="copyShareLink()">複製</button>
+                                </div>
+                                <button class="btn-oled btn-oled-danger btn-sm" onclick="clearSettings()">清除本機設定</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -349,7 +359,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings();
-            initShareUi();
             
             document.addEventListener('keydown', (e) => {
                 if(document.getElementById('imageModal').classList.contains('show')) {
@@ -358,9 +367,9 @@
                 }
             });
 
+            // If no URL, force Setup Mode (which opens Admin Panel Settings)
             if (!SCRIPT_URL) {
                 showSetupState();
-                new bootstrap.Modal(document.getElementById('settingsModal')).show();
             } else {
                 fetchAlbums();
             }
@@ -390,7 +399,6 @@
                     });
                     
                     showAlbumList();
-                    populateAdminAlbumSelect();
                 } else { throw new Error(json.message); }
             } catch (err) {
                 console.error(err);
@@ -460,7 +468,12 @@
         // --- Admin Functions ---
 
         function openLoginModal() {
-            bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
+            // Check if initial setup
+            if(!SCRIPT_URL) {
+                // If no URL, skip login and go straight to settings (initial setup)
+                openAdminDashboard('settings');
+                return;
+            }
             new bootstrap.Modal(document.getElementById('loginModal')).show();
         }
 
@@ -476,10 +489,9 @@
                 
                 if(json.status === "success") {
                     adminToken = pwd;
-                    document.getElementById('adminView').classList.remove('hidden');
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                    openAdminDashboard();
                     alert("登入成功！");
-                    populateAdminAlbumSelect();
                 } else {
                     alert("密碼錯誤");
                 }
@@ -490,21 +502,37 @@
             }
         }
 
+        function openAdminDashboard(activeTabId = 'upload') {
+            const modal = new bootstrap.Modal(document.getElementById('adminDashboardModal'));
+            modal.show();
+            
+            // Populate settings fields
+            document.getElementById('settingGasUrl').value = SCRIPT_URL;
+            document.getElementById('settingPageTitle').value = PAGE_TITLE;
+            initShareUi(); // update QR in modal
+            populateAdminAlbumSelect();
+
+            // Switch Tab
+            const triggerEl = document.querySelector(`#adminTabs button[id="tab-${activeTabId}"]`);
+            if(triggerEl) bootstrap.Tab.getOrCreateInstance(triggerEl).show();
+        }
+
         function logoutAdmin() {
             adminToken = "";
-            document.getElementById('adminView').classList.add('hidden');
-            alert("已登出");
+            // alert("已登出"); 
         }
 
         function populateAdminAlbumSelect() {
             const select = document.getElementById('uploadAlbumSelect');
             select.innerHTML = '<option value="new">+ 建立新相簿...</option>';
-            allData.forEach(album => {
-                const opt = document.createElement('option');
-                opt.value = album.name;
-                opt.innerText = album.name;
-                select.appendChild(opt);
-            });
+            if(allData) {
+                allData.forEach(album => {
+                    const opt = document.createElement('option');
+                    opt.value = album.name;
+                    opt.innerText = album.name;
+                    select.appendChild(opt);
+                });
+            }
         }
 
         function handleAlbumSelect() {
@@ -518,6 +546,8 @@
         }
 
         async function startBatchUpload() {
+            if(!adminToken) return alert("憑證過期，請重新登入");
+            
             const selectVal = document.getElementById('uploadAlbumSelect').value;
             let albumName = selectVal;
             if(selectVal === 'new') {
@@ -607,6 +637,10 @@
         // --- Other Helpers ---
 
         function openDirectoryModal() {
+            if(!allData || allData.length === 0) {
+                alert("無資料可顯示");
+                return;
+            }
             const list = document.getElementById('directoryList');
             list.innerHTML = '';
             allData.forEach((album, i) => {
