@@ -302,6 +302,32 @@
             filter: invert(1) grayscale(100%) brightness(200%);
         }
         
+        /* Directory List Styles */
+        .directory-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .directory-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .directory-item:hover {
+            background: rgba(41, 121, 255, 0.1);
+            padding-left: 1.5rem;
+            color: var(--brand-primary);
+        }
+        .directory-item:last-child { border-bottom: none; }
+        .dir-index { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem; }
+        .dir-count { font-family: var(--font-mono); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+        
         /* Inputs */
         .form-control {
             background-color: var(--bg-tertiary);
@@ -445,6 +471,10 @@
             </div>
             
             <div class="d-flex gap-2">
+                <!-- Index Button -->
+                <button id="directoryBtn" class="btn-oled" onclick="openDirectoryModal()">
+                    <i class="bi bi-list-ul me-2"></i> 目錄檢索
+                </button>
                 <button id="downloadAllBtn" class="btn-oled btn-oled-accent hidden" onclick="downloadAllCurrentPhotos()">
                     <i class="bi bi-download me-2"></i> 相簿下載
                 </button>
@@ -509,6 +539,23 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-oled w-100" onclick="saveSettings()">儲存並重啟</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Directory Modal -->
+    <div class="modal fade" id="directoryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">相簿目錄索引</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <ul id="directoryList" class="directory-list">
+                        <!-- Items injected via JS -->
+                    </ul>
                 </div>
             </div>
         </div>
@@ -614,6 +661,7 @@
             document.getElementById('separator').classList.add('hidden');
             document.getElementById('currentAlbumName').classList.add('hidden');
             document.getElementById('downloadAllBtn').classList.add('hidden');
+            document.getElementById('directoryBtn').classList.remove('hidden'); // Show Directory Btn
             document.getElementById('setupState').classList.add('hidden');
             document.getElementById('emptyState').classList.add(allData.length === 0 ? 'hidden' : 'hidden');
 
@@ -623,7 +671,8 @@
 
             allData.forEach(album => {
                 const col = document.createElement('div');
-                col.className = 'col-6 col-md-4 col-lg-3'; 
+                // Updated: col-12 for mobile (1 column), col-md-4 (tablet), col-lg-3 (desktop)
+                col.className = 'col-12 col-md-4 col-lg-3'; 
                 col.innerHTML = `
                     <div class="album-card" onclick="showPhotos('${album.id}')">
                         <img src="${album.cover}" class="album-cover" loading="lazy">
@@ -644,9 +693,17 @@
             currentAlbumPhotos = album.photos;
             currentAlbumNameStr = album.name; // Store for ZIP filename
 
+            // Close directory modal if open
+            const dirModalEl = document.getElementById('directoryModal');
+            const dirModal = bootstrap.Modal.getInstance(dirModalEl);
+            if(dirModal) dirModal.hide();
+
             document.getElementById('albumView').classList.add('hidden');
             document.getElementById('photoView').classList.remove('hidden');
             document.getElementById('downloadAllBtn').classList.remove('hidden');
+            // Hide Directory button inside album view to save space or keep it? User might want to jump.
+            // Keeping it visible in navHeader.
+            
             document.getElementById('separator').classList.remove('hidden');
             document.getElementById('currentAlbumName').innerText = album.name.toUpperCase();
             document.getElementById('currentAlbumName').classList.remove('hidden');
@@ -659,6 +716,33 @@
                 col.innerHTML = `<div class="photo-item" onclick="openLightbox(${index})"><img src="${photo.url.replace('=s800', '=s400')}" loading="lazy"></div>`;
                 view.appendChild(col);
             });
+        }
+
+        function openDirectoryModal() {
+            if(!allData || allData.length === 0) {
+                alert("無資料可顯示");
+                return;
+            }
+            const list = document.getElementById('directoryList');
+            list.innerHTML = '';
+            
+            allData.forEach((album, index) => {
+                const li = document.createElement('li');
+                li.className = 'directory-item';
+                // Pad number with leading zero
+                const num = (index + 1).toString().padStart(2, '0');
+                li.innerHTML = `
+                    <div>
+                        <span class="dir-index">[${num}]</span>
+                        <span>${album.name}</span>
+                    </div>
+                    <span class="dir-count">${album.photos.length}</span>
+                `;
+                li.onclick = () => showPhotos(album.id);
+                list.appendChild(li);
+            });
+            
+            new bootstrap.Modal(document.getElementById('directoryModal')).show();
         }
 
         function openLightbox(index) {
