@@ -126,6 +126,9 @@
         .form-control, .form-select { background-color: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 0.6rem; font-size: 0.9rem; }
         .form-control:focus, .form-select:focus { background-color: var(--bg-tertiary); border-color: var(--brand-primary); color: var(--text-primary); box-shadow: none; }
         .form-label { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.3rem; }
+        
+        /* v8.6: High Contrast Placeholder */
+        .form-control::placeholder { color: #AAAAAA; opacity: 1; }
 
         /* Footer */
         .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
@@ -205,23 +208,23 @@
                 <div class="col-md-6 border-end border-secondary">
                     <div class="admin-section-title">相簿管理</div>
                     <div class="d-flex gap-2 mb-3">
-                        <input type="text" class="form-control" id="createAlbumName" placeholder="輸入新相簿名稱 (例如: 1130520 校慶)">
+                        <!-- v8.6: High Contrast Placeholder -->
+                        <input type="text" class="form-control" id="createAlbumName" placeholder="例如:20260507_運動會">
                         <button class="btn-oled btn-oled-accent text-nowrap" onclick="createAlbum()">
                             <i class="bi bi-folder-plus me-1"></i> 建立相簿
                         </button>
                     </div>
-                    <!-- High Contrast Text -->
-                    <p class="small" style="color: var(--text-secondary);">* 建立後請在下方列表點擊「上傳」新增照片。</p>
+                    <!-- v8.6: High Contrast Helper Text -->
+                    <p class="small text-white-50">* 建立後請在下方列表點擊「上傳」新增照片。</p>
                 </div>
 
-                <!-- System Config Section -->
+                <!-- System Config Section (Always Expanded in v8.6) -->
                 <div class="col-md-6">
                     <div class="admin-section-title">
                         系統設定 
-                        <button class="btn btn-link btn-sm p-0 ms-2 text-decoration-none" onclick="toggleConfigArea()" style="color:var(--brand-primary); font-size:0.7rem;">[展開/收合]</button>
                     </div>
                     
-                    <div id="configArea" class="hidden">
+                    <div id="configArea">
                         <div class="mb-2">
                             <label class="form-label small">API服務端點 (GAS URL)</label>
                             <input type="url" class="form-control form-control-sm" id="settingGasUrl" placeholder="https://script.google.com/...">
@@ -290,11 +293,14 @@
 
     <!-- Modals -->
 
-    <!-- Login Modal -->
+    <!-- Login Modal (v8.6 Center Title) -->
     <div class="modal fade" id="loginModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
-                <div class="modal-header border-0"><h5 class="modal-title">管理者驗證</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header border-0 d-flex justify-content-center position-relative">
+                    <h5 class="modal-title w-100 text-center">你好：管理者</h5>
+                    <button class="btn-close position-absolute end-0 me-3" data-bs-dismiss="modal"></button>
+                </div>
                 <div class="modal-body">
                     <input type="password" class="form-control text-center mb-3" id="adminPassword" placeholder="請輸入密碼" autocomplete="off">
                     <button class="btn-oled w-100" onclick="verifyAdmin()">登入</button>
@@ -312,8 +318,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- High Contrast Text -->
-                    <p class="mb-2" style="color: var(--text-secondary);">上傳至: <span id="uploadTargetName" class="text-white fw-bold"></span></p>
+                    <!-- v8.6: High Contrast Text -->
+                    <p class="mb-2 text-white-50">上傳至: <span id="uploadTargetName" class="text-white fw-bold"></span></p>
                     <input type="file" class="form-control mb-3" id="uploadFiles" multiple accept="image/*">
                     
                     <div id="uploadStatus" class="hidden">
@@ -409,7 +415,6 @@
         const STORAGE_KEY_URL = "gas_album_url_v5";
         const STORAGE_KEY_TITLE = "gas_album_title_v5";
         const SESSION_KEY_VIEWER = "is_viewer_mode";
-        // v8.5 SESSION_KEY_ADMIN
         const SESSION_KEY_ADMIN = "gas_album_admin_token";
 
         // Fast UI Toggle
@@ -433,13 +438,16 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings();
 
-            // v8.5 Restore Admin Session
             const storedAdmin = sessionStorage.getItem(SESSION_KEY_ADMIN);
             if(storedAdmin) {
                 adminToken = storedAdmin;
                 document.getElementById('loginBtn').classList.add('d-none');
                 document.getElementById('adminModeLabel').classList.remove('d-none');
+                
+                // Show Admin Panel Directly
                 document.getElementById('adminPanel').classList.remove('hidden');
+                initShareUi(); // populate inputs in admin panel
+                populateAdminAlbumSelect(); // populate select
             }
             
             document.addEventListener('keydown', (e) => {
@@ -483,7 +491,6 @@
                 const json = await safeFetchJson(url);
                 if (json.status === "success") {
                     allData = json.data;
-                    // Sort: Date (8 digits) Desc
                     allData.sort((a, b) => {
                         const getDigits = s => {
                             const d = s.replace(/\D/g, '');
@@ -496,11 +503,10 @@
                     
                     showAlbumList();
                     populateAdminAlbumSelect();
-                    // Update current view if inside an album
                     if(!document.getElementById('photoView').classList.contains('hidden')) {
                         const updatedAlbum = allData.find(a => a.name === currentAlbumNameStr);
                         if(updatedAlbum) showPhotos(updatedAlbum.id);
-                        else showAlbumList(); // album deleted?
+                        else showAlbumList(); 
                     }
                 } else { throw new Error(json.message); }
             } catch (err) {
@@ -523,7 +529,6 @@
             const view = document.getElementById('albumView');
             view.innerHTML = '';
             
-            // Allow empty state for admin to create albums
             if(allData.length === 0 && !adminToken) {
                 document.getElementById('emptyState').classList.remove('hidden');
                 return;
@@ -535,7 +540,6 @@
                 const col = document.createElement('div');
                 col.className = 'col-12 col-md-4 col-lg-3';
                 
-                // Admin Buttons
                 let adminBtns = "";
                 if(adminToken) {
                     adminBtns = `
@@ -546,7 +550,7 @@
                         </div>`;
                 }
 
-                const coverImg = album.cover || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PC9zdmc+'; // Placeholder if empty
+                const coverImg = album.cover || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PC9zdmc+';
 
                 col.innerHTML = `
                     <div class="album-card" onclick="showPhotos('${album.id}')">
@@ -577,10 +581,8 @@
             document.getElementById('currentAlbumName').innerText = album.name;
             document.getElementById('currentAlbumName').classList.remove('hidden');
             
-            // Admin: Show upload button in header
             if(adminToken) {
                 document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
-                // Update click handler to current album
                 document.getElementById('uploadToAlbumBtn').onclick = () => openUploadModal(album.name);
             }
 
@@ -611,22 +613,17 @@
 
         // --- Admin Logic ---
 
-        // NEW: Show Admin Panel directly when in setup mode
         function showAdminPanel(showSettings = false) {
             const panel = document.getElementById('adminPanel');
             panel.classList.remove('hidden');
-            if(showSettings) {
-                 document.getElementById('configArea').classList.remove('hidden');
-            }
+            // v8.6: Settings always visible/available, no more toggle button
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function openLoginModal() {
             document.getElementById('adminPassword').value = "";
-            // Initial Setup Bypass
-            if (!SCRIPT_URL) {
-                alert("初次使用，請先設定 API 網址。");
-                showAdminPanel(true); // Open panel directly
+            if(!SCRIPT_URL) { 
+                showAdminPanel(true); // Bypass login for initial setup
                 return;
             }
             new bootstrap.Modal(document.getElementById('loginModal')).show();
@@ -641,19 +638,18 @@
                 const json = await safeFetchJson(url);
                 if(json.status === "success") {
                     adminToken = pwd;
-                    sessionStorage.setItem(SESSION_KEY_ADMIN, pwd); // v8.5 Save to session
+                    sessionStorage.setItem(SESSION_KEY_ADMIN, pwd);
                     
                     document.getElementById('adminPassword').value = "";
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
                     
-                    showAdminPanel(); // Use unified function
+                    showAdminPanel(); 
                     
-                    // UI Toggles for Admin
                     document.getElementById('loginBtn').classList.add('d-none');
                     document.getElementById('adminModeLabel').classList.remove('d-none');
                     
                     alert("登入成功！");
-                    fetchAlbums(true); // Refresh to show controls
+                    fetchAlbums(true);
                 } else { alert("密碼錯誤"); }
             } catch(e) { alert("驗證失敗: " + e.message); }
             finally { showLoading(false); }
@@ -661,19 +657,17 @@
 
         function logoutAdmin() {
             adminToken = "";
-            sessionStorage.removeItem(SESSION_KEY_ADMIN); // v8.5 Clear session
+            sessionStorage.removeItem(SESSION_KEY_ADMIN);
             document.getElementById('adminPanel').classList.add('hidden');
             document.getElementById('adminPassword').value = ""; 
             
-            // UI Toggles for Guest
             document.getElementById('loginBtn').classList.remove('d-none');
             document.getElementById('adminModeLabel').classList.add('d-none');
 
-            showAlbumList(); // Refresh UI to hide controls
+            showAlbumList();
             alert("已登出");
         }
 
-        // API Actions
         async function createAlbum() {
             const name = document.getElementById('createAlbumName').value.trim();
             if(!name) return alert("請輸入相簿名稱");
@@ -704,7 +698,6 @@
             callApi({ action: 'deletePhoto', id: id, password: adminToken });
         }
 
-        // Generic API Caller
         async function callApi(payload, successMsg) {
             showLoading(true);
             try {
@@ -712,7 +705,7 @@
                 const json = await res.json();
                 if(json.status === "success") {
                     if(successMsg) alert(successMsg);
-                    document.getElementById('createAlbumName').value = ""; // Clear input
+                    document.getElementById('createAlbumName').value = ""; 
                     fetchAlbums(true);
                 } else {
                     alert("操作失敗: " + json.message);
@@ -721,11 +714,9 @@
             finally { showLoading(false); }
         }
 
-        // Upload Logic
         function openUploadModal(preselectName = null) {
             const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
             document.getElementById('uploadTargetName').innerText = preselectName || currentAlbumNameStr || "未選擇";
-            // Store target name in modal dataset or variable logic
             document.getElementById('uploadModal').dataset.targetAlbum = preselectName || currentAlbumNameStr;
             modal.show();
         }
@@ -733,7 +724,6 @@
         async function startBatchUpload() {
             const albumName = document.getElementById('uploadModal').dataset.targetAlbum;
             if(!albumName) return alert("無法確認目標相簿");
-            
             const files = document.getElementById('uploadFiles').files;
             if(files.length === 0) return alert("請選擇檔案");
 
@@ -753,37 +743,24 @@
             for(let i=0; i<total; i++) {
                 const file = files[i];
                 pText.innerText = `上傳中 (${i+1}/${total}): ${file.name}`;
-                
                 try {
                     const base64 = await toBase64(file);
-                    // If album has an ID (existing), passing it helps backend find folder faster, 
-                    // but Name is sufficient and robust.
-                    const payload = {
-                        action: 'upload',
-                        password: adminToken,
-                        albumName: albumName,
-                        fileName: file.name,
-                        image: base64
-                    };
-                    
+                    const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
                     const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const json = await res.json();
                     if(json.status === "success") successCount++;
                 } catch(e) { console.error(e); }
                 
-                // Update Progress
                 const pct = Math.round(((i+1)/total)*100);
                 pBar.style.width = `${pct}%`;
                 pCount.innerText = `${pct}%`;
             }
             
-            // Force 100% UI update before alert
+            // v8.6: Force fill bar to 100% and wait for animation before alert
             pBar.style.width = "100%";
             pCount.innerText = "100%";
             pText.innerText = "處理完成";
-            
-            // Allow UI repaint
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise(r => setTimeout(r, 500)); 
 
             alert(`上傳完成！成功 ${successCount} / ${total}`);
             document.getElementById('uploadFiles').value = "";
@@ -793,13 +770,8 @@
             fetchAlbums(true);
         }
 
-        function toggleConfigArea(forceShow = false) {
-            const el = document.getElementById('configArea');
-            if(forceShow || el.classList.contains('hidden')) el.classList.remove('hidden');
-            else el.classList.add('hidden');
-        }
+        // v8.6 Removed toggleConfigArea since it is always visible
 
-        // --- Standard Helpers ---
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -874,12 +846,10 @@
             const btn = document.getElementById('downloadAllBtn');
             const txt = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<div class="spinner-border spinner-border-sm"></div> 打包中...`;
-            
             try {
                 const zip = new JSZip();
                 const folder = zip.folder(currentAlbumNameStr || "album");
                 let count = 0;
-                
                 const promises = currentAlbumPhotos.map(async (p, i) => {
                     try {
                         const url = `https://lh3.googleusercontent.com/d/${p.id}=s2500`;
@@ -892,10 +862,8 @@
                         count++;
                     } catch(e) { }
                 });
-                
                 await Promise.all(promises);
                 if(count===0) throw new Error("No images loaded");
-                
                 const content = await zip.generateAsync({type:"blob"});
                 saveAs(content, `${currentAlbumNameStr}.zip`);
             } catch(e) { alert("下載失敗"); } 
