@@ -131,6 +131,25 @@
         .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
         .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; }
 
+        /* Tabs in Admin Modal */
+        .nav-tabs { border-bottom: 1px solid var(--border-subtle); }
+        .nav-tabs .nav-link { color: var(--text-muted); border: none; border-bottom: 2px solid transparent; transition: 0.3s; font-family: var(--font-mono); cursor: pointer; }
+        .nav-tabs .nav-link:hover { color: var(--text-primary); }
+        .nav-tabs .nav-link.active { background: transparent; color: var(--brand-primary); border-bottom: 2px solid var(--brand-primary); }
+
+        /* Admin Styles */
+        .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
+        .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
+        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
+
+        /* Directory List */
+        .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
+        .directory-item { padding: 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .directory-item:hover { background: rgba(41, 121, 255, 0.1); padding-left: 1.5rem; color: var(--brand-primary); }
+        .directory-item:last-child { border-bottom: none; }
+        .dir-index { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem; }
+        .dir-count { font-family: var(--font-mono); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+
         /* Utils */
         .hidden { display: none !important; }
         .d-none { display: none !important; }
@@ -143,19 +162,6 @@
         .thumbnail-strip-container { position: absolute; bottom: 0; width: 100%; height: 100px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 20px; overflow-x: auto; }
         .thumb-item { width: 60px; height: 60px; margin-right: 10px; opacity: 0.5; cursor: pointer; flex-shrink: 0; }
         .thumb-item.active { opacity: 1; border: 2px solid var(--brand-primary); }
-        
-        /* Upload Status */
-        .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
-        .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
-        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
-    
-        /* Directory List */
-        .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
-        .directory-item { padding: 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
-        .directory-item:hover { background: rgba(41, 121, 255, 0.1); padding-left: 1.5rem; color: var(--brand-primary); }
-        .directory-item:last-child { border-bottom: none; }
-        .dir-index { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem; }
-        .dir-count { font-family: var(--font-mono); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -173,7 +179,13 @@
                     <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
                 </span>
                 
-                <button class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openLoginModal()" title="管理者登入">
+                <!-- Admin Mode Label (Hidden by default) -->
+                <span id="adminModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
+                    <i class="bi bi-shield-check me-1"></i> 管理者模式
+                </span>
+                
+                <!-- Admin Login Button (Will be hidden on login) -->
+                <button id="loginBtn" class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openLoginModal()" title="管理者登入">
                     <i class="bi bi-key-fill"></i>
                 </button>
             </div>
@@ -198,7 +210,8 @@
                             <i class="bi bi-folder-plus me-1"></i> 建立相簿
                         </button>
                     </div>
-                    <p class="text-muted small">* 建立後請在下方列表點擊「上傳」新增照片。</p>
+                    <!-- High Contrast Text -->
+                    <p class="small" style="color: var(--text-secondary);">* 建立後請在下方列表點擊「上傳」新增照片。</p>
                 </div>
 
                 <!-- System Config Section -->
@@ -299,7 +312,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted mb-2">上傳至: <span id="uploadTargetName" class="text-white fw-bold"></span></p>
+                    <!-- High Contrast Text -->
+                    <p class="mb-2" style="color: var(--text-secondary);">上傳至: <span id="uploadTargetName" class="text-white fw-bold"></span></p>
                     <input type="file" class="form-control mb-3" id="uploadFiles" multiple accept="image/*">
                     
                     <div id="uploadStatus" class="hidden">
@@ -409,7 +423,7 @@
             }
             if (sessionStorage.getItem(SESSION_KEY_VIEWER) === "true") {
                 const style = document.createElement('style');
-                style.innerHTML = '.btn-settings { display: none !important; } #viewerModeLabel { display: inline-block !important; }';
+                style.innerHTML = '#loginBtn { display: none !important; } #viewerModeLabel { display: inline-block !important; }';
                 document.head.appendChild(style);
             }
         })();
@@ -592,7 +606,6 @@
             if(showSettings) {
                  document.getElementById('configArea').classList.remove('hidden');
             }
-            // Scroll to top to see panel
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -621,6 +634,10 @@
                     
                     showAdminPanel(); // Use unified function
                     
+                    // UI Toggles for Admin
+                    document.getElementById('loginBtn').classList.add('d-none');
+                    document.getElementById('adminModeLabel').classList.remove('d-none');
+                    
                     alert("登入成功！");
                     fetchAlbums(true); // Refresh to show controls
                 } else { alert("密碼錯誤"); }
@@ -631,8 +648,13 @@
         function logoutAdmin() {
             adminToken = "";
             document.getElementById('adminPanel').classList.add('hidden');
-            document.getElementById('adminPassword').value = ""; // Clear password again just in case
-            showAlbumList();
+            document.getElementById('adminPassword').value = "";
+            
+            // UI Toggles for Guest
+            document.getElementById('loginBtn').classList.remove('d-none');
+            document.getElementById('adminModeLabel').classList.add('d-none');
+
+            showAlbumList(); // Refresh UI to hide controls
             alert("已登出");
         }
 
@@ -675,9 +697,11 @@
                 const json = await res.json();
                 if(json.status === "success") {
                     if(successMsg) alert(successMsg);
-                    document.getElementById('createAlbumName').value = "";
+                    document.getElementById('createAlbumName').value = ""; // Clear input
                     fetchAlbums(true);
-                } else { alert("操作失敗: " + json.message); }
+                } else {
+                    alert("操作失敗: " + json.message);
+                }
             } catch(e) { console.error(e); alert("連線錯誤"); }
             finally { showLoading(false); }
         }
@@ -686,6 +710,7 @@
         function openUploadModal(preselectName = null) {
             const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
             document.getElementById('uploadTargetName').innerText = preselectName || currentAlbumNameStr || "未選擇";
+            // Store target name in modal dataset or variable logic
             document.getElementById('uploadModal').dataset.targetAlbum = preselectName || currentAlbumNameStr;
             modal.show();
         }
@@ -718,6 +743,11 @@
                 } catch(e) { console.error(e); }
                 pBar.style.width = `${Math.round(((i+1)/total)*100)}%`;
             }
+            
+            pBar.style.width = "100%";
+            // Delay alert slightly to let UI update
+            await new Promise(r => setTimeout(r, 200));
+            
             alert(`上傳完成！成功 ${successCount} / ${total}`);
             document.getElementById('uploadFiles').value = "";
             document.getElementById('uploadStatus').classList.add('hidden');
@@ -776,6 +806,9 @@
             document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
             const active = document.querySelector(`.thumb-item[data-idx="${currentPhotoIndex}"]`);
             if(active) active.classList.add('active');
+            
+            // Scroll thumb into view
+            if(active) active.scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
 
         function renderThumbs() {
