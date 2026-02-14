@@ -529,11 +529,14 @@
                     <hr style="border-color: var(--border-subtle);">
                     
                     <div class="text-center mt-3">
-                        <p class="text-secondary small font-monospace mb-3">存取 QR CODE</p>
+                        <p class="text-secondary small font-monospace mb-3">存取 QR CODE (智慧連結)</p>
                         <div id="qrcode" class="d-flex justify-content-center mb-3 bg-white p-2 rounded w-auto d-inline-block"></div>
                         <div class="input-group">
                             <input type="text" class="form-control text-center font-monospace" id="shareLinkInput" readonly style="font-size: 0.8rem;">
                             <button class="btn btn-outline-secondary" onclick="copyShareLink()"><i class="bi bi-clipboard"></i></button>
+                        </div>
+                        <div class="form-text text-muted mt-2">
+                            * 此連結已包含您的設定，掃描後可直接存取相簿。
                         </div>
                     </div>
                 </div>
@@ -611,6 +614,19 @@
         const STORAGE_KEY_TITLE = "gas_album_title_v5";
 
         document.addEventListener('DOMContentLoaded', () => {
+            // 1. Check for Config in URL (Smart Link)
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if(ref) {
+                try {
+                    const decoded = atob(ref);
+                    localStorage.setItem(STORAGE_KEY_URL, decoded);
+                    // Optional: Remove query param from URL for cleaner look (without reloading)
+                    const newUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, newUrl);
+                } catch(e) { console.error("Invalid Smart Link"); }
+            }
+
             loadSettings();
             initShareUi();
             
@@ -643,14 +659,12 @@
                 if (json.status === "success") {
                     allData = json.data;
                     
-                    // 全域排序設定 (v6.0 Special)
-                    // 依據相簿名稱中的「前8位數字」由大到小排列
+                    // 全域排序設定 (v6.0 Special - 前8碼)
                     allData.sort((a, b) => {
                         const getFirst8Digits = (str) => {
-                            // 移除所有非數字字元，取得純數字字串
+                            // 移除所有非數字字元
                             const digits = str.replace(/\D/g, '');
-                            // 截取前 8 碼，如果不足則補 0 (parseInt 會處理)
-                            // 如果完全沒數字，回傳 0
+                            // 截取前 8 碼 (如果不足回傳 0)
                             return digits.length > 0 ? parseInt(digits.substring(0, 8), 10) : 0;
                         };
 
@@ -662,8 +676,7 @@
                             return dateB - dateA;
                         }
                         
-                        // Secondary Sort: Full String Descending (Fallback)
-                        // 如果前8碼數字一樣，再比對完整字串
+                        // Secondary Sort: Fallback
                         return (b.name || "").localeCompare((a.name || ""), 'zh-TW');
                     });
 
@@ -671,8 +684,6 @@
                 } else { throw new Error(json.message); }
             } catch (error) {
                 console.error(error);
-                // alert("Connection Error: " + error.message); 
-                // Removed standard alert for better UX, relying on setup state
                 showLoading(false); 
                 openSettingsModal();
             } finally { showLoading(false); }
@@ -686,7 +697,7 @@
             document.getElementById('separator').classList.add('hidden');
             document.getElementById('currentAlbumName').classList.add('hidden');
             document.getElementById('downloadAllBtn').classList.add('hidden');
-            document.getElementById('directoryBtn').classList.remove('hidden'); // Show Directory Btn
+            document.getElementById('directoryBtn').classList.remove('hidden'); 
             document.getElementById('setupState').classList.add('hidden');
             document.getElementById('emptyState').classList.add(allData.length === 0 ? 'hidden' : 'hidden');
 
@@ -696,7 +707,6 @@
 
             allData.forEach(album => {
                 const col = document.createElement('div');
-                // Updated: col-12 for mobile (1 column), col-md-4 (tablet), col-lg-3 (desktop)
                 col.className = 'col-12 col-md-4 col-lg-3'; 
                 col.innerHTML = `
                     <div class="album-card" onclick="showPhotos('${album.id}')">
@@ -716,7 +726,7 @@
             const album = allData.find(a => a.id === albumId);
             if (!album) return;
             currentAlbumPhotos = album.photos;
-            currentAlbumNameStr = album.name; // Store for ZIP filename
+            currentAlbumNameStr = album.name; 
 
             // Close directory modal if open
             const dirModalEl = document.getElementById('directoryModal');
@@ -726,8 +736,6 @@
             document.getElementById('albumView').classList.add('hidden');
             document.getElementById('photoView').classList.remove('hidden');
             document.getElementById('downloadAllBtn').classList.remove('hidden');
-            // Hide Directory button inside album view to save space or keep it? User might want to jump.
-            // Keeping it visible in navHeader.
             
             document.getElementById('separator').classList.remove('hidden');
             document.getElementById('currentAlbumName').innerText = album.name.toUpperCase();
@@ -754,7 +762,6 @@
             allData.forEach((album, index) => {
                 const li = document.createElement('li');
                 li.className = 'directory-item';
-                // Pad number with leading zero
                 const num = (index + 1).toString().padStart(2, '0');
                 li.innerHTML = `
                     <div>
@@ -822,7 +829,7 @@
             }
         }
 
-        // --- ZIP Download Logic (v5.4 Fix) ---
+        // --- ZIP Download Logic ---
         async function downloadAllCurrentPhotos() {
             if (!currentAlbumPhotos.length) return;
             
@@ -841,17 +848,13 @@
                 
                 let successCount = 0;
 
-                // Fetch all images
                 const promises = currentAlbumPhotos.map(async (photo, i) => {
                     try {
-                        // FIX v5.4: Use lh3 link for CORS support on blobs
                         const fetchUrl = `https://lh3.googleusercontent.com/d/${photo.id}=s2500`;
-                        
                         const response = await fetch(fetchUrl);
                         if (!response.ok) throw new Error('Network error');
                         const blob = await response.blob();
                         
-                        // Detect extension
                         let ext = 'jpg';
                         if (blob.type === 'image/png') ext = 'png';
                         else if (blob.type === 'image/gif') ext = 'gif';
@@ -867,7 +870,7 @@
                 await Promise.all(promises);
 
                 if (successCount === 0) {
-                     alert("下載失敗：無法抓取照片檔案 (可能因瀏覽器安全性限制)。\n建議改用單張下載功能。");
+                     alert("下載失敗：無法抓取照片檔案。\n請改用單張下載。");
                      return;
                 }
 
@@ -896,21 +899,40 @@
             const url = document.getElementById('settingGasUrl').value.trim();
             const title = document.getElementById('settingPageTitle').value.trim();
             if(!url) return alert("錯誤：必須輸入服務端點 URL");
+            
+            // Save local
             localStorage.setItem(STORAGE_KEY_URL, url);
             localStorage.setItem(STORAGE_KEY_TITLE, title);
+            
+            // Also update share link UI immediately
+            SCRIPT_URL = url; 
+            initShareUi(); 
+            
             location.reload();
         }
 
         function initShareUi() {
-            const url = window.location.href;
-            document.getElementById('shareLinkInput').value = url;
-            // Clear prev QR
+            if(!SCRIPT_URL) return;
+            
+            // Generate Smart Link
+            const baseUrl = window.location.href.split('?')[0];
+            const encoded = btoa(SCRIPT_URL);
+            const shareUrl = `${baseUrl}?ref=${encoded}`;
+            
+            document.getElementById('shareLinkInput').value = shareUrl;
+            
+            // Generate QR
             document.getElementById("qrcode").innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: url, width: 100, height: 100, colorDark: "#000000", colorLight: "#ffffff" });
+            new QRCode(document.getElementById("qrcode"), { 
+                text: shareUrl, 
+                width: 128, height: 128, 
+                colorDark: "#000000", colorLight: "#ffffff",
+                correctLevel : QRCode.CorrectLevel.L
+            });
         }
         
         function copyShareLink() {
-            navigator.clipboard.writeText(document.getElementById('shareLinkInput').value).then(()=>alert("連結已複製到剪貼簿"));
+            navigator.clipboard.writeText(document.getElementById('shareLinkInput').value).then(()=>alert("連結已複製到剪貼簿 (含設定參數)"));
         }
 
         function showSetupState() {
