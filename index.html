@@ -127,12 +127,11 @@
         .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
         .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; }
 
-        /* Admin Panel */
-        #adminPanel { background: rgba(10, 10, 15, 0.95); border-bottom: 1px solid var(--brand-accent); padding: 1.5rem 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; z-index: 1010; }
+        /* Admin Panel Styles (for Modal) */
         .admin-section-title { font-family: var(--font-mono); font-size: 0.8rem; color: var(--brand-accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; }
         .admin-section-title::after { content: ''; flex-grow: 1; height: 1px; background: rgba(255,64,129,0.2); margin-left: 10px; }
 
-        /* Progress Modal */
+        /* Progress Modal Styles */
         .progress-container { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin-top: 1rem; }
         .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
         .progress-text { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; font-family: var(--font-mono); font-size: 0.9rem; }
@@ -171,64 +170,31 @@
                 <span id="navbarTitle">雲端相簿</span>
             </a>
             <div>
+                <!-- Viewer Mode Label -->
                 <span id="viewerModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
                 </span>
-                <span id="adminModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
-                    <i class="bi bi-shield-check me-1"></i> 管理者模式
-                </span>
+                
+                <!-- Admin Controls Container -->
+                <div id="adminControls" class="d-none d-inline-flex align-items-center gap-2">
+                    <span style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
+                        <i class="bi bi-shield-check me-1"></i> 管理者模式
+                    </span>
+                    <button class="btn-oled btn-sm" onclick="openAdminModal()">
+                        <i class="bi bi-gear-fill me-1"></i> 後台
+                    </button>
+                    <button class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+                
+                <!-- Login Button -->
                 <button id="loginBtn" class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openLoginModal()" title="管理者登入">
                     <i class="bi bi-key-fill"></i>
                 </button>
             </div>
         </div>
     </nav>
-
-    <!-- Admin Panel -->
-    <div id="adminPanel" class="hidden">
-        <div class="container-fluid px-lg-5">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <h5 class="text-white"><i class="bi bi-shield-lock-fill me-2" style="color: var(--brand-accent);"></i>管理者控制台</h5>
-                <button class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()">登出</button>
-            </div>
-
-            <div class="row g-4">
-                <div class="col-md-6 border-end border-secondary">
-                    <div class="admin-section-title">相簿管理</div>
-                    <div class="d-flex gap-2 mb-3">
-                        <input type="text" class="form-control" id="createAlbumName" placeholder="例如:20260507_運動會">
-                        <button class="btn-oled btn-oled-accent text-nowrap" onclick="createAlbum()">
-                            <i class="bi bi-folder-plus me-1"></i> 建立相簿
-                        </button>
-                    </div>
-                    <p class="small text-white-50">* 建立後請在下方列表點擊「上傳」新增照片。</p>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="admin-section-title">系統設定</div>
-                    <div id="configArea">
-                        <div class="mb-2">
-                            <label class="form-label small">API服務端點 (GAS URL)</label>
-                            <input type="url" class="form-control form-control-sm" id="settingGasUrl" placeholder="https://script.google.com/...">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small">網頁標題</label>
-                            <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
-                                <button class="btn-oled btn-sm" onclick="saveSettings()">儲存</button>
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2 mt-3">
-                            <button class="btn-oled btn-sm" onclick="initShareUi(); new bootstrap.Modal(document.getElementById('shareModal')).show()">
-                                <i class="bi bi-share me-1"></i> 取得分享連結
-                            </button>
-                            <button class="btn-oled btn-sm btn-oled-danger ms-auto" onclick="clearSettings()">清除設定</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Main Content -->
     <div class="container-fluid px-lg-5 py-5">
@@ -258,7 +224,7 @@
         <div id="setupState" class="text-center py-5 hidden">
             <h1 class="display-4 mb-3">系統初始化</h1>
             <p class="text-muted">尚未設定服務端點。</p>
-            <button class="btn-oled btn-oled-accent px-5" onclick="openLoginModal()">管理者登入設定</button>
+            <button class="btn-oled btn-oled-accent px-5" onclick="openAdminModal(true)">開始設定</button>
         </div>
     </div>
 
@@ -287,20 +253,50 @@
         </div>
     </div>
 
-    <!-- Progress Modal -->
-    <div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
+    <!-- Admin Control Modal (Unified Popup) -->
+    <div class="modal fade" id="adminControlModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="progressModalTitle">處理中</h5>
+                    <h5 class="modal-title"><i class="bi bi-sliders me-2"></i>管理者控制台</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="progress-container"><div id="genericProgressBar" class="progress-bar"></div></div>
-                    <div class="d-flex justify-content-between mt-2 font-monospace">
-                        <span id="progressText" class="progress-text">初始化...</span>
-                        <span id="progressCount" class="progress-text">0%</span>
+                <div class="modal-body p-4">
+                    <div class="row g-4">
+                        <!-- Create Album Section -->
+                        <div class="col-md-6 border-end border-secondary">
+                            <div class="admin-section-title">相簿管理</div>
+                            <div class="d-flex gap-2 mb-3">
+                                <input type="text" class="form-control" id="createAlbumName" placeholder="例如:20260507_運動會">
+                                <button class="btn-oled btn-oled-accent text-nowrap" onclick="createAlbum()">
+                                    <i class="bi bi-folder-plus me-1"></i> 建立
+                                </button>
+                            </div>
+                            <p class="small text-white-50">* 建立後請在下方列表點擊「上傳」新增照片。</p>
+                        </div>
+
+                        <!-- System Config Section -->
+                        <div class="col-md-6">
+                            <div class="admin-section-title">系統設定</div>
+                            <div class="mb-2">
+                                <label class="form-label small">API服務端點 (GAS URL)</label>
+                                <input type="url" class="form-control form-control-sm" id="settingGasUrl" placeholder="https://script.google.com/...">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">網頁標題</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
+                                    <button class="btn-oled btn-sm" onclick="saveSettings()">儲存</button>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 mt-3">
+                                <button class="btn-oled btn-sm" onclick="initShareUi(); new bootstrap.Modal(document.getElementById('shareModal')).show()">
+                                    <i class="bi bi-share me-1"></i> 取得分享連結
+                                </button>
+                                <button class="btn-oled btn-sm btn-oled-danger ms-auto" onclick="clearSettings()">清除設定</button>
+                            </div>
+                        </div>
                     </div>
-                    <div id="progressLog" class="log-area hidden"></div>
                 </div>
             </div>
         </div>
@@ -341,6 +337,24 @@
                     <input type="text" class="form-control mb-3" id="renameInput">
                     <input type="hidden" id="renameTargetId">
                     <button class="btn-oled w-100" onclick="confirmRename()">確認更名</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal (Generic) -->
+    <div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="progressModalTitle">處理中</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="progress-container"><div id="genericProgressBar" class="progress-bar"></div></div>
+                    <div class="d-flex justify-content-between mt-2 font-monospace">
+                        <span id="progressText" class="progress-text">初始化...</span>
+                        <span id="progressCount" class="progress-text">0%</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -416,7 +430,9 @@
         const STORAGE_KEY_TITLE = "gas_album_title_v5";
         const SESSION_KEY_VIEWER = "is_viewer_mode";
         const SESSION_KEY_ADMIN = "gas_album_admin_token";
+        const SESSION_KEY_CURRENT_ALBUM = "gas_album_active_id";
 
+        // Fast UI Toggle
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
             const ref = urlParams.get('ref');
@@ -440,10 +456,7 @@
             const storedAdmin = sessionStorage.getItem(SESSION_KEY_ADMIN);
             if(storedAdmin) {
                 adminToken = storedAdmin;
-                document.getElementById('loginBtn').classList.add('d-none');
-                document.getElementById('adminModeLabel').classList.remove('d-none');
-                document.getElementById('adminPanel').classList.remove('hidden');
-                initShareUi(); 
+                toggleAdminUI(true);
             }
             
             document.addEventListener('keydown', (e) => {
@@ -462,6 +475,21 @@
                 if(this.files.length > 0) performBatchUpload(this.files, uploadTargetAlbumName);
             });
         });
+
+        function toggleAdminUI(isAdmin) {
+            const loginBtn = document.getElementById('loginBtn');
+            const adminControls = document.getElementById('adminControls');
+            
+            if(isAdmin) {
+                loginBtn.classList.add('d-none');
+                adminControls.classList.remove('d-none');
+                adminControls.classList.add('d-flex');
+            } else {
+                loginBtn.classList.remove('d-none');
+                adminControls.classList.add('d-none');
+                adminControls.classList.remove('d-flex');
+            }
+        }
 
         // --- Core Functions ---
 
@@ -501,18 +529,13 @@
                         return (b.name||"").localeCompare((a.name||""), 'zh-TW');
                     });
                     
-                    // Capture state before reset
-                    const wasInAlbum = !document.getElementById('photoView').classList.contains('hidden');
-                    const lastAlbumName = currentAlbumNameStr;
-
+                    const savedAlbumId = sessionStorage.getItem(SESSION_KEY_CURRENT_ALBUM);
                     showAlbumList();
-                    populateAdminAlbumSelect();
                     
-                    // Restore state logic (v8.9 fix)
-                    if(wasInAlbum) {
-                        const updatedAlbum = allData.find(a => a.name === lastAlbumName);
-                        if(updatedAlbum) showPhotos(updatedAlbum.id);
-                        // if deleted, stays in list
+                    if (savedAlbumId) {
+                        const savedAlbum = allData.find(a => a.id === savedAlbumId);
+                        if (savedAlbum) showPhotos(savedAlbum.id);
+                        else sessionStorage.removeItem(SESSION_KEY_CURRENT_ALBUM);
                     }
                 } else { throw new Error(json.message); }
             } catch (err) {
@@ -523,6 +546,8 @@
         }
 
         function showAlbumList() {
+            sessionStorage.removeItem(SESSION_KEY_CURRENT_ALBUM);
+
             document.getElementById('albumView').classList.remove('hidden');
             document.getElementById('photoView').classList.add('hidden');
             document.getElementById('separator').classList.add('hidden');
@@ -573,6 +598,8 @@
         }
 
         function showPhotos(albumId) {
+            sessionStorage.setItem(SESSION_KEY_CURRENT_ALBUM, albumId);
+
             const album = allData.find(a => a.id === albumId);
             if (!album) return;
             currentAlbumPhotos = album.photos;
@@ -676,8 +703,9 @@
             for (let i=0; i<ids.length; i++) {
                 const id = ids[i];
                 pText.innerText = `刪除中: ${i+1}/${count}`;
-                pCount.innerText = `${Math.round(((i)/count)*100)}%`;
-                pBar.style.width = `${Math.round(((i)/count)*100)}%`;
+                const pct = Math.round(((i)/count)*100);
+                pCount.innerText = `${pct}%`;
+                pBar.style.width = `${pct}%`;
                 
                 try {
                     const payload = { action: 'deletePhoto', id: id, password: adminToken };
@@ -700,16 +728,19 @@
 
         // --- Admin Logic ---
 
-        function showAdminPanel(showSettings = false) {
-            const panel = document.getElementById('adminPanel');
-            panel.classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        function openAdminModal(isSetup = false) {
+            const modal = new bootstrap.Modal(document.getElementById('adminControlModal'));
+            modal.show();
+            // Load settings
+            document.getElementById('settingGasUrl').value = SCRIPT_URL;
+            document.getElementById('settingPageTitle').value = PAGE_TITLE;
+            initShareUi(); 
         }
 
         function openLoginModal() {
             document.getElementById('adminPassword').value = "";
             if(!SCRIPT_URL) { 
-                showAdminPanel(true);
+                openAdminModal(true); 
                 return;
             }
             new bootstrap.Modal(document.getElementById('loginModal')).show();
@@ -727,9 +758,10 @@
                     sessionStorage.setItem(SESSION_KEY_ADMIN, pwd);
                     document.getElementById('adminPassword').value = "";
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
-                    showAdminPanel(); 
-                    document.getElementById('loginBtn').classList.add('d-none');
-                    document.getElementById('adminModeLabel').classList.remove('d-none');
+                    
+                    toggleAdminUI(true);
+                    openAdminModal(); 
+                    
                     alert("登入成功！");
                     fetchAlbums(true); 
                 } else { alert("密碼錯誤"); }
@@ -740,10 +772,11 @@
         function logoutAdmin() {
             adminToken = "";
             sessionStorage.removeItem(SESSION_KEY_ADMIN);
-            document.getElementById('adminPanel').classList.add('hidden');
-            document.getElementById('adminPassword').value = ""; 
-            document.getElementById('loginBtn').classList.remove('d-none');
-            document.getElementById('adminModeLabel').classList.add('d-none');
+            
+            const adminModal = bootstrap.Modal.getInstance(document.getElementById('adminControlModal'));
+            if(adminModal) adminModal.hide();
+            
+            toggleAdminUI(false);
             showAlbumList();
             alert("已登出");
         }
@@ -789,6 +822,7 @@
             finally { showLoading(false); }
         }
 
+        // Upload Logic
         function openUploadModal(preselectName = null) {
             const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
             document.getElementById('uploadTargetName').innerText = preselectName || currentAlbumNameStr || "未選擇";
@@ -817,7 +851,7 @@
 
             for(let i=0; i<total; i++) {
                 const file = files[i];
-                pText.innerText = `上傳中: ${i+1}/${total}`;
+                pText.innerText = `上傳中 (${i+1}/${total}): ${file.name}`;
                 try {
                     const base64 = await toBase64(file);
                     const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
@@ -831,7 +865,6 @@
                 pCount.innerText = `${pct}%`;
             }
             
-            // v8.6 Force complete UI
             pBar.style.width = "100%";
             pCount.innerText = "100%";
             pText.innerText = "處理完成";
@@ -846,7 +879,6 @@
         }
 
         function performBatchUpload(files, albumName) {
-            // Re-use logic for hidden input, but adapted
             if(!adminToken) return alert("請先登入");
             
             showProgressModal("上傳進度");
