@@ -131,25 +131,6 @@
         .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
         .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; }
 
-        /* Tabs in Admin Modal */
-        .nav-tabs { border-bottom: 1px solid var(--border-subtle); }
-        .nav-tabs .nav-link { color: var(--text-muted); border: none; border-bottom: 2px solid transparent; transition: 0.3s; font-family: var(--font-mono); cursor: pointer; }
-        .nav-tabs .nav-link:hover { color: var(--text-primary); }
-        .nav-tabs .nav-link.active { background: transparent; color: var(--brand-primary); border-bottom: 2px solid var(--brand-primary); }
-
-        /* Admin Styles */
-        .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
-        .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
-        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
-
-        /* Directory List */
-        .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
-        .directory-item { padding: 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
-        .directory-item:hover { background: rgba(41, 121, 255, 0.1); padding-left: 1.5rem; color: var(--brand-primary); }
-        .directory-item:last-child { border-bottom: none; }
-        .dir-index { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem; }
-        .dir-count { font-family: var(--font-mono); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
-
         /* Utils */
         .hidden { display: none !important; }
         .d-none { display: none !important; }
@@ -162,6 +143,19 @@
         .thumbnail-strip-container { position: absolute; bottom: 0; width: 100%; height: 100px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 20px; overflow-x: auto; }
         .thumb-item { width: 60px; height: 60px; margin-right: 10px; opacity: 0.5; cursor: pointer; flex-shrink: 0; }
         .thumb-item.active { opacity: 1; border: 2px solid var(--brand-primary); }
+        
+        /* Upload Status */
+        .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
+        .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
+        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
+    
+        /* Directory List */
+        .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
+        .directory-item { padding: 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .directory-item:hover { background: rgba(41, 121, 255, 0.1); padding-left: 1.5rem; color: var(--brand-primary); }
+        .directory-item:last-child { border-bottom: none; }
+        .dir-index { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem; }
+        .dir-count { font-family: var(--font-mono); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -460,12 +454,9 @@
             try {
                 let url = `${SCRIPT_URL}?action=getAlbums`;
                 if (forceRefresh) url += "&refresh=true";
-                
                 const json = await safeFetchJson(url);
-                
                 if (json.status === "success") {
                     allData = json.data;
-                    // Sort: Date (8 digits) Desc
                     allData.sort((a, b) => {
                         const getDigits = s => {
                             const d = s.replace(/\D/g, '');
@@ -477,11 +468,11 @@
                     });
                     
                     showAlbumList();
-                    // If inside an album, refresh it too
+                    // Update current view if inside an album
                     if(!document.getElementById('photoView').classList.contains('hidden')) {
                         const updatedAlbum = allData.find(a => a.name === currentAlbumNameStr);
                         if(updatedAlbum) showPhotos(updatedAlbum.id);
-                        else showAlbumList(); // album deleted?
+                        else showAlbumList();
                     }
                 } else { throw new Error(json.message); }
             } catch (err) {
@@ -504,7 +495,6 @@
             const view = document.getElementById('albumView');
             view.innerHTML = '';
             
-            // Allow empty state for admin to create albums
             if(allData.length === 0 && !adminToken) {
                 document.getElementById('emptyState').classList.remove('hidden');
                 return;
@@ -516,7 +506,6 @@
                 const col = document.createElement('div');
                 col.className = 'col-12 col-md-4 col-lg-3';
                 
-                // Admin Buttons
                 let adminBtns = "";
                 if(adminToken) {
                     adminBtns = `
@@ -527,7 +516,7 @@
                         </div>`;
                 }
 
-                const coverImg = album.cover || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PC9zdmc+'; // Placeholder if empty
+                const coverImg = album.cover || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PC9zdmc+';
 
                 col.innerHTML = `
                     <div class="album-card" onclick="showPhotos('${album.id}')">
@@ -558,10 +547,8 @@
             document.getElementById('currentAlbumName').innerText = album.name;
             document.getElementById('currentAlbumName').classList.remove('hidden');
             
-            // Admin: Show upload button in header
             if(adminToken) {
                 document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
-                // Update click handler to current album
                 document.getElementById('uploadToAlbumBtn').onclick = () => openUploadModal(album.name);
             }
 
@@ -594,7 +581,7 @@
 
         function openLoginModal() {
             document.getElementById('adminPassword').value = "";
-            if(!SCRIPT_URL) { // Initial Setup
+            if(!SCRIPT_URL) { 
                 new bootstrap.Modal(document.getElementById('loginModal')).show();
             } else {
                 new bootstrap.Modal(document.getElementById('loginModal')).show();
@@ -608,20 +595,16 @@
             try {
                 const url = `${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`;
                 const json = await safeFetchJson(url);
-                
                 if(json.status === "success") {
                     adminToken = pwd;
                     document.getElementById('adminPassword').value = "";
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
-                    document.getElementById('adminPanel').classList.remove('hidden'); // Show Admin Panel
-                    
-                    // If this was initial setup, open settings
+                    document.getElementById('adminPanel').classList.remove('hidden'); 
                     if(!SCRIPT_URL || document.getElementById('settingGasUrl').value === "") {
                         toggleConfigArea(true);
                     }
-                    
                     alert("登入成功！");
-                    fetchAlbums(true); // Refresh to show controls
+                    fetchAlbums(true);
                 } else { alert("密碼錯誤"); }
             } catch(e) { alert("驗證失敗: " + e.message); }
             finally { showLoading(false); }
@@ -630,7 +613,8 @@
         function logoutAdmin() {
             adminToken = "";
             document.getElementById('adminPanel').classList.add('hidden');
-            showAlbumList(); // Refresh UI to hide controls
+            document.getElementById('adminPassword').value = ""; // Clear password again just in case
+            showAlbumList();
             alert("已登出");
         }
 
@@ -638,21 +622,12 @@
         async function createAlbum() {
             const name = document.getElementById('createAlbumName').value.trim();
             if(!name) return alert("請輸入相簿名稱");
-            
-            callApi({
-                action: 'createAlbum',
-                albumName: name,
-                password: adminToken
-            }, "相簿建立成功！");
+            callApi({ action: 'createAlbum', albumName: name, password: adminToken }, "相簿建立成功！");
         }
 
         async function deleteAlbum(id, name) {
             if(!confirm(`確定要刪除相簿「${name}」及其所有照片嗎？\n(此動作無法復原)`)) return;
-            callApi({
-                action: 'deleteAlbum',
-                id: id,
-                password: adminToken
-            });
+            callApi({ action: 'deleteAlbum', id: id, password: adminToken });
         }
 
         function prepareRename(id, oldName) {
@@ -665,50 +640,32 @@
             const id = document.getElementById('renameTargetId').value;
             const newName = document.getElementById('renameInput').value.trim();
             if(!newName) return alert("名稱不能為空");
-            
             bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide();
-            callApi({
-                action: 'renameAlbum',
-                id: id,
-                newName: newName,
-                password: adminToken
-            });
+            callApi({ action: 'renameAlbum', id: id, newName: newName, password: adminToken });
         }
 
         async function deletePhoto(id) {
             if(!confirm("確定刪除此照片？")) return;
-            callApi({
-                action: 'deletePhoto',
-                id: id,
-                password: adminToken
-            });
+            callApi({ action: 'deletePhoto', id: id, password: adminToken });
         }
 
-        // Generic API Caller
         async function callApi(payload, successMsg) {
             showLoading(true);
             try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const json = await res.json();
                 if(json.status === "success") {
                     if(successMsg) alert(successMsg);
-                    document.getElementById('createAlbumName').value = ""; // Clear input
+                    document.getElementById('createAlbumName').value = "";
                     fetchAlbums(true);
-                } else {
-                    alert("操作失敗: " + json.message);
-                }
+                } else { alert("操作失敗: " + json.message); }
             } catch(e) { console.error(e); alert("連線錯誤"); }
             finally { showLoading(false); }
         }
 
-        // Upload Logic
         function openUploadModal(preselectName = null) {
             const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
             document.getElementById('uploadTargetName').innerText = preselectName || currentAlbumNameStr || "未選擇";
-            // Store target name in modal dataset or variable logic
             document.getElementById('uploadModal').dataset.targetAlbum = preselectName || currentAlbumNameStr;
             modal.show();
         }
@@ -716,7 +673,6 @@
         async function startBatchUpload() {
             const albumName = document.getElementById('uploadModal').dataset.targetAlbum;
             if(!albumName) return alert("無法確認目標相簿");
-            
             const files = document.getElementById('uploadFiles').files;
             if(files.length === 0) return alert("請選擇檔案");
 
@@ -724,7 +680,6 @@
             const pBar = document.getElementById('uploadProgressBar');
             const pText = document.getElementById('uploadProgressText');
             const doBtn = document.getElementById('doUploadBtn');
-            
             doBtn.disabled = true;
             pBar.style.width = "0%";
             
@@ -734,27 +689,15 @@
             for(let i=0; i<total; i++) {
                 const file = files[i];
                 pText.innerText = `上傳中 (${i+1}/${total}): ${file.name}`;
-                
                 try {
                     const base64 = await toBase64(file);
-                    // If album has an ID (existing), passing it helps backend find folder faster, 
-                    // but Name is sufficient and robust.
-                    const payload = {
-                        action: 'upload',
-                        password: adminToken,
-                        albumName: albumName,
-                        fileName: file.name,
-                        image: base64
-                    };
-                    
+                    const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
                     const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const json = await res.json();
                     if(json.status === "success") successCount++;
                 } catch(e) { console.error(e); }
-                
                 pBar.style.width = `${Math.round(((i+1)/total)*100)}%`;
             }
-            
             alert(`上傳完成！成功 ${successCount} / ${total}`);
             document.getElementById('uploadFiles').value = "";
             document.getElementById('uploadStatus').classList.add('hidden');
@@ -769,7 +712,6 @@
             else el.classList.add('hidden');
         }
 
-        // --- Standard Helpers ---
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -809,7 +751,6 @@
             newI.onload = () => { img.src = url; img.style.opacity = '1'; };
             newI.src = url;
             document.getElementById('downloadLink').href = p.downloadUrl;
-            
             document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
             const active = document.querySelector(`.thumb-item[data-idx="${currentPhotoIndex}"]`);
             if(active) active.classList.add('active');
@@ -841,12 +782,10 @@
             const btn = document.getElementById('downloadAllBtn');
             const txt = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<div class="spinner-border spinner-border-sm"></div> 打包中...`;
-            
             try {
                 const zip = new JSZip();
                 const folder = zip.folder(currentAlbumNameStr || "album");
                 let count = 0;
-                
                 const promises = currentAlbumPhotos.map(async (p, i) => {
                     try {
                         const url = `https://lh3.googleusercontent.com/d/${p.id}=s2500`;
@@ -859,10 +798,8 @@
                         count++;
                     } catch(e) { }
                 });
-                
                 await Promise.all(promises);
                 if(count===0) throw new Error("No images loaded");
-                
                 const content = await zip.generateAsync({type:"blob"});
                 saveAs(content, `${currentAlbumNameStr}.zip`);
             } catch(e) { alert("下載失敗"); } 
@@ -915,7 +852,6 @@
             document.getElementById('albumView').classList.add('hidden');
             document.getElementById('setupState').classList.remove('hidden');
         }
-        function openSettingsModal() { new bootstrap.Modal(document.getElementById('settingsModal')).show(); }
         function showLoading(show) { 
             const el = document.getElementById('loadingOverlay');
             show ? el.classList.remove('hidden') : el.classList.add('hidden');
