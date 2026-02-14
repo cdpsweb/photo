@@ -131,6 +131,25 @@
         .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
         .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; }
 
+        /* Tabs in Admin Modal */
+        .nav-tabs { border-bottom: 1px solid var(--border-subtle); }
+        .nav-tabs .nav-link { color: var(--text-muted); border: none; border-bottom: 2px solid transparent; transition: 0.3s; font-family: var(--font-mono); cursor: pointer; }
+        .nav-tabs .nav-link:hover { color: var(--text-primary); }
+        .nav-tabs .nav-link.active { background: transparent; color: var(--brand-primary); border-bottom: 2px solid var(--brand-primary); }
+
+        /* Admin Styles */
+        .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
+        .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
+        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
+
+        /* Directory List */
+        .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
+        .directory-item { padding: 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .directory-item:hover { background: rgba(41, 121, 255, 0.1); padding-left: 1.5rem; color: var(--brand-primary); }
+        .directory-item:last-child { border-bottom: none; }
+        .dir-index { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem; }
+        .dir-count { font-family: var(--font-mono); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+
         /* Utils */
         .hidden { display: none !important; }
         .d-none { display: none !important; }
@@ -143,11 +162,6 @@
         .thumbnail-strip-container { position: absolute; bottom: 0; width: 100%; height: 100px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 20px; overflow-x: auto; }
         .thumb-item { width: 60px; height: 60px; margin-right: 10px; opacity: 0.5; cursor: pointer; flex-shrink: 0; }
         .thumb-item.active { opacity: 1; border: 2px solid var(--brand-primary); }
-        
-        /* Upload Status */
-        .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
-        .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
-        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
     </style>
 </head>
 <body>
@@ -160,6 +174,7 @@
                 <span id="navbarTitle">雲端相簿</span>
             </a>
             <div>
+                <!-- Viewer Mode Label -->
                 <span id="viewerModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
                 </span>
@@ -202,12 +217,12 @@
                     <div id="configArea" class="hidden">
                         <div class="mb-2">
                             <label class="form-label small">API服務端點 (GAS URL)</label>
-                            <input type="url" class="form-control form-control-sm" id="settingGasUrl">
+                            <input type="url" class="form-control form-control-sm" id="settingGasUrl" placeholder="https://script.google.com/...">
                         </div>
                         <div class="mb-2">
                             <label class="form-label small">網頁標題</label>
                             <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" id="settingPageTitle">
+                                <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
                                 <button class="btn-oled btn-sm" onclick="saveSettings()">儲存</button>
                             </div>
                         </div>
@@ -422,14 +437,32 @@
 
         // --- Core Functions ---
 
+        async function safeFetchJson(url, options = {}) {
+            try {
+                const res = await fetch(url, options);
+                const text = await res.text();
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    if (text.trim().startsWith("<")) {
+                        throw new Error("權限錯誤：GAS 回傳了登入頁面而非資料。\n請檢查部署設定：「誰可以存取」必須設為「所有人」。");
+                    }
+                    throw new Error("資料格式錯誤 (非JSON)");
+                }
+            } catch (err) {
+                throw err;
+            }
+        }
+
         async function fetchAlbums(forceRefresh = false) {
             if (!SCRIPT_URL) return;
             showLoading(true);
             try {
                 let url = `${SCRIPT_URL}?action=getAlbums`;
                 if (forceRefresh) url += "&refresh=true";
-                const res = await fetch(url);
-                const json = await res.json();
+                
+                const json = await safeFetchJson(url);
+                
                 if (json.status === "success") {
                     allData = json.data;
                     // Sort: Date (8 digits) Desc
@@ -453,6 +486,7 @@
                 } else { throw new Error(json.message); }
             } catch (err) {
                 console.error(err);
+                if(err.message.includes("權限錯誤")) alert(err.message);
                 showLoading(false);
             } finally { showLoading(false); }
         }
@@ -572,8 +606,9 @@
             if(!pwd) return alert("請輸入密碼");
             showLoading(true);
             try {
-                const res = await fetch(`${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`);
-                const json = await res.json();
+                const url = `${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`;
+                const json = await safeFetchJson(url);
+                
                 if(json.status === "success") {
                     adminToken = pwd;
                     document.getElementById('adminPassword').value = "";
@@ -588,7 +623,7 @@
                     alert("登入成功！");
                     fetchAlbums(true); // Refresh to show controls
                 } else { alert("密碼錯誤"); }
-            } catch(e) { alert("驗證失敗: " + e); }
+            } catch(e) { alert("驗證失敗: " + e.message); }
             finally { showLoading(false); }
         }
 
