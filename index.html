@@ -141,7 +141,7 @@
         .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
         .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
         .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
-
+    
         /* Directory List */
         .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
         .directory-item { padding: 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
@@ -184,7 +184,7 @@
                     <i class="bi bi-shield-check me-1"></i> 管理者模式
                 </span>
                 
-                <!-- Admin Login Button (Will be hidden on login) -->
+                <!-- Admin Login Button -->
                 <button id="loginBtn" class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openLoginModal()" title="管理者登入">
                     <i class="bi bi-key-fill"></i>
                 </button>
@@ -409,6 +409,8 @@
         const STORAGE_KEY_URL = "gas_album_url_v5";
         const STORAGE_KEY_TITLE = "gas_album_title_v5";
         const SESSION_KEY_VIEWER = "is_viewer_mode";
+        // v8.5 SESSION_KEY_ADMIN
+        const SESSION_KEY_ADMIN = "gas_album_admin_token";
 
         // Fast UI Toggle
         (function() {
@@ -430,6 +432,16 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings();
+
+            // v8.5 Restore Admin Session
+            const storedAdmin = sessionStorage.getItem(SESSION_KEY_ADMIN);
+            if(storedAdmin) {
+                adminToken = storedAdmin;
+                document.getElementById('loginBtn').classList.add('d-none');
+                document.getElementById('adminModeLabel').classList.remove('d-none');
+                document.getElementById('adminPanel').classList.remove('hidden');
+            }
+            
             document.addEventListener('keydown', (e) => {
                 if(document.getElementById('imageModal').classList.contains('show')) {
                     if(e.key === "ArrowLeft") navigateLightbox(-1);
@@ -629,6 +641,8 @@
                 const json = await safeFetchJson(url);
                 if(json.status === "success") {
                     adminToken = pwd;
+                    sessionStorage.setItem(SESSION_KEY_ADMIN, pwd); // v8.5 Save to session
+                    
                     document.getElementById('adminPassword').value = "";
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
                     
@@ -647,8 +661,9 @@
 
         function logoutAdmin() {
             adminToken = "";
+            sessionStorage.removeItem(SESSION_KEY_ADMIN); // v8.5 Clear session
             document.getElementById('adminPanel').classList.add('hidden');
-            document.getElementById('adminPassword').value = "";
+            document.getElementById('adminPassword').value = ""; 
             
             // UI Toggles for Guest
             document.getElementById('loginBtn').classList.remove('d-none');
@@ -718,15 +733,19 @@
         async function startBatchUpload() {
             const albumName = document.getElementById('uploadModal').dataset.targetAlbum;
             if(!albumName) return alert("無法確認目標相簿");
+            
             const files = document.getElementById('uploadFiles').files;
             if(files.length === 0) return alert("請選擇檔案");
 
             document.getElementById('uploadStatus').classList.remove('hidden');
             const pBar = document.getElementById('uploadProgressBar');
             const pText = document.getElementById('uploadProgressText');
+            const pCount = document.getElementById('uploadCount');
             const doBtn = document.getElementById('doUploadBtn');
+            
             doBtn.disabled = true;
             pBar.style.width = "0%";
+            pCount.innerText = "0%";
             
             let successCount = 0;
             const total = files.length;
@@ -734,20 +753,38 @@
             for(let i=0; i<total; i++) {
                 const file = files[i];
                 pText.innerText = `上傳中 (${i+1}/${total}): ${file.name}`;
+                
                 try {
                     const base64 = await toBase64(file);
-                    const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
+                    // If album has an ID (existing), passing it helps backend find folder faster, 
+                    // but Name is sufficient and robust.
+                    const payload = {
+                        action: 'upload',
+                        password: adminToken,
+                        albumName: albumName,
+                        fileName: file.name,
+                        image: base64
+                    };
+                    
                     const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const json = await res.json();
                     if(json.status === "success") successCount++;
                 } catch(e) { console.error(e); }
-                pBar.style.width = `${Math.round(((i+1)/total)*100)}%`;
+                
+                // Update Progress
+                const pct = Math.round(((i+1)/total)*100);
+                pBar.style.width = `${pct}%`;
+                pCount.innerText = `${pct}%`;
             }
             
+            // Force 100% UI update before alert
             pBar.style.width = "100%";
-            // Delay alert slightly to let UI update
-            await new Promise(r => setTimeout(r, 200));
+            pCount.innerText = "100%";
+            pText.innerText = "處理完成";
             
+            // Allow UI repaint
+            await new Promise(r => setTimeout(r, 200));
+
             alert(`上傳完成！成功 ${successCount} / ${total}`);
             document.getElementById('uploadFiles').value = "";
             document.getElementById('uploadStatus').classList.add('hidden');
@@ -805,10 +842,10 @@
             
             document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
             const active = document.querySelector(`.thumb-item[data-idx="${currentPhotoIndex}"]`);
-            if(active) active.classList.add('active');
-            
-            // Scroll thumb into view
-            if(active) active.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            if(active) {
+                active.classList.add('active');
+                active.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            }
         }
 
         function renderThumbs() {
@@ -837,10 +874,12 @@
             const btn = document.getElementById('downloadAllBtn');
             const txt = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<div class="spinner-border spinner-border-sm"></div> 打包中...`;
+            
             try {
                 const zip = new JSZip();
                 const folder = zip.folder(currentAlbumNameStr || "album");
                 let count = 0;
+                
                 const promises = currentAlbumPhotos.map(async (p, i) => {
                     try {
                         const url = `https://lh3.googleusercontent.com/d/${p.id}=s2500`;
@@ -853,8 +892,10 @@
                         count++;
                     } catch(e) { }
                 });
+                
                 await Promise.all(promises);
                 if(count===0) throw new Error("No images loaded");
+                
                 const content = await zip.generateAsync({type:"blob"});
                 saveAs(content, `${currentAlbumNameStr}.zip`);
             } catch(e) { alert("下載失敗"); } 
@@ -907,6 +948,7 @@
             document.getElementById('albumView').classList.add('hidden');
             document.getElementById('setupState').classList.remove('hidden');
         }
+        function openSettingsModal() { new bootstrap.Modal(document.getElementById('settingsModal')).show(); }
         function showLoading(show) { 
             const el = document.getElementById('loadingOverlay');
             show ? el.classList.remove('hidden') : el.classList.add('hidden');
