@@ -16,7 +16,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <!-- v8.8 Added: SortableJS for Drag and Drop -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
@@ -92,63 +91,25 @@
         .btn-card-action { flex: 1; font-size: 0.8rem; padding: 4px; }
 
         /* Photo Grid */
-        .photo-item { 
-            position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1/1; border: 1px solid transparent; 
-            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; 
-        }
-        /* v8.8: Grab cursor for drag hint */
+        .photo-item { position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1/1; border: 1px solid transparent; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .photo-item.draggable { cursor: grab; }
         .photo-item.draggable:active { cursor: grabbing; }
-        
-        .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; pointer-events: none; /* Prevent image drag interfering with Sortable */ }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; pointer-events: none; }
         .photo-item:hover { border-color: var(--brand-primary); }
         .photo-item:hover img { transform: scale(1.05); }
-        
-        /* Sortable Ghost Class */
         .sortable-ghost { opacity: 0.4; background-color: var(--brand-primary); border: 2px dashed var(--brand-primary); }
 
         /* Multi-select Styles */
-        .photo-item.selected {
-            border: 2px solid var(--brand-danger);
-            box-shadow: 0 0 15px rgba(255, 23, 68, 0.4);
-        }
+        .photo-item.selected { border: 2px solid var(--brand-danger); box-shadow: 0 0 15px rgba(255, 23, 68, 0.4); }
         .photo-item.selected img { opacity: 0.6; }
-        
-        .photo-checkbox {
-            position: absolute; top: 10px; left: 10px; width: 24px; height: 24px;
-            background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px;
-            z-index: 20; display: flex; align-items: center; justify-content: center;
-            pointer-events: none; 
-            transition: 0.2s;
-        }
-        .photo-item.selected .photo-checkbox {
-            background: var(--brand-danger); border-color: var(--brand-danger);
-        }
-        .photo-item.selected .photo-checkbox::after {
-            content: '✓'; color: white; font-weight: bold; font-size: 14px;
-        }
+        .photo-checkbox { position: absolute; top: 10px; left: 10px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: 0.2s; }
+        .photo-item.selected .photo-checkbox { background: var(--brand-danger); border-color: var(--brand-danger); }
+        .photo-item.selected .photo-checkbox::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
 
         /* Header Breadcrumb */
-        #navHeader {
-            border-bottom: 1px solid var(--border-subtle);
-            padding-bottom: 2rem;
-            margin-bottom: 2rem;
-            background: radial-gradient(circle at top right, rgba(41, 121, 255, 0.1), transparent 40%);
-        }
-        .breadcrumb-item-custom {
-            font-family: var(--font-mono);
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            letter-spacing: 0.05em;
-            cursor: pointer !important;
-            transition: color 0.2s;
-            text-decoration: none;
-        }
-        .breadcrumb-item-custom:hover {
-            color: var(--brand-primary);
-            text-shadow: 0 0 8px rgba(41, 121, 255, 0.5);
-            text-decoration: underline;
-        }
+        #navHeader { border-bottom: 1px solid var(--border-subtle); padding-bottom: 2rem; margin-bottom: 2rem; background: radial-gradient(circle at top right, rgba(41, 121, 255, 0.1), transparent 40%); }
+        .breadcrumb-item-custom { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-muted); letter-spacing: 0.05em; cursor: pointer !important; transition: color 0.2s; text-decoration: none; }
+        .breadcrumb-item-custom:hover { color: var(--brand-primary); text-shadow: 0 0 8px rgba(41, 121, 255, 0.5); text-decoration: underline; }
         .breadcrumb-active { color: var(--brand-primary); text-shadow: 0 0 8px rgba(41, 121, 255, 0.5); }
         .breadcrumb-separator { color: var(--text-muted); margin: 0 0.5rem; }
 
@@ -171,11 +132,12 @@
         .admin-section-title { font-family: var(--font-mono); font-size: 0.8rem; color: var(--brand-accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; }
         .admin-section-title::after { content: ''; flex-grow: 1; height: 1px; background: rgba(255,64,129,0.2); margin-left: 10px; }
 
-        /* Progress Modal Styles */
+        /* Progress Modal */
         .progress-container { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin-top: 1rem; }
         .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
         .progress-text { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; font-family: var(--font-mono); font-size: 0.9rem; }
         .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
+        .upload-text-high-contrast { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; }
 
         /* Directory List */
         .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
@@ -222,7 +184,7 @@
         </div>
     </nav>
 
-    <!-- Admin Panel (Embedded) -->
+    <!-- Admin Panel -->
     <div id="adminPanel" class="hidden">
         <div class="container-fluid px-lg-5">
             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -325,7 +287,7 @@
         </div>
     </div>
 
-    <!-- Progress Modal (Generic for Upload/Delete) -->
+    <!-- Progress Modal -->
     <div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -339,6 +301,32 @@
                         <span id="progressCount" class="progress-text">0%</span>
                     </div>
                     <div id="progressLog" class="log-area hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">上傳相片</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2 text-white-50">上傳至: <span id="uploadTargetName" class="text-white fw-bold"></span></p>
+                    <input type="file" class="form-control mb-3" id="uploadFiles" multiple accept="image/*">
+                    <div id="uploadStatus" class="hidden">
+                        <div class="progress-container"><div id="uploadProgressBar" class="progress-bar"></div></div>
+                        <div class="d-flex justify-content-between mt-1 font-monospace small">
+                            <span id="uploadProgressText" class="upload-text-high-contrast">準備中...</span>
+                            <span id="uploadCount" class="upload-text-high-contrast"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="doUploadBtn" class="btn-oled btn-oled-accent w-100" onclick="startBatchUpload()">開始上傳</button>
                 </div>
             </div>
         </div>
@@ -408,7 +396,6 @@
         <button class="btn-oled btn-oled-danger btn-sm mt-3" onclick="forceStopLoading()">終止程序</button>
     </div>
 
-    <!-- Hidden File Input for Upload -->
     <input type="file" id="hiddenUploadInput" multiple accept="image/*" class="d-none">
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -423,14 +410,13 @@
         let currentPhotoIndex = 0;
         let adminToken = ""; 
         let selectedPhotoIds = new Set();
-        let uploadTargetAlbumName = ""; // Store for hidden upload
+        let uploadTargetAlbumName = "";
 
         const STORAGE_KEY_URL = "gas_album_url_v5";
         const STORAGE_KEY_TITLE = "gas_album_title_v5";
         const SESSION_KEY_VIEWER = "is_viewer_mode";
         const SESSION_KEY_ADMIN = "gas_album_admin_token";
 
-        // Fast UI Toggle
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
             const ref = urlParams.get('ref');
@@ -472,7 +458,6 @@
                 fetchAlbums();
             }
 
-            // Hidden upload input listener
             document.getElementById('hiddenUploadInput').addEventListener('change', function() {
                 if(this.files.length > 0) performBatchUpload(this.files, uploadTargetAlbumName);
             });
@@ -516,12 +501,18 @@
                         return (b.name||"").localeCompare((a.name||""), 'zh-TW');
                     });
                     
+                    // Capture state before reset
+                    const wasInAlbum = !document.getElementById('photoView').classList.contains('hidden');
+                    const lastAlbumName = currentAlbumNameStr;
+
                     showAlbumList();
-                    // Update view logic
-                    if(!document.getElementById('photoView').classList.contains('hidden')) {
-                        const updatedAlbum = allData.find(a => a.name === currentAlbumNameStr);
+                    populateAdminAlbumSelect();
+                    
+                    // Restore state logic (v8.9 fix)
+                    if(wasInAlbum) {
+                        const updatedAlbum = allData.find(a => a.name === lastAlbumName);
                         if(updatedAlbum) showPhotos(updatedAlbum.id);
-                        else showAlbumList(); 
+                        // if deleted, stays in list
                     }
                 } else { throw new Error(json.message); }
             } catch (err) {
@@ -605,16 +596,13 @@
                 document.getElementById('deleteCount').innerText = '0';
             }
             
-            // Sortable Init
             const photoGrid = document.getElementById('photoView');
-            // Destroy old instance if any
             if(photoGrid._sortable) photoGrid._sortable.destroy();
             
             if(adminToken) {
                 photoGrid._sortable = new Sortable(photoGrid, {
                     animation: 150,
                     ghostClass: 'sortable-ghost',
-                    // Disable sorting for visitors to avoid confusion, though it is visual only
                 });
             }
 
@@ -648,7 +636,6 @@
             });
         }
 
-        // Multi-select Handler
         function handlePhotoSelect(event, id, index) {
             event.stopPropagation();
             const el = document.getElementById(`p-item-${id}`);
@@ -672,7 +659,6 @@
             }
         }
 
-        // Batch Delete
         async function executeBatchDelete() {
             const count = selectedPhotoIds.size;
             if (count === 0) return;
@@ -709,7 +695,6 @@
             bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
             alert(`刪除完成！成功 ${success} / ${count}`);
             selectedPhotoIds.clear();
-            // Stay in album -> fetchAlbums will call showPhotos if album exists
             fetchAlbums(true); 
         }
 
@@ -804,21 +789,26 @@
             finally { showLoading(false); }
         }
 
-        // Upload Logic
         function openUploadModal(preselectName = null) {
-            uploadTargetAlbumName = preselectName || currentAlbumNameStr;
-            // Trigger hidden input
-            document.getElementById('hiddenUploadInput').click();
+            const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+            document.getElementById('uploadTargetName').innerText = preselectName || currentAlbumNameStr || "未選擇";
+            document.getElementById('uploadModal').dataset.targetAlbum = preselectName || currentAlbumNameStr;
+            modal.show();
         }
 
-        async function performBatchUpload(files, albumName) {
-            if(files.length === 0) return;
+        async function startBatchUpload() {
+            const albumName = document.getElementById('uploadModal').dataset.targetAlbum;
+            if(!albumName) return alert("無法確認目標相簿");
+            const files = document.getElementById('uploadFiles').files;
+            if(files.length === 0) return alert("請選擇檔案");
+
+            document.getElementById('uploadStatus').classList.remove('hidden');
+            const pBar = document.getElementById('uploadProgressBar');
+            const pText = document.getElementById('uploadProgressText');
+            const pCount = document.getElementById('uploadCount');
+            const doBtn = document.getElementById('doUploadBtn');
             
-            showProgressModal("上傳進度");
-            const pBar = document.getElementById('genericProgressBar');
-            const pText = document.getElementById('progressText');
-            const pCount = document.getElementById('progressCount');
-            
+            doBtn.disabled = true;
             pBar.style.width = "0%";
             pCount.innerText = "0%";
             
@@ -841,16 +831,60 @@
                 pCount.innerText = `${pct}%`;
             }
             
+            // v8.6 Force complete UI
             pBar.style.width = "100%";
             pCount.innerText = "100%";
-            pText.innerText = "完成";
-            await new Promise(r => setTimeout(r, 500));
-            
-            bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
-            // Clear input
-            document.getElementById('hiddenUploadInput').value = "";
+            pText.innerText = "處理完成";
+            await new Promise(r => setTimeout(r, 500)); 
+
             alert(`上傳完成！成功 ${successCount} / ${total}`);
+            document.getElementById('uploadFiles').value = "";
+            document.getElementById('uploadStatus').classList.add('hidden');
+            doBtn.disabled = false;
+            bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
             fetchAlbums(true);
+        }
+
+        function performBatchUpload(files, albumName) {
+            // Re-use logic for hidden input, but adapted
+            if(!adminToken) return alert("請先登入");
+            
+            showProgressModal("上傳進度");
+            const pBar = document.getElementById('genericProgressBar');
+            const pText = document.getElementById('progressText');
+            const pCount = document.getElementById('progressCount');
+            
+            pBar.style.width = "0%";
+            pCount.innerText = "0%";
+            
+            (async () => {
+                let successCount = 0;
+                const total = files.length;
+                for(let i=0; i<total; i++) {
+                    const file = files[i];
+                    pText.innerText = `上傳中: ${i+1}/${total}`;
+                    try {
+                        const base64 = await toBase64(file);
+                        const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
+                        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                        const json = await res.json();
+                        if(json.status === "success") successCount++;
+                    } catch(e) {}
+                    const pct = Math.round(((i+1)/total)*100);
+                    pBar.style.width = `${pct}%`;
+                    pCount.innerText = `${pct}%`;
+                }
+                
+                pBar.style.width = "100%";
+                pCount.innerText = "100%";
+                pText.innerText = "完成";
+                await new Promise(r => setTimeout(r, 500));
+                
+                bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
+                document.getElementById('hiddenUploadInput').value = "";
+                alert(`上傳完成！成功 ${successCount} / ${total}`);
+                fetchAlbums(true);
+            })();
         }
         
         function showProgressModal(title) {
@@ -861,7 +895,6 @@
             new bootstrap.Modal(document.getElementById('progressModal')).show();
         }
 
-        // --- Standard Helpers ---
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -932,12 +965,6 @@
         }
 
         async function downloadAllCurrentPhotos() {
-            // Updated to support current Sortable order
-            // Sortable modifies the DOM, but currentAlbumPhotos array might not be synced if we don't handle onEnd.
-            // Actually, for download, we should probably stick to array. 
-            // If user sorted visually, we might want to respect that? 
-            // For now, let's just download the array as is. Visual sort is transient.
-            
             if(!confirm(`下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`)) return;
             const btn = document.getElementById('downloadAllBtn');
             const txt = btn.innerHTML;
