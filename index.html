@@ -49,11 +49,11 @@
 
         /* Navbar */
         .navbar-custom {
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-subtle);
-            padding: 1.2rem 0;
-            position: sticky; top: 0; z-index: 1000;
+            padding: 1rem 0;
+            position: sticky; top: 0; z-index: 1020;
         }
         .navbar-brand { font-weight: 700; color: var(--text-primary) !important; display: flex; align-items: center; gap: 0.5rem; }
         .brand-dot { width: 8px; height: 8px; background-color: var(--brand-primary); border-radius: 50%; box-shadow: 0 0 10px var(--brand-primary); }
@@ -62,63 +62,74 @@
         .btn-oled {
             background: transparent; border: 1px solid var(--border-subtle); color: var(--text-secondary);
             font-family: var(--font-mono); font-size: 0.85rem; border-radius: var(--radius-md);
-            padding: 0.6rem 1.2rem; transition: all 0.3s; text-decoration: none;
+            padding: 0.5rem 1rem; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
         }
         .btn-oled:hover { border-color: var(--brand-primary); color: var(--text-primary); box-shadow: var(--glow-blue); background: rgba(41, 121, 255, 0.05); text-decoration: none; }
-        .btn-oled-accent { border-color: rgba(255, 64, 129, 0.3); }
-        .btn-oled-accent:hover { border-color: var(--brand-accent); background: rgba(255, 64, 129, 0.05); text-decoration: none; }
+        .btn-oled-accent { border-color: rgba(255, 64, 129, 0.3); color: var(--brand-accent); }
+        .btn-oled-accent:hover { border-color: var(--brand-accent); background: rgba(255, 64, 129, 0.05); color: #fff; }
         .btn-oled-danger { border-color: var(--brand-danger); color: var(--brand-danger); }
-        .btn-oled-danger:hover { background: rgba(255, 23, 68, 0.1); box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); text-decoration: none; }
-        .btn-icon { width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; }
+        .btn-oled-danger:hover { background: rgba(255, 23, 68, 0.1); box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); text-decoration: none; color: #fff; }
+        
+        /* Admin Panel (Embedded) */
+        #adminPanel {
+            background: rgba(10, 10, 15, 0.95);
+            border-bottom: 1px solid var(--brand-accent);
+            padding: 1.5rem 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            z-index: 1010;
+        }
+        .admin-section-title {
+            font-family: var(--font-mono); font-size: 0.8rem; color: var(--brand-accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center;
+        }
+        .admin-section-title::after { content: ''; flex-grow: 1; height: 1px; background: rgba(255,64,129,0.2); margin-left: 10px; }
 
         /* Cards */
         .album-card {
             background-color: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-            overflow: hidden; transition: all 0.3s; cursor: pointer; height: 100%; display: flex; flex-direction: column;
+            overflow: hidden; transition: all 0.3s; height: 100%; display: flex; flex-direction: column; position: relative;
         }
         .album-card:hover { transform: translateY(-4px); border-color: var(--brand-primary); box-shadow: var(--glow-blue); }
-        .album-cover { height: 240px; width: 100%; object-fit: cover; border-bottom: 1px solid var(--border-subtle); }
-        .album-info { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .album-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .album-cover { height: 220px; width: 100%; object-fit: cover; border-bottom: 1px solid var(--border-subtle); }
+        .album-info { padding: 1.2rem; flex-grow: 1; }
+        .album-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.4; }
         .album-meta { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); }
+        
+        /* Admin Controls on Album Card */
+        .admin-album-controls {
+            padding: 10px; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2);
+            display: flex; gap: 5px; justify-content: space-between;
+        }
+        .btn-card-action { flex: 1; font-size: 0.8rem; padding: 4px; }
 
         /* Photo Grid */
         .photo-item { position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1/1; border: 1px solid transparent; cursor: pointer; }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
         .photo-item:hover { border-color: var(--brand-primary); }
         .photo-item:hover img { transform: scale(1.05); }
+        
+        /* Delete Photo Button */
+        .btn-delete-photo {
+            position: absolute; top: 5px; right: 5px; width: 30px; height: 30px;
+            background: rgba(0,0,0,0.6); border: 1px solid var(--brand-danger); color: var(--brand-danger);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            z-index: 10; cursor: pointer; transition: 0.2s; opacity: 0;
+        }
+        .photo-item:hover .btn-delete-photo { opacity: 1; }
+        .btn-delete-photo:hover { background: var(--brand-danger); color: white; }
 
         /* Inputs & Modals */
         .modal-content { background-color: var(--bg-secondary); border: 1px solid var(--border-subtle); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         .modal-header, .modal-footer { border-color: var(--border-subtle); }
         .modal-title { color: var(--text-primary); font-weight: bold; }
         .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
-        .form-control, .form-select { background-color: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 0.8rem; }
+        .form-control, .form-select { background-color: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 0.6rem; font-size: 0.9rem; }
         .form-control:focus, .form-select:focus { background-color: var(--bg-tertiary); border-color: var(--brand-primary); color: var(--text-primary); box-shadow: none; }
-        .form-label { color: var(--text-secondary); font-size: 0.9rem; }
+        .form-label { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.3rem; }
 
         /* Footer */
         .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
         .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; }
-
-        /* Tabs in Admin Modal */
-        .nav-tabs { border-bottom: 1px solid var(--border-subtle); }
-        .nav-tabs .nav-link { color: var(--text-muted); border: none; border-bottom: 2px solid transparent; transition: 0.3s; font-family: var(--font-mono); cursor: pointer; }
-        .nav-tabs .nav-link:hover { color: var(--text-primary); }
-        .nav-tabs .nav-link.active { background: transparent; color: var(--brand-primary); border-bottom: 2px solid var(--brand-primary); }
-
-        /* Admin Styles */
-        .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
-        .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
-        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
-
-        /* Directory List */
-        .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
-        .directory-item { padding: 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
-        .directory-item:hover { background: rgba(41, 121, 255, 0.1); padding-left: 1.5rem; color: var(--brand-primary); }
-        .directory-item:last-child { border-bottom: none; }
-        .dir-index { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem; }
-        .dir-count { font-family: var(--font-mono); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
 
         /* Utils */
         .hidden { display: none !important; }
@@ -132,6 +143,11 @@
         .thumbnail-strip-container { position: absolute; bottom: 0; width: 100%; height: 100px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 20px; overflow-x: auto; }
         .thumb-item { width: 60px; height: 60px; margin-right: 10px; opacity: 0.5; cursor: pointer; flex-shrink: 0; }
         .thumb-item.active { opacity: 1; border: 2px solid var(--brand-primary); }
+        
+        /* Upload Status */
+        .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
+        .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
+        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
     </style>
 </head>
 <body>
@@ -144,12 +160,10 @@
                 <span id="navbarTitle">雲端相簿</span>
             </a>
             <div>
-                <!-- Viewer Mode Label -->
                 <span id="viewerModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
                 </span>
                 
-                <!-- Admin Login Button -->
                 <button class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openLoginModal()" title="管理者登入">
                     <i class="bi bi-key-fill"></i>
                 </button>
@@ -157,55 +171,61 @@
         </div>
     </nav>
 
+    <!-- Admin Panel (Embedded at Top) -->
+    <div id="adminPanel" class="hidden">
+        <div class="container-fluid px-lg-5">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h5 class="text-white"><i class="bi bi-shield-lock-fill me-2" style="color: var(--brand-accent);"></i>管理者控制台</h5>
+                <button class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()">登出</button>
+            </div>
+
+            <div class="row g-4">
+                <!-- Create Album Section -->
+                <div class="col-md-6 border-end border-secondary">
+                    <div class="admin-section-title">相簿管理</div>
+                    <div class="d-flex gap-2 mb-3">
+                        <input type="text" class="form-control" id="createAlbumName" placeholder="輸入新相簿名稱 (例如: 1130520 校慶)">
+                        <button class="btn-oled btn-oled-accent text-nowrap" onclick="createAlbum()">
+                            <i class="bi bi-folder-plus me-1"></i> 建立相簿
+                        </button>
+                    </div>
+                    <p class="text-muted small">* 建立後請在下方列表點擊「上傳」新增照片。</p>
+                </div>
+
+                <!-- System Config Section -->
+                <div class="col-md-6">
+                    <div class="admin-section-title">
+                        系統設定 
+                        <button class="btn btn-link btn-sm p-0 ms-2 text-decoration-none" onclick="toggleConfigArea()" style="color:var(--brand-primary); font-size:0.7rem;">[展開/收合]</button>
+                    </div>
+                    
+                    <div id="configArea" class="hidden">
+                        <div class="mb-2">
+                            <label class="form-label small">API服務端點 (GAS URL)</label>
+                            <input type="url" class="form-control form-control-sm" id="settingGasUrl">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">網頁標題</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="settingPageTitle">
+                                <button class="btn-oled btn-sm" onclick="saveSettings()">儲存</button>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                            <button class="btn-oled btn-sm" onclick="initShareUi(); new bootstrap.Modal(document.getElementById('shareModal')).show()">
+                                <i class="bi bi-share me-1"></i> 取得分享連結
+                            </button>
+                            <button class="btn-oled btn-sm btn-oled-danger ms-auto" onclick="clearSettings()">清除設定</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="container-fluid px-lg-5 py-5">
         
-        <!-- Admin Dashboard -->
-        <div id="adminView" class="admin-panel hidden">
-            <div class="admin-badge">ADMIN_CONSOLE</div>
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="mb-0">上傳管理後台</h4>
-                <button class="btn-oled btn-sm" onclick="logoutAdmin()">登出</button>
-            </div>
-            
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <label class="form-label">選擇或建立相簿</label>
-                    <div class="input-group mb-2">
-                        <!-- v7.4 Fix: Improved Select UX -->
-                        <select class="form-select" id="uploadAlbumSelect" onchange="handleAlbumSelect()">
-                            <option value="new">+ 建立新相簿...</option>
-                            <!-- Albums Populated Here -->
-                        </select>
-                    </div>
-                    <!-- v7.4 Fix: Name input -->
-                    <input type="text" class="form-control hidden" id="newAlbumName" placeholder="輸入新相簿名稱 (例如: 1130520 校慶)">
-                </div>
-                <div class="col-md-8">
-                    <label class="form-label">選擇照片 (支援多選)</label>
-                    <input type="file" class="form-control" id="uploadFiles" multiple accept="image/*">
-                </div>
-            </div>
-            
-            <div class="d-flex justify-content-end mt-4">
-                <button id="startUploadBtn" class="btn-oled btn-oled-accent px-4" onclick="startBatchUpload()">
-                    <i class="bi bi-cloud-upload me-2"></i> 開始上傳
-                </button>
-            </div>
-
-            <!-- Upload Status -->
-            <div id="uploadStatus" class="hidden">
-                <div class="progress-container">
-                    <div id="uploadProgressBar" class="progress-bar"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-2 font-monospace small text-muted">
-                    <span id="uploadProgressText">準備中...</span>
-                    <span id="uploadCount">0/0</span>
-                </div>
-                <div id="uploadLog" class="log-area"></div>
-            </div>
-        </div>
-
         <!-- Navigation Header -->
         <div id="navHeader" class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
             <div>
@@ -216,6 +236,12 @@
             <div class="d-flex gap-2">
                 <button id="directoryBtn" class="btn-oled" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i> 目錄檢索</button>
                 <button id="downloadAllBtn" class="btn-oled btn-oled-accent hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
+                
+                <!-- Admin Batch Upload Button -->
+                <button id="uploadToAlbumBtn" class="btn-oled btn-oled-accent hidden" onclick="openUploadModal()">
+                    <i class="bi bi-cloud-upload me-2"></i> 上傳相片
+                </button>
+
                 <button id="refreshBtn" class="btn-oled" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
         </div>
@@ -229,7 +255,7 @@
         <div id="setupState" class="text-center py-5 hidden">
             <h1 class="display-4 mb-3">系統初始化</h1>
             <p class="text-muted">尚未設定服務端點。</p>
-            <button class="btn-oled btn-oled-accent px-5" onclick="openAdminDashboard('settings')">開始設定</button>
+            <button class="btn-oled btn-oled-accent px-5" onclick="openLoginModal()">管理者登入設定</button>
         </div>
     </div>
 
@@ -255,90 +281,58 @@
         </div>
     </div>
 
-    <!-- Admin Dashboard Modal -->
-    <div class="modal fade" id="adminDashboardModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-shield-lock-fill me-2"></i>管理者後台</h5>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()">
-                            <i class="bi bi-box-arrow-right me-1"></i> 登出
-                        </button>
+                    <h5 class="modal-title">上傳相片</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-2">上傳至: <span id="uploadTargetName" class="text-white fw-bold"></span></p>
+                    <input type="file" class="form-control mb-3" id="uploadFiles" multiple accept="image/*">
+                    
+                    <div id="uploadStatus" class="hidden">
+                        <div class="progress-container"><div id="uploadProgressBar" class="progress-bar"></div></div>
+                        <div class="d-flex justify-content-between mt-1 font-monospace small text-muted">
+                            <span id="uploadProgressText">準備中...</span><span id="uploadCount"></span>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-body p-0">
-                    <!-- Tabs -->
-                    <ul class="nav nav-tabs nav-fill" id="adminTabs" role="tablist">
-                        <li class="nav-item">
-                            <button class="nav-link active" id="tab-upload" data-bs-toggle="tab" data-bs-target="#content-upload" type="button">相簿上傳</button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link" id="tab-settings" data-bs-toggle="tab" data-bs-target="#content-settings" type="button">系統設定</button>
-                        </li>
-                    </ul>
-                    
-                    <!-- Tab Content -->
-                    <div class="tab-content p-4">
-                        <!-- Upload Tab -->
-                        <div class="tab-pane fade show active" id="content-upload">
-                            <div class="row g-4">
-                                <div class="col-md-5">
-                                    <label class="form-label">選擇或建立相簿</label>
-                                    <select class="form-select mb-2" id="uploadAlbumSelect" onchange="handleAlbumSelect()">
-                                        <option value="new">+ 建立新相簿...</option>
-                                    </select>
-                                    <input type="text" class="form-control hidden" id="newAlbumName" placeholder="輸入名稱 (例: 1130520 校慶)">
-                                </div>
-                                <div class="col-md-7">
-                                    <label class="form-label">選擇照片</label>
-                                    <input type="file" class="form-control" id="uploadFiles" multiple accept="image/*">
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-end mt-4">
-                                <button id="startUploadBtn" class="btn-oled btn-oled-accent px-4" onclick="startBatchUpload()">
-                                    <i class="bi bi-cloud-upload me-2"></i> 開始上傳
-                                </button>
-                            </div>
-                            <!-- Upload Progress -->
-                            <div id="uploadStatus" class="hidden mt-3">
-                                <div class="progress-container"><div id="uploadProgressBar" class="progress-bar"></div></div>
-                                <div class="d-flex justify-content-between mt-2 font-monospace small text-muted">
-                                    <span id="uploadProgressText">準備中...</span><span id="uploadCount">0/0</span>
-                                </div>
-                                <div id="uploadLog" class="log-area"></div>
-                            </div>
-                        </div>
+                <div class="modal-footer">
+                    <button id="doUploadBtn" class="btn-oled btn-oled-accent w-100" onclick="startBatchUpload()">開始上傳</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                        <!-- Settings Tab -->
-                        <div class="tab-pane fade" id="content-settings">
-                            <div class="mb-3">
-                                <label class="form-label font-monospace">API服務端點 (GAS URL)</label>
-                                <input type="url" class="form-control" id="settingGasUrl" placeholder="https://script.google.com/...">
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label font-monospace">網頁標題</label>
-                                <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
-                            </div>
-                            
-                            <button class="btn-oled w-100 mb-4" onclick="saveSettings()">儲存設定並重啟</button>
-                            
-                            <hr style="border-color: var(--border-subtle);">
-                            
-                            <div class="text-center">
-                                <p class="text-secondary small font-monospace mb-2">存取 QR CODE (智慧連結)</p>
-                                <div id="qrcode" class="d-flex justify-content-center mb-3 bg-white p-2 rounded w-auto d-inline-block"></div>
-                                <div class="input-group input-group-sm mb-3">
-                                    <input type="text" class="form-control text-center" id="shareLinkInput" readonly>
-                                    <button class="btn btn-outline-secondary" onclick="copyShareLink()">複製</button>
-                                </div>
-                                <p class="small font-monospace mb-4" style="color: var(--brand-accent); font-weight: bold;">
-                                    * 此連結已包含您的設定，掃描後可直接存取相簿。
-                                </p>
-                                <button class="btn-oled btn-oled-danger btn-sm" onclick="clearSettings()">清除本機設定 (Reset App)</button>
-                            </div>
-                        </div>
+    <!-- Rename Modal -->
+    <div class="modal fade" id="renameModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">更名相簿</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="text" class="form-control mb-3" id="renameInput">
+                    <input type="hidden" id="renameTargetId">
+                    <button class="btn-oled w-100" onclick="confirmRename()">確認更名</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Link Modal -->
+    <div class="modal fade" id="shareModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">分享連結</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center">
+                    <div id="qrcode" class="d-flex justify-content-center mb-3 bg-white p-2 rounded w-auto d-inline-block"></div>
+                    <div class="input-group input-group-sm mb-3">
+                        <input type="text" class="form-control text-center" id="shareLinkInput" readonly>
+                        <button class="btn btn-outline-secondary" onclick="copyShareLink()">複製</button>
                     </div>
+                    <p class="small text-muted">* 此連結包含設定參數，訪客掃描後可直接瀏覽。</p>
                 </div>
             </div>
         </div>
@@ -385,6 +379,7 @@
         let allData = [];
         let currentAlbumPhotos = [];
         let currentAlbumNameStr = "";
+        let currentAlbumIdStr = "";
         let currentPhotoIndex = 0;
         let adminToken = ""; 
 
@@ -412,14 +407,12 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings();
-            
             document.addEventListener('keydown', (e) => {
                 if(document.getElementById('imageModal').classList.contains('show')) {
                     if(e.key === "ArrowLeft") navigateLightbox(-1);
                     if(e.key === "ArrowRight") navigateLightbox(1);
                 }
             });
-
             if (!SCRIPT_URL) {
                 showSetupState();
             } else {
@@ -451,7 +444,12 @@
                     });
                     
                     showAlbumList();
-                    populateAdminAlbumSelect();
+                    // If inside an album, refresh it too
+                    if(!document.getElementById('photoView').classList.contains('hidden')) {
+                        const updatedAlbum = allData.find(a => a.name === currentAlbumNameStr);
+                        if(updatedAlbum) showPhotos(updatedAlbum.id);
+                        else showAlbumList(); // album deleted?
+                    }
                 } else { throw new Error(json.message); }
             } catch (err) {
                 console.error(err);
@@ -465,12 +463,15 @@
             document.getElementById('separator').classList.add('hidden');
             document.getElementById('currentAlbumName').classList.add('hidden');
             document.getElementById('downloadAllBtn').classList.add('hidden');
+            document.getElementById('uploadToAlbumBtn').classList.add('hidden');
             document.getElementById('directoryBtn').classList.remove('hidden');
             document.getElementById('setupState').classList.add('hidden');
             
             const view = document.getElementById('albumView');
             view.innerHTML = '';
-            if(allData.length === 0) {
+            
+            // Allow empty state for admin to create albums
+            if(allData.length === 0 && !adminToken) {
                 document.getElementById('emptyState').classList.remove('hidden');
                 return;
             } else {
@@ -481,22 +482,27 @@
                 const col = document.createElement('div');
                 col.className = 'col-12 col-md-4 col-lg-3';
                 
-                // v7.4 Admin Controls
-                let adminControls = "";
-                if (adminToken) {
-                    adminControls = `<button class="btn-oled btn-sm btn-oled-accent w-100 mt-3" onclick="event.stopPropagation(); openAdminDashboard('upload', '${album.name}')"><i class="bi bi-cloud-upload me-1"></i> 上傳相片</button>`;
+                // Admin Buttons
+                let adminBtns = "";
+                if(adminToken) {
+                    adminBtns = `
+                        <div class="admin-album-controls">
+                            <button class="btn btn-sm btn-dark btn-card-action" onclick="event.stopPropagation(); prepareRename('${album.id}', '${album.name}')">更名</button>
+                            <button class="btn btn-sm btn-dark btn-card-action" onclick="event.stopPropagation(); openUploadModal('${album.name}')">上傳</button>
+                            <button class="btn btn-sm btn-danger btn-card-action" onclick="event.stopPropagation(); deleteAlbum('${album.id}', '${album.name}')">刪除</button>
+                        </div>`;
                 }
+
+                const coverImg = album.cover || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PC9zdmc+'; // Placeholder if empty
 
                 col.innerHTML = `
                     <div class="album-card" onclick="showPhotos('${album.id}')">
-                        <img src="${album.cover}" class="album-cover" loading="lazy">
+                        <img src="${coverImg}" class="album-cover" loading="lazy">
                         <div class="album-info">
-                            <div>
-                                <h5 class="album-title">${album.name}</h5>
-                                <div class="album-meta"><i class="bi bi-images me-1"></i> ${album.photos.length} 項目</div>
-                            </div>
-                            ${adminControls}
+                            <h5 class="album-title">${album.name}</h5>
+                            <div class="album-meta"><i class="bi bi-images me-1"></i> ${album.photos.length} 項目</div>
                         </div>
+                        ${adminBtns}
                     </div>`;
                 view.appendChild(col);
             });
@@ -507,9 +513,9 @@
             if (!album) return;
             currentAlbumPhotos = album.photos;
             currentAlbumNameStr = album.name;
+            currentAlbumIdStr = album.id;
 
-            const dirModal = bootstrap.Modal.getInstance(document.getElementById('directoryModal'));
-            if(dirModal) dirModal.hide();
+            bootstrap.Modal.getInstance(document.getElementById('directoryModal'))?.hide();
 
             document.getElementById('albumView').classList.add('hidden');
             document.getElementById('photoView').classList.remove('hidden');
@@ -517,132 +523,164 @@
             document.getElementById('separator').classList.remove('hidden');
             document.getElementById('currentAlbumName').innerText = album.name;
             document.getElementById('currentAlbumName').classList.remove('hidden');
+            
+            // Admin: Show upload button in header
+            if(adminToken) {
+                document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
+                // Update click handler to current album
+                document.getElementById('uploadToAlbumBtn').onclick = () => openUploadModal(album.name);
+            }
 
             const view = document.getElementById('photoView');
             view.innerHTML = '';
+            
+            if(album.photos.length === 0) {
+                view.innerHTML = '<div class="col-12 text-center text-muted py-5">此相簿是空的</div>';
+            }
+
             album.photos.forEach((photo, index) => {
                 const col = document.createElement('div');
                 col.className = 'col-6 col-md-3 col-lg-2';
-                col.innerHTML = `<div class="photo-item" onclick="openLightbox(${index})"><img src="${photo.url.replace('=s800', '=s400')}" loading="lazy"></div>`;
+                
+                let delBtn = "";
+                if(adminToken) {
+                    delBtn = `<div class="btn-delete-photo" onclick="event.stopPropagation(); deletePhoto('${photo.id}')"><i class="bi bi-x-lg"></i></div>`;
+                }
+
+                col.innerHTML = `
+                    <div class="photo-item" onclick="openLightbox(${index})">
+                        ${delBtn}
+                        <img src="${photo.url.replace('=s800', '=s400')}" loading="lazy">
+                    </div>`;
                 view.appendChild(col);
             });
         }
 
-        // --- Admin Functions ---
+        // --- Admin Logic ---
 
         function openLoginModal() {
             document.getElementById('adminPassword').value = "";
-            if(!SCRIPT_URL) {
-                openAdminDashboard('settings');
-                return;
+            if(!SCRIPT_URL) { // Initial Setup
+                new bootstrap.Modal(document.getElementById('loginModal')).show();
+            } else {
+                new bootstrap.Modal(document.getElementById('loginModal')).show();
             }
-            new bootstrap.Modal(document.getElementById('loginModal')).show();
         }
 
         async function verifyAdmin() {
             const pwd = document.getElementById('adminPassword').value;
             if(!pwd) return alert("請輸入密碼");
-            
             showLoading(true);
             try {
-                const url = `${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`;
-                const res = await fetch(url);
+                const res = await fetch(`${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`);
                 const json = await res.json();
-                
                 if(json.status === "success") {
                     adminToken = pwd;
                     document.getElementById('adminPassword').value = "";
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
-                    openAdminDashboard();
+                    document.getElementById('adminPanel').classList.remove('hidden'); // Show Admin Panel
+                    
+                    // If this was initial setup, open settings
+                    if(!SCRIPT_URL || document.getElementById('settingGasUrl').value === "") {
+                        toggleConfigArea(true);
+                    }
+                    
                     alert("登入成功！");
-                    // Refresh List to show Admin Controls
-                    showAlbumList();
-                } else {
-                    alert("密碼錯誤");
-                }
-            } catch(e) {
-                alert("驗證失敗: " + e);
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        function openAdminDashboard(activeTabId = 'upload', preselectAlbumName = null) {
-            const modalEl = document.getElementById('adminDashboardModal');
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-            
-            // Populate settings fields
-            document.getElementById('settingGasUrl').value = SCRIPT_URL;
-            document.getElementById('settingPageTitle').value = PAGE_TITLE;
-            initShareUi(); 
-            populateAdminAlbumSelect();
-
-            // v7.4 Preselect logic
-            if(preselectAlbumName) {
-                const select = document.getElementById('uploadAlbumSelect');
-                select.value = preselectAlbumName;
-                handleAlbumSelect(); // Ensure input state is correct
-            }
-
-            // Switch Tab
-            const triggerEl = document.querySelector(`#adminTabs button[id="tab-${activeTabId}"]`);
-            if(triggerEl) bootstrap.Tab.getOrCreateInstance(triggerEl).show();
+                    fetchAlbums(true); // Refresh to show controls
+                } else { alert("密碼錯誤"); }
+            } catch(e) { alert("驗證失敗: " + e); }
+            finally { showLoading(false); }
         }
 
         function logoutAdmin() {
             adminToken = "";
-            document.getElementById('adminPassword').value = "";
-            const modal = bootstrap.Modal.getInstance(document.getElementById('adminDashboardModal'));
-            if(modal) modal.hide();
-            
-            // Refresh to remove admin controls
-            showAlbumList();
-            alert("已登出"); 
+            document.getElementById('adminPanel').classList.add('hidden');
+            showAlbumList(); // Refresh UI to hide controls
+            alert("已登出");
         }
 
-        function populateAdminAlbumSelect() {
-            const select = document.getElementById('uploadAlbumSelect');
-            // Store current value to restore after repopulating if possible
-            const currentVal = select.value;
+        // API Actions
+        async function createAlbum() {
+            const name = document.getElementById('createAlbumName').value.trim();
+            if(!name) return alert("請輸入相簿名稱");
             
-            select.innerHTML = '<option value="new">+ 建立新相簿...</option>';
-            if(allData) {
-                allData.forEach(album => {
-                    const opt = document.createElement('option');
-                    opt.value = album.name;
-                    opt.innerText = album.name;
-                    select.appendChild(opt);
+            callApi({
+                action: 'createAlbum',
+                albumName: name,
+                password: adminToken
+            }, "相簿建立成功！");
+        }
+
+        async function deleteAlbum(id, name) {
+            if(!confirm(`確定要刪除相簿「${name}」及其所有照片嗎？\n(此動作無法復原)`)) return;
+            callApi({
+                action: 'deleteAlbum',
+                id: id,
+                password: adminToken
+            });
+        }
+
+        function prepareRename(id, oldName) {
+            document.getElementById('renameTargetId').value = id;
+            document.getElementById('renameInput').value = oldName;
+            new bootstrap.Modal(document.getElementById('renameModal')).show();
+        }
+
+        async function confirmRename() {
+            const id = document.getElementById('renameTargetId').value;
+            const newName = document.getElementById('renameInput').value.trim();
+            if(!newName) return alert("名稱不能為空");
+            
+            bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide();
+            callApi({
+                action: 'renameAlbum',
+                id: id,
+                newName: newName,
+                password: adminToken
+            });
+        }
+
+        async function deletePhoto(id) {
+            if(!confirm("確定刪除此照片？")) return;
+            callApi({
+                action: 'deletePhoto',
+                id: id,
+                password: adminToken
+            });
+        }
+
+        // Generic API Caller
+        async function callApi(payload, successMsg) {
+            showLoading(true);
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
                 });
-            }
-            
-            // Try restore
-            if(currentVal && currentVal !== 'new') {
-                select.value = currentVal;
-            }
+                const json = await res.json();
+                if(json.status === "success") {
+                    if(successMsg) alert(successMsg);
+                    document.getElementById('createAlbumName').value = ""; // Clear input
+                    fetchAlbums(true);
+                } else {
+                    alert("操作失敗: " + json.message);
+                }
+            } catch(e) { console.error(e); alert("連線錯誤"); }
+            finally { showLoading(false); }
         }
 
-        function handleAlbumSelect() {
-            const val = document.getElementById('uploadAlbumSelect').value;
-            const input = document.getElementById('newAlbumName');
-            if(val === 'new') {
-                input.classList.remove('hidden');
-                setTimeout(() => input.focus(), 100); // Focus for better UX
-            } else {
-                input.classList.add('hidden');
-            }
+        // Upload Logic
+        function openUploadModal(preselectName = null) {
+            const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+            document.getElementById('uploadTargetName').innerText = preselectName || currentAlbumNameStr || "未選擇";
+            // Store target name in modal dataset or variable logic
+            document.getElementById('uploadModal').dataset.targetAlbum = preselectName || currentAlbumNameStr;
+            modal.show();
         }
 
         async function startBatchUpload() {
-            if(!adminToken) return alert("憑證過期，請重新登入");
-            
-            const selectVal = document.getElementById('uploadAlbumSelect').value;
-            let albumName = selectVal;
-            
-            if(selectVal === 'new') {
-                albumName = document.getElementById('newAlbumName').value.trim();
-                if(!albumName) return alert("請輸入新相簿名稱");
-            }
+            const albumName = document.getElementById('uploadModal').dataset.targetAlbum;
+            if(!albumName) return alert("無法確認目標相簿");
             
             const files = document.getElementById('uploadFiles').files;
             if(files.length === 0) return alert("請選擇檔案");
@@ -650,10 +688,9 @@
             document.getElementById('uploadStatus').classList.remove('hidden');
             const pBar = document.getElementById('uploadProgressBar');
             const pText = document.getElementById('uploadProgressText');
-            const pCount = document.getElementById('uploadCount');
-            const logArea = document.getElementById('uploadLog');
+            const doBtn = document.getElementById('doUploadBtn');
             
-            logArea.innerHTML = "";
+            doBtn.disabled = true;
             pBar.style.width = "0%";
             
             let successCount = 0;
@@ -661,51 +698,43 @@
 
             for(let i=0; i<total; i++) {
                 const file = files[i];
-                pText.innerText = `上傳中: ${file.name}`;
-                pCount.innerText = `${i+1}/${total}`;
+                pText.innerText = `上傳中 (${i+1}/${total}): ${file.name}`;
                 
                 try {
                     const base64 = await toBase64(file);
+                    // If album has an ID (existing), passing it helps backend find folder faster, 
+                    // but Name is sufficient and robust.
                     const payload = {
+                        action: 'upload',
                         password: adminToken,
                         albumName: albumName,
                         fileName: file.name,
                         image: base64
                     };
                     
-                    const res = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify(payload)
-                    });
-                    
+                    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const json = await res.json();
-                    
-                    if(json.status === "success") {
-                        successCount++;
-                        logLog(file.name + " ... OK");
-                    } else {
-                        logLog(file.name + " ... FAILED: " + json.message, "red");
-                    }
-
-                } catch(e) {
-                    console.error(e);
-                    logLog(file.name + " ... ERROR", "red");
-                }
+                    if(json.status === "success") successCount++;
+                } catch(e) { console.error(e); }
                 
-                const pct = Math.round(((i+1)/total)*100);
-                pBar.style.width = `${pct}%`;
+                pBar.style.width = `${Math.round(((i+1)/total)*100)}%`;
             }
             
-            pText.innerText = "上傳完成";
             alert(`上傳完成！成功 ${successCount} / ${total}`);
-            
             document.getElementById('uploadFiles').value = "";
-            setTimeout(() => {
-                document.getElementById('uploadStatus').classList.add('hidden');
-                fetchAlbums(true);
-            }, 2000);
+            document.getElementById('uploadStatus').classList.add('hidden');
+            doBtn.disabled = false;
+            bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+            fetchAlbums(true);
         }
 
+        function toggleConfigArea(forceShow = false) {
+            const el = document.getElementById('configArea');
+            if(forceShow || el.classList.contains('hidden')) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        }
+
+        // --- Standard Helpers ---
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -715,30 +744,14 @@
             });
         }
 
-        function logLog(msg, color="gray") {
-            const div = document.createElement('div');
-            div.innerText = msg;
-            div.style.color = color;
-            const area = document.getElementById('uploadLog');
-            area.prepend(div);
-        }
-
-        // --- Other Helpers ---
-
         function openDirectoryModal() {
-            if(!allData || allData.length === 0) {
-                alert("無資料可顯示");
-                return;
-            }
             const list = document.getElementById('directoryList');
             list.innerHTML = '';
             allData.forEach((album, i) => {
                 const li = document.createElement('li');
                 li.className = 'directory-item';
                 const num = (i+1).toString().padStart(2,'0');
-                li.innerHTML = `
-                    <div><span class="dir-index">[${num}]</span> ${album.name}</div>
-                    <span class="dir-count">${album.photos.length}</span>`;
+                li.innerHTML = `<div><span class="dir-index">[${num}]</span> ${album.name}</div><span class="dir-count">${album.photos.length}</span>`;
                 li.onclick = () => { showPhotos(album.id); bootstrap.Modal.getInstance(document.getElementById('directoryModal')).hide(); };
                 list.appendChild(li);
             });
@@ -764,10 +777,7 @@
             
             document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
             const active = document.querySelector(`.thumb-item[data-idx="${currentPhotoIndex}"]`);
-            if(active) {
-                active.classList.add('active');
-                active.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-            }
+            if(active) active.classList.add('active');
         }
 
         function renderThumbs() {
@@ -792,7 +802,7 @@
         }
 
         async function downloadAllCurrentPhotos() {
-            if(!confirm(`確定下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`)) return;
+            if(!confirm(`下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`)) return;
             const btn = document.getElementById('downloadAllBtn');
             const txt = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<div class="spinner-border spinner-border-sm"></div> 打包中...`;
@@ -812,7 +822,7 @@
                         if(blob.type.includes('png')) ext='png';
                         folder.file(`${currentAlbumNameStr}_${i+1}.${ext}`, blob);
                         count++;
-                    } catch(e) { console.error(e); }
+                    } catch(e) { }
                 });
                 
                 await Promise.all(promises);
@@ -820,11 +830,8 @@
                 
                 const content = await zip.generateAsync({type:"blob"});
                 saveAs(content, `${currentAlbumNameStr}.zip`);
-            } catch(e) {
-                alert("下載失敗 (瀏覽器限制或網路錯誤)");
-            } finally {
-                btn.disabled = false; btn.innerHTML = txt;
-            }
+            } catch(e) { alert("下載失敗"); } 
+            finally { btn.disabled = false; btn.innerHTML = txt; }
         }
 
         function loadSettings() {
