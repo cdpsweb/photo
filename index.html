@@ -643,19 +643,19 @@
                 if (json.status === "success") {
                     allData = json.data;
                     
-                    // 全域排序設定 (v5.9 Special)
-                    // 依據相簿名稱中的「前6位數字」由大到小排列
+                    // 全域排序設定 (v6.0 Special)
+                    // 依據相簿名稱中的「前8位數字」由大到小排列
                     allData.sort((a, b) => {
-                        const getFirst6Digits = (str) => {
+                        const getFirst8Digits = (str) => {
                             // 移除所有非數字字元，取得純數字字串
                             const digits = str.replace(/\D/g, '');
-                            // 截取前 6 碼，如果不足則補 0 (雖然理論上會是0，但 parseInt 會處理)
+                            // 截取前 8 碼，如果不足則補 0 (parseInt 會處理)
                             // 如果完全沒數字，回傳 0
-                            return digits.length > 0 ? parseInt(digits.substring(0, 6), 10) : 0;
+                            return digits.length > 0 ? parseInt(digits.substring(0, 8), 10) : 0;
                         };
 
-                        const dateA = getFirst6Digits(a.name || "");
-                        const dateB = getFirst6Digits(b.name || "");
+                        const dateA = getFirst8Digits(a.name || "");
+                        const dateB = getFirst8Digits(b.name || "");
 
                         // Primary Sort: Date Number Descending (大到小)
                         if (dateB !== dateA) {
@@ -663,7 +663,7 @@
                         }
                         
                         // Secondary Sort: Full String Descending (Fallback)
-                        // 如果前6碼數字一樣 (例如同日兩個活動)，再比對完整字串
+                        // 如果前8碼數字一樣，再比對完整字串
                         return (b.name || "").localeCompare((a.name || ""), 'zh-TW');
                     });
 
