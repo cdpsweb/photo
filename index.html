@@ -33,6 +33,10 @@
             --brand-danger: #FF1744;
             --border-subtle: rgba(41, 121, 255, 0.2);
             --glow-blue: 0 0 30px rgba(41, 121, 255, 0.3);
+            --glow-pink: 0 0 30px rgba(255, 64, 129, 0.3);
+            --glow-text: 0 0 10px rgba(255, 255, 255, 0.5);
+            
+            /* Typography */
             --font-sans: 'Inter', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
             --radius-md: 12px;
@@ -65,9 +69,19 @@
             font-family: var(--font-mono); font-size: 0.85rem; border-radius: var(--radius-md);
             padding: 0.5rem 1rem; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
         }
+        /* Base Blue Button Hover */
         .btn-oled:hover { border-color: var(--brand-primary); color: var(--text-primary); box-shadow: var(--glow-blue); background: rgba(41, 121, 255, 0.05); text-decoration: none; }
+        
+        /* Accent (Pink) Button Styles */
         .btn-oled-accent { border-color: rgba(255, 64, 129, 0.3); color: var(--brand-accent); }
-        .btn-oled-accent:hover { border-color: var(--brand-accent); background: rgba(255, 64, 129, 0.05); color: #fff; }
+        .btn-oled-accent:hover { 
+            border-color: var(--brand-accent); 
+            background: rgba(255, 64, 129, 0.05); 
+            color: #fff; 
+            box-shadow: var(--glow-pink); 
+            text-decoration: none;
+        }
+        
         .btn-oled-danger { border-color: var(--brand-danger); color: var(--brand-danger); }
         .btn-oled-danger:hover { background: rgba(255, 23, 68, 0.1); box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); text-decoration: none; color: #fff; }
         .btn-icon { width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; }
@@ -127,6 +141,10 @@
         .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
         .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; }
 
+        /* Admin Panel Styles (for Modal) */
+        .admin-section-title { font-family: var(--font-mono); font-size: 0.8rem; color: var(--brand-accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; }
+        .admin-section-title::after { content: ''; flex-grow: 1; height: 1px; background: rgba(255,64,129,0.2); margin-left: 10px; }
+
         /* Progress Modal Styles */
         .progress-container { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin-top: 1rem; }
         .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
@@ -177,12 +195,12 @@
                         <i class="bi bi-shield-check me-1"></i> 管理者模式
                     </span>
                     
-                    <!-- NEW: Create Album Button -->
-                    <button class="btn-oled btn-sm btn-oled-accent" onclick="openCreateAlbumModal()">
+                    <!-- Create Album Button (Removed accent class) -->
+                    <button class="btn-oled btn-sm" onclick="openCreateAlbumModal()">
                         <i class="bi bi-folder-plus me-1"></i> 建立相簿
                     </button>
 
-                    <!-- Renamed Settings Button -->
+                    <!-- Settings Button -->
                     <button class="btn-oled btn-sm" onclick="openAdminModal()">
                         <i class="bi bi-gear-fill me-1"></i> 系統設定
                     </button>
@@ -200,6 +218,11 @@
         </div>
     </nav>
 
+    <!-- Admin Panel (Embedded at Top) -->
+    <div id="adminPanel" class="hidden">
+        <!-- Kept hidden/removed functionality as per previous request to move to modal -->
+    </div>
+
     <!-- Main Content -->
     <div class="container-fluid px-lg-5 py-5">
         <div id="navHeader" class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
@@ -213,10 +236,15 @@
                 <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
                     <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
                 </button>
-                <button id="downloadAllBtn" class="btn-oled btn-oled-accent hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
-                <button id="uploadToAlbumBtn" class="btn-oled btn-oled-accent hidden" onclick="openUploadModal()">
+                
+                <!-- Download Button (Removed accent class) -->
+                <button id="downloadAllBtn" class="btn-oled hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
+                
+                <!-- Upload Button (Removed accent class) -->
+                <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
                     <i class="bi bi-cloud-upload me-2"></i> 上傳相片
                 </button>
+
                 <button id="refreshBtn" class="btn-oled" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
         </div>
@@ -257,7 +285,7 @@
         </div>
     </div>
 
-    <!-- NEW: Create Album Modal (Standalone) -->
+    <!-- Create Album Modal -->
     <div class="modal fade" id="createAlbumModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
@@ -274,7 +302,7 @@
         </div>
     </div>
 
-    <!-- Modified Admin/Settings Modal -->
+    <!-- Admin Settings Modal -->
     <div class="modal fade" id="adminControlModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -741,7 +769,6 @@
             initShareUi(); 
         }
 
-        // NEW: Open specific small modal for Create Album
         function openCreateAlbumModal() {
             document.getElementById('createAlbumName').value = "";
             new bootstrap.Modal(document.getElementById('createAlbumModal')).show();
@@ -795,7 +822,6 @@
             const name = document.getElementById('createAlbumName').value.trim();
             if(!name) return alert("請輸入相簿名稱");
             
-            // Close the small modal
             bootstrap.Modal.getInstance(document.getElementById('createAlbumModal')).hide();
             
             callApi({ action: 'createAlbum', albumName: name, password: adminToken }, "相簿建立成功！");
@@ -827,7 +853,6 @@
                 const json = await res.json();
                 if(json.status === "success") {
                     if(successMsg) alert(successMsg);
-                    // document.getElementById('createAlbumName').value = ""; // Handled in modal open
                     fetchAlbums(true);
                 } else {
                     alert("操作失敗: " + json.message);
