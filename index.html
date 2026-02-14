@@ -16,6 +16,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- v8.8 Added: SortableJS for Drag and Drop -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
         /* --- S92 OLED Style Tokens --- */
@@ -90,12 +92,22 @@
         .btn-card-action { flex: 1; font-size: 0.8rem; padding: 4px; }
 
         /* Photo Grid */
-        .photo-item { position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1/1; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; }
-        .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .photo-item { 
+            position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1/1; border: 1px solid transparent; 
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; 
+        }
+        /* v8.8: Grab cursor for drag hint */
+        .photo-item.draggable { cursor: grab; }
+        .photo-item.draggable:active { cursor: grabbing; }
+        
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; pointer-events: none; /* Prevent image drag interfering with Sortable */ }
         .photo-item:hover { border-color: var(--brand-primary); }
         .photo-item:hover img { transform: scale(1.05); }
         
-        /* v8.7 Multi-select Styles */
+        /* Sortable Ghost Class */
+        .sortable-ghost { opacity: 0.4; background-color: var(--brand-primary); border: 2px dashed var(--brand-primary); }
+
+        /* Multi-select Styles */
         .photo-item.selected {
             border: 2px solid var(--brand-danger);
             box-shadow: 0 0 15px rgba(255, 23, 68, 0.4);
@@ -106,7 +118,7 @@
             position: absolute; top: 10px; left: 10px; width: 24px; height: 24px;
             background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px;
             z-index: 20; display: flex; align-items: center; justify-content: center;
-            pointer-events: none; /* Let parent click handle it */
+            pointer-events: none; 
             transition: 0.2s;
         }
         .photo-item.selected .photo-checkbox {
@@ -116,7 +128,7 @@
             content: '✓'; color: white; font-weight: bold; font-size: 14px;
         }
 
-        /* Header Breadcrumb v8.7 Fix */
+        /* Header Breadcrumb */
         #navHeader {
             border-bottom: 1px solid var(--border-subtle);
             padding-bottom: 2rem;
@@ -128,14 +140,14 @@
             font-size: 0.95rem;
             color: var(--text-muted);
             letter-spacing: 0.05em;
-            cursor: pointer !important; /* Force pointer */
+            cursor: pointer !important;
             transition: color 0.2s;
             text-decoration: none;
         }
         .breadcrumb-item-custom:hover {
             color: var(--brand-primary);
             text-shadow: 0 0 8px rgba(41, 121, 255, 0.5);
-            text-decoration: underline; /* Visual cue */
+            text-decoration: underline;
         }
         .breadcrumb-active { color: var(--brand-primary); text-shadow: 0 0 8px rgba(41, 121, 255, 0.5); }
         .breadcrumb-separator { color: var(--text-muted); margin: 0 0.5rem; }
@@ -148,8 +160,6 @@
         .form-control, .form-select { background-color: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 0.6rem; font-size: 0.9rem; }
         .form-control:focus, .form-select:focus { background-color: var(--bg-tertiary); border-color: var(--brand-primary); color: var(--text-primary); box-shadow: none; }
         .form-label { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.3rem; }
-        
-        /* Placeholder High Contrast */
         .form-control::placeholder { color: #AAAAAA; opacity: 1; }
 
         /* Footer */
@@ -161,11 +171,11 @@
         .admin-section-title { font-family: var(--font-mono); font-size: 0.8rem; color: var(--brand-accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; }
         .admin-section-title::after { content: ''; flex-grow: 1; height: 1px; background: rgba(255,64,129,0.2); margin-left: 10px; }
 
-        /* Upload Status */
-        .progress-container { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-top: 1rem; }
+        /* Progress Modal Styles */
+        .progress-container { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin-top: 1rem; }
         .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
-        /* v8.7: High contrast upload text */
-        .upload-text-high-contrast { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; }
+        .progress-text { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; font-family: var(--font-mono); font-size: 0.9rem; }
+        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
 
         /* Directory List */
         .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
@@ -199,17 +209,12 @@
                 <span id="navbarTitle">雲端相簿</span>
             </a>
             <div>
-                <!-- Viewer Mode Label -->
                 <span id="viewerModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
                 </span>
-                
-                <!-- Admin Mode Label -->
                 <span id="adminModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-shield-check me-1"></i> 管理者模式
                 </span>
-                
-                <!-- Admin Login Button -->
                 <button id="loginBtn" class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openLoginModal()" title="管理者登入">
                     <i class="bi bi-key-fill"></i>
                 </button>
@@ -217,7 +222,7 @@
         </div>
     </nav>
 
-    <!-- Admin Panel (Embedded at Top) -->
+    <!-- Admin Panel (Embedded) -->
     <div id="adminPanel" class="hidden">
         <div class="container-fluid px-lg-5">
             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -226,7 +231,6 @@
             </div>
 
             <div class="row g-4">
-                <!-- Create Album Section -->
                 <div class="col-md-6 border-end border-secondary">
                     <div class="admin-section-title">相簿管理</div>
                     <div class="d-flex gap-2 mb-3">
@@ -238,12 +242,8 @@
                     <p class="small text-white-50">* 建立後請在下方列表點擊「上傳」新增照片。</p>
                 </div>
 
-                <!-- System Config Section -->
                 <div class="col-md-6">
-                    <div class="admin-section-title">
-                        系統設定 
-                    </div>
-                    
+                    <div class="admin-section-title">系統設定</div>
                     <div id="configArea">
                         <div class="mb-2">
                             <label class="form-label small">API服務端點 (GAS URL)</label>
@@ -270,8 +270,6 @@
 
     <!-- Main Content -->
     <div class="container-fluid px-lg-5 py-5">
-        
-        <!-- Navigation Header -->
         <div id="navHeader" class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
             <div>
                 <span id="homeLink" class="breadcrumb-item-custom" onclick="showAlbumList()">相簿首頁</span>
@@ -280,28 +278,21 @@
             </div>
             <div class="d-flex gap-2">
                 <button id="directoryBtn" class="btn-oled" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i> 目錄檢索</button>
-                
-                <!-- Batch Delete Button (Hidden) -->
                 <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
                     <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
                 </button>
-
                 <button id="downloadAllBtn" class="btn-oled btn-oled-accent hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
-                
                 <button id="uploadToAlbumBtn" class="btn-oled btn-oled-accent hidden" onclick="openUploadModal()">
                     <i class="bi bi-cloud-upload me-2"></i> 上傳相片
                 </button>
-
                 <button id="refreshBtn" class="btn-oled" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
         </div>
 
-        <!-- Views -->
         <div id="albumView" class="row g-4"></div>
         <div id="photoView" class="row g-3 hidden"></div>
         <div id="emptyState" class="text-center py-5 hidden"><h2 class="text-muted font-monospace">查無資料 (NO_DATA)</h2></div>
         
-        <!-- Initial Setup State -->
         <div id="setupState" class="text-center py-5 hidden">
             <h1 class="display-4 mb-3">系統初始化</h1>
             <p class="text-muted">尚未設定服務端點。</p>
@@ -334,29 +325,20 @@
         </div>
     </div>
 
-    <!-- Upload Modal -->
-    <div class="modal fade" id="uploadModal" tabindex="-1" data-bs-backdrop="static">
+    <!-- Progress Modal (Generic for Upload/Delete) -->
+    <div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">上傳相片</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="progressModalTitle">處理中</h5>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-2 text-white-50">上傳至: <span id="uploadTargetName" class="text-white fw-bold"></span></p>
-                    <input type="file" class="form-control mb-3" id="uploadFiles" multiple accept="image/*">
-                    
-                    <div id="uploadStatus" class="hidden">
-                        <div class="progress-container"><div id="uploadProgressBar" class="progress-bar"></div></div>
-                        <div class="d-flex justify-content-between mt-1 font-monospace small">
-                            <!-- v8.7 High Contrast Text -->
-                            <span id="uploadProgressText" class="upload-text-high-contrast">準備中...</span>
-                            <span id="uploadCount" class="upload-text-high-contrast"></span>
-                        </div>
+                    <div class="progress-container"><div id="genericProgressBar" class="progress-bar"></div></div>
+                    <div class="d-flex justify-content-between mt-2 font-monospace">
+                        <span id="progressText" class="progress-text">初始化...</span>
+                        <span id="progressCount" class="progress-text">0%</span>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="doUploadBtn" class="btn-oled btn-oled-accent w-100" onclick="startBatchUpload()">開始上傳</button>
+                    <div id="progressLog" class="log-area hidden"></div>
                 </div>
             </div>
         </div>
@@ -426,6 +408,9 @@
         <button class="btn-oled btn-oled-danger btn-sm mt-3" onclick="forceStopLoading()">終止程序</button>
     </div>
 
+    <!-- Hidden File Input for Upload -->
+    <input type="file" id="hiddenUploadInput" multiple accept="image/*" class="d-none">
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
@@ -437,9 +422,8 @@
         let currentAlbumIdStr = "";
         let currentPhotoIndex = 0;
         let adminToken = ""; 
-        
-        // v8.7 Multi-select
         let selectedPhotoIds = new Set();
+        let uploadTargetAlbumName = ""; // Store for hidden upload
 
         const STORAGE_KEY_URL = "gas_album_url_v5";
         const STORAGE_KEY_TITLE = "gas_album_title_v5";
@@ -474,7 +458,6 @@
                 document.getElementById('adminModeLabel').classList.remove('d-none');
                 document.getElementById('adminPanel').classList.remove('hidden');
                 initShareUi(); 
-                populateAdminAlbumSelect();
             }
             
             document.addEventListener('keydown', (e) => {
@@ -488,6 +471,11 @@
             } else {
                 fetchAlbums();
             }
+
+            // Hidden upload input listener
+            document.getElementById('hiddenUploadInput').addEventListener('change', function() {
+                if(this.files.length > 0) performBatchUpload(this.files, uploadTargetAlbumName);
+            });
         });
 
         // --- Core Functions ---
@@ -529,7 +517,7 @@
                     });
                     
                     showAlbumList();
-                    populateAdminAlbumSelect();
+                    // Update view logic
                     if(!document.getElementById('photoView').classList.contains('hidden')) {
                         const updatedAlbum = allData.find(a => a.name === currentAlbumNameStr);
                         if(updatedAlbum) showPhotos(updatedAlbum.id);
@@ -550,7 +538,7 @@
             document.getElementById('currentAlbumName').classList.add('hidden');
             document.getElementById('downloadAllBtn').classList.add('hidden');
             document.getElementById('uploadToAlbumBtn').classList.add('hidden');
-            document.getElementById('batchDeleteBtn').classList.add('hidden'); // Hide batch delete
+            document.getElementById('batchDeleteBtn').classList.add('hidden');
             document.getElementById('directoryBtn').classList.remove('hidden');
             document.getElementById('setupState').classList.add('hidden');
             
@@ -599,7 +587,7 @@
             currentAlbumPhotos = album.photos;
             currentAlbumNameStr = album.name;
             currentAlbumIdStr = album.id;
-            selectedPhotoIds.clear(); // Reset selections
+            selectedPhotoIds.clear();
 
             bootstrap.Modal.getInstance(document.getElementById('directoryModal'))?.hide();
 
@@ -610,13 +598,24 @@
             document.getElementById('currentAlbumName').innerText = album.name;
             document.getElementById('currentAlbumName').classList.remove('hidden');
             
-            // Toggle Admin Buttons
             if(adminToken) {
                 document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
                 document.getElementById('uploadToAlbumBtn').onclick = () => openUploadModal(album.name);
-                // Batch delete button shown only if needed, logic in selection handler
                 document.getElementById('batchDeleteBtn').classList.add('hidden');
                 document.getElementById('deleteCount').innerText = '0';
+            }
+            
+            // Sortable Init
+            const photoGrid = document.getElementById('photoView');
+            // Destroy old instance if any
+            if(photoGrid._sortable) photoGrid._sortable.destroy();
+            
+            if(adminToken) {
+                photoGrid._sortable = new Sortable(photoGrid, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    // Disable sorting for visitors to avoid confusion, though it is visual only
+                });
             }
 
             const view = document.getElementById('photoView');
@@ -630,17 +629,18 @@
                 const col = document.createElement('div');
                 col.className = 'col-6 col-md-3 col-lg-2';
                 
-                // v8.7 Multi-select Checkbox (Admin Only)
                 let selectionHtml = "";
                 let clickAction = `openLightbox(${index})`;
+                let dragClass = "";
                 
                 if(adminToken) {
                     selectionHtml = `<div class="photo-checkbox"></div>`;
                     clickAction = `handlePhotoSelect(event, '${photo.id}', ${index})`;
+                    dragClass = "draggable";
                 }
 
                 col.innerHTML = `
-                    <div class="photo-item" id="p-item-${photo.id}" onclick="${clickAction}">
+                    <div class="photo-item ${dragClass}" id="p-item-${photo.id}" onclick="${clickAction}">
                         ${selectionHtml}
                         <img src="${photo.url.replace('=s800', '=s400')}" loading="lazy">
                     </div>`;
@@ -648,13 +648,10 @@
             });
         }
 
-        // v8.7 Photo Selection Handler
+        // Multi-select Handler
         function handlePhotoSelect(event, id, index) {
-            // Prevent opening lightbox immediately if in selection mode
             event.stopPropagation();
-            
             const el = document.getElementById(`p-item-${id}`);
-            
             if (selectedPhotoIds.has(id)) {
                 selectedPhotoIds.delete(id);
                 el.classList.remove('selected');
@@ -662,56 +659,58 @@
                 selectedPhotoIds.add(id);
                 el.classList.add('selected');
             }
-            
-            // Update UI
             const count = selectedPhotoIds.size;
             const delBtn = document.getElementById('batchDeleteBtn');
             const dlBtn = document.getElementById('downloadAllBtn');
-            
             if (count > 0) {
                 delBtn.classList.remove('hidden');
                 document.getElementById('deleteCount').innerText = count;
-                dlBtn.classList.add('hidden'); // Hide download to avoid clutter
+                dlBtn.classList.add('hidden'); 
             } else {
                 delBtn.classList.add('hidden');
                 dlBtn.classList.remove('hidden');
-                // If clicked without selection, maybe open lightbox? 
-                // For better UX in admin mode, click = toggle select. 
-                // Double click or view icon = lightbox.
-                // Current logic: click = select. To view, admin might need another way or just deselect all.
-                // Let's keep it simple: Admin click = toggle select.
             }
         }
 
-        // v8.7 Execute Batch Delete
+        // Batch Delete
         async function executeBatchDelete() {
             const count = selectedPhotoIds.size;
             if (count === 0) return;
-            
             if (!confirm(`確定要刪除選取的 ${count} 張照片嗎？\n(此動作無法復原)`)) return;
             
-            showLoading(true);
             const ids = Array.from(selectedPhotoIds);
+            showProgressModal("刪除進度");
+            
+            const pBar = document.getElementById('genericProgressBar');
+            const pText = document.getElementById('progressText');
+            const pCount = document.getElementById('progressCount');
+            
             let success = 0;
             
-            // Sequential deletion to be safe with GAS quota
-            for (const id of ids) {
+            for (let i=0; i<ids.length; i++) {
+                const id = ids[i];
+                pText.innerText = `刪除中: ${i+1}/${count}`;
+                pCount.innerText = `${Math.round(((i)/count)*100)}%`;
+                pBar.style.width = `${Math.round(((i)/count)*100)}%`;
+                
                 try {
-                    const payload = {
-                        action: 'deletePhoto',
-                        id: id,
-                        password: adminToken
-                    };
+                    const payload = { action: 'deletePhoto', id: id, password: adminToken };
                     const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const json = await res.json();
                     if(json.status === "success") success++;
                 } catch(e) { console.error(e); }
             }
             
-            showLoading(false);
+            pBar.style.width = "100%";
+            pCount.innerText = "100%";
+            pText.innerText = "完成";
+            await new Promise(r => setTimeout(r, 500));
+            
+            bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
             alert(`刪除完成！成功 ${success} / ${count}`);
             selectedPhotoIds.clear();
-            fetchAlbums(true); // Reload
+            // Stay in album -> fetchAlbums will call showPhotos if album exists
+            fetchAlbums(true); 
         }
 
         // --- Admin Logic ---
@@ -741,15 +740,11 @@
                 if(json.status === "success") {
                     adminToken = pwd;
                     sessionStorage.setItem(SESSION_KEY_ADMIN, pwd);
-                    
                     document.getElementById('adminPassword').value = "";
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
-                    
                     showAdminPanel(); 
-                    
                     document.getElementById('loginBtn').classList.add('d-none');
                     document.getElementById('adminModeLabel').classList.remove('d-none');
-                    
                     alert("登入成功！");
                     fetchAlbums(true); 
                 } else { alert("密碼錯誤"); }
@@ -762,15 +757,12 @@
             sessionStorage.removeItem(SESSION_KEY_ADMIN);
             document.getElementById('adminPanel').classList.add('hidden');
             document.getElementById('adminPassword').value = ""; 
-            
             document.getElementById('loginBtn').classList.remove('d-none');
             document.getElementById('adminModeLabel').classList.add('d-none');
-
             showAlbumList();
             alert("已登出");
         }
 
-        // API Actions
         async function createAlbum() {
             const name = document.getElementById('createAlbumName').value.trim();
             if(!name) return alert("請輸入相簿名稱");
@@ -796,8 +788,6 @@
             callApi({ action: 'renameAlbum', id: id, newName: newName, password: adminToken });
         }
 
-        // async function deletePhoto(id) { ... } -> Replaced by batch delete
-
         async function callApi(payload, successMsg) {
             showLoading(true);
             try {
@@ -816,25 +806,19 @@
 
         // Upload Logic
         function openUploadModal(preselectName = null) {
-            const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
-            document.getElementById('uploadTargetName').innerText = preselectName || currentAlbumNameStr || "未選擇";
-            document.getElementById('uploadModal').dataset.targetAlbum = preselectName || currentAlbumNameStr;
-            modal.show();
+            uploadTargetAlbumName = preselectName || currentAlbumNameStr;
+            // Trigger hidden input
+            document.getElementById('hiddenUploadInput').click();
         }
 
-        async function startBatchUpload() {
-            const albumName = document.getElementById('uploadModal').dataset.targetAlbum;
-            if(!albumName) return alert("無法確認目標相簿");
-            const files = document.getElementById('uploadFiles').files;
-            if(files.length === 0) return alert("請選擇檔案");
-
-            document.getElementById('uploadStatus').classList.remove('hidden');
-            const pBar = document.getElementById('uploadProgressBar');
-            const pText = document.getElementById('uploadProgressText');
-            const pCount = document.getElementById('uploadCount');
-            const doBtn = document.getElementById('doUploadBtn');
+        async function performBatchUpload(files, albumName) {
+            if(files.length === 0) return;
             
-            doBtn.disabled = true;
+            showProgressModal("上傳進度");
+            const pBar = document.getElementById('genericProgressBar');
+            const pText = document.getElementById('progressText');
+            const pCount = document.getElementById('progressCount');
+            
             pBar.style.width = "0%";
             pCount.innerText = "0%";
             
@@ -843,7 +827,7 @@
 
             for(let i=0; i<total; i++) {
                 const file = files[i];
-                pText.innerText = `上傳中 (${i+1}/${total}): ${file.name}`;
+                pText.innerText = `上傳中: ${i+1}/${total}`;
                 try {
                     const base64 = await toBase64(file);
                     const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
@@ -857,18 +841,24 @@
                 pCount.innerText = `${pct}%`;
             }
             
-            // Force 100% UI update
             pBar.style.width = "100%";
             pCount.innerText = "100%";
-            pText.innerText = "處理完成";
-            await new Promise(r => setTimeout(r, 500)); 
-
+            pText.innerText = "完成";
+            await new Promise(r => setTimeout(r, 500));
+            
+            bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
+            // Clear input
+            document.getElementById('hiddenUploadInput').value = "";
             alert(`上傳完成！成功 ${successCount} / ${total}`);
-            document.getElementById('uploadFiles').value = "";
-            document.getElementById('uploadStatus').classList.add('hidden');
-            doBtn.disabled = false;
-            bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
             fetchAlbums(true);
+        }
+        
+        function showProgressModal(title) {
+            document.getElementById('progressModalTitle').innerText = title;
+            document.getElementById('genericProgressBar').style.width = '0%';
+            document.getElementById('progressText').innerText = '準備中...';
+            document.getElementById('progressCount').innerText = '0%';
+            new bootstrap.Modal(document.getElementById('progressModal')).show();
         }
 
         // --- Standard Helpers ---
@@ -942,6 +932,12 @@
         }
 
         async function downloadAllCurrentPhotos() {
+            // Updated to support current Sortable order
+            // Sortable modifies the DOM, but currentAlbumPhotos array might not be synced if we don't handle onEnd.
+            // Actually, for download, we should probably stick to array. 
+            // If user sorted visually, we might want to respect that? 
+            // For now, let's just download the array as is. Visual sort is transient.
+            
             if(!confirm(`下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`)) return;
             const btn = document.getElementById('downloadAllBtn');
             const txt = btn.innerHTML;
