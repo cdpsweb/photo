@@ -465,7 +465,12 @@
                 <span id="navbarTitle">雲端相簿</span>
             </a>
             <div>
-                <!-- Settings Button (will be hidden in view mode) -->
+                <!-- Viewer Mode Label (Shown only via share link) -->
+                <span id="viewerModeLabel" class="d-none user-select-none" style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--border-subtle); padding: 6px 12px; border-radius: 20px; letter-spacing: 1px;">
+                    <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
+                </span>
+
+                <!-- Settings Button (Hidden in viewer mode) -->
                 <button class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openSettingsModal()" title="系統設定">
                     <i class="bi bi-sliders"></i>
                 </button>
@@ -536,7 +541,6 @@
                         <input type="url" class="form-control" id="settingGasUrl" placeholder="https://script.google.com/..." required>
                     </div>
                     <div class="mb-4">
-                        <!-- v6.5 Update: Simplified Label -->
                         <label class="form-label font-monospace">網頁標題</label>
                         <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
                     </div>
@@ -550,7 +554,6 @@
                             <input type="text" class="form-control text-center font-monospace" id="shareLinkInput" readonly style="font-size: 0.8rem;">
                             <button class="btn btn-outline-secondary" onclick="copyShareLink()"><i class="bi bi-clipboard"></i></button>
                         </div>
-                        <!-- v6.3 Update: Highlighting Text -->
                         <p class="mt-3 small font-monospace" style="color: var(--brand-accent); font-weight: bold;">
                             * 此連結已包含您的設定，掃描後可直接存取相簿。
                         </p>
@@ -590,7 +593,6 @@
                     <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-4 z-3" data-bs-dismiss="modal"></button>
                     
                     <!-- Download Btn (Top Left) -->
-                    <!-- v6.3 Update: Label change to "照片下載" -->
                     <a id="downloadLink" href="#" target="_blank" class="btn-oled position-absolute top-0 start-0 m-4 z-3">
                         <i class="bi bi-file-earmark-arrow-down me-2"></i> 照片下載
                     </a>
@@ -649,10 +651,13 @@
                 } catch(e) { console.error("Invalid Smart Link"); }
             }
 
-            // v6.5 Update: Hide Settings Button if in viewer mode
+            // v6.6 Update: Show Label & Hide Settings Button if in viewer mode
             if (sessionStorage.getItem(SESSION_KEY_VIEWER) === "true") {
                 const btnSettings = document.querySelector('.btn-settings');
-                if (btnSettings) btnSettings.classList.add('d-none'); // Hide it
+                const labelViewer = document.getElementById('viewerModeLabel');
+                
+                if (btnSettings) btnSettings.classList.add('d-none'); // Hide Settings
+                if (labelViewer) labelViewer.classList.remove('d-none'); // Show Label
             }
 
             loadSettings();
