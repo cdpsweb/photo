@@ -78,7 +78,7 @@
         }
         .album-card:hover { transform: translateY(-4px); border-color: var(--brand-primary); box-shadow: var(--glow-blue); }
         .album-cover { height: 240px; width: 100%; object-fit: cover; border-bottom: 1px solid var(--border-subtle); }
-        .album-info { padding: 1.5rem; flex-grow: 1; }
+        .album-info { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
         .album-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
         .album-meta { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); }
 
@@ -144,12 +144,12 @@
                 <span id="navbarTitle">雲端相簿</span>
             </a>
             <div>
-                <!-- Viewer Mode Label (Shown only via share link) -->
+                <!-- Viewer Mode Label -->
                 <span id="viewerModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
                 </span>
                 
-                <!-- Admin Login Button (Key Icon) -->
+                <!-- Admin Login Button -->
                 <button class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openLoginModal()" title="管理者登入">
                     <i class="bi bi-key-fill"></i>
                 </button>
@@ -160,7 +160,7 @@
     <!-- Main Content -->
     <div class="container-fluid px-lg-5 py-5">
         
-        <!-- Admin Dashboard (Hidden by default) -->
+        <!-- Admin Dashboard -->
         <div id="adminView" class="admin-panel hidden">
             <div class="admin-badge">ADMIN_CONSOLE</div>
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -172,11 +172,13 @@
                 <div class="col-md-4">
                     <label class="form-label">選擇或建立相簿</label>
                     <div class="input-group mb-2">
+                        <!-- v7.4 Fix: Improved Select UX -->
                         <select class="form-select" id="uploadAlbumSelect" onchange="handleAlbumSelect()">
                             <option value="new">+ 建立新相簿...</option>
-                            <!-- Existing albums populated via JS -->
+                            <!-- Albums Populated Here -->
                         </select>
                     </div>
+                    <!-- v7.4 Fix: Name input -->
                     <input type="text" class="form-control hidden" id="newAlbumName" placeholder="輸入新相簿名稱 (例如: 1130520 校慶)">
                 </div>
                 <div class="col-md-8">
@@ -246,7 +248,6 @@
             <div class="modal-content">
                 <div class="modal-header border-0"><h5 class="modal-title">管理者驗證</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <!-- Added autocomplete="off" to prevent retention -->
                     <input type="password" class="form-control text-center mb-3" id="adminPassword" placeholder="請輸入密碼" autocomplete="off">
                     <button class="btn-oled w-100" onclick="verifyAdmin()">登入</button>
                 </div>
@@ -254,14 +255,13 @@
         </div>
     </div>
 
-    <!-- Admin Dashboard Modal (Unified) -->
+    <!-- Admin Dashboard Modal -->
     <div class="modal fade" id="adminDashboardModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-shield-lock-fill me-2"></i>管理者後台</h5>
                     <div class="d-flex gap-2">
-                        <!-- Logout Button -->
                         <button type="button" class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()">
                             <i class="bi bi-box-arrow-right me-1"></i> 登出
                         </button>
@@ -420,7 +420,6 @@
                 }
             });
 
-            // If no URL, force Setup Mode (which opens Admin Panel Settings)
             if (!SCRIPT_URL) {
                 showSetupState();
             } else {
@@ -481,12 +480,22 @@
             allData.forEach(album => {
                 const col = document.createElement('div');
                 col.className = 'col-12 col-md-4 col-lg-3';
+                
+                // v7.4 Admin Controls
+                let adminControls = "";
+                if (adminToken) {
+                    adminControls = `<button class="btn-oled btn-sm btn-oled-accent w-100 mt-3" onclick="event.stopPropagation(); openAdminDashboard('upload', '${album.name}')"><i class="bi bi-cloud-upload me-1"></i> 上傳相片</button>`;
+                }
+
                 col.innerHTML = `
                     <div class="album-card" onclick="showPhotos('${album.id}')">
                         <img src="${album.cover}" class="album-cover" loading="lazy">
                         <div class="album-info">
-                            <h5 class="album-title">${album.name}</h5>
-                            <div class="album-meta"><i class="bi bi-images me-1"></i> ${album.photos.length} 項目</div>
+                            <div>
+                                <h5 class="album-title">${album.name}</h5>
+                                <div class="album-meta"><i class="bi bi-images me-1"></i> ${album.photos.length} 項目</div>
+                            </div>
+                            ${adminControls}
                         </div>
                     </div>`;
                 view.appendChild(col);
@@ -522,11 +531,8 @@
         // --- Admin Functions ---
 
         function openLoginModal() {
-            // Ensure input is empty before showing
             document.getElementById('adminPassword').value = "";
-            // Check if initial setup
             if(!SCRIPT_URL) {
-                // If no URL, skip login and go straight to settings (initial setup)
                 openAdminDashboard('settings');
                 return;
             }
@@ -545,12 +551,12 @@
                 
                 if(json.status === "success") {
                     adminToken = pwd;
-                    // Clear password after success
                     document.getElementById('adminPassword').value = "";
-                    
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
                     openAdminDashboard();
                     alert("登入成功！");
+                    // Refresh List to show Admin Controls
+                    showAlbumList();
                 } else {
                     alert("密碼錯誤");
                 }
@@ -561,15 +567,23 @@
             }
         }
 
-        function openAdminDashboard(activeTabId = 'upload') {
-            const modal = new bootstrap.Modal(document.getElementById('adminDashboardModal'));
+        function openAdminDashboard(activeTabId = 'upload', preselectAlbumName = null) {
+            const modalEl = document.getElementById('adminDashboardModal');
+            const modal = new bootstrap.Modal(modalEl);
             modal.show();
             
             // Populate settings fields
             document.getElementById('settingGasUrl').value = SCRIPT_URL;
             document.getElementById('settingPageTitle').value = PAGE_TITLE;
-            initShareUi(); // update QR in modal
+            initShareUi(); 
             populateAdminAlbumSelect();
+
+            // v7.4 Preselect logic
+            if(preselectAlbumName) {
+                const select = document.getElementById('uploadAlbumSelect');
+                select.value = preselectAlbumName;
+                handleAlbumSelect(); // Ensure input state is correct
+            }
 
             // Switch Tab
             const triggerEl = document.querySelector(`#adminTabs button[id="tab-${activeTabId}"]`);
@@ -578,15 +592,20 @@
 
         function logoutAdmin() {
             adminToken = "";
-            // Clear password field to prevent retention
             document.getElementById('adminPassword').value = "";
             const modal = bootstrap.Modal.getInstance(document.getElementById('adminDashboardModal'));
             if(modal) modal.hide();
+            
+            // Refresh to remove admin controls
+            showAlbumList();
             alert("已登出"); 
         }
 
         function populateAdminAlbumSelect() {
             const select = document.getElementById('uploadAlbumSelect');
+            // Store current value to restore after repopulating if possible
+            const currentVal = select.value;
+            
             select.innerHTML = '<option value="new">+ 建立新相簿...</option>';
             if(allData) {
                 allData.forEach(album => {
@@ -596,6 +615,11 @@
                     select.appendChild(opt);
                 });
             }
+            
+            // Try restore
+            if(currentVal && currentVal !== 'new') {
+                select.value = currentVal;
+            }
         }
 
         function handleAlbumSelect() {
@@ -603,6 +627,7 @@
             const input = document.getElementById('newAlbumName');
             if(val === 'new') {
                 input.classList.remove('hidden');
+                setTimeout(() => input.focus(), 100); // Focus for better UX
             } else {
                 input.classList.add('hidden');
             }
@@ -613,6 +638,7 @@
             
             const selectVal = document.getElementById('uploadAlbumSelect').value;
             let albumName = selectVal;
+            
             if(selectVal === 'new') {
                 albumName = document.getElementById('newAlbumName').value.trim();
                 if(!albumName) return alert("請輸入新相簿名稱");
