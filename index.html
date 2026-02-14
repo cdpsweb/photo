@@ -642,6 +642,10 @@
                 
                 if (json.status === "success") {
                     allData = json.data;
+                    
+                    // Sort data by name descending (Date desc)
+                    allData.sort((a, b) => b.name.localeCompare(a.name, 'zh-TW'));
+
                     showAlbumList();
                 } else { throw new Error(json.message); }
             } catch (error) {
