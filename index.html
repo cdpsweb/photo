@@ -17,8 +17,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         /* --- S92 OLED Style Tokens --- */
@@ -71,8 +69,10 @@
             font-family: var(--font-mono); font-size: 0.85rem; border-radius: var(--radius-md);
             padding: 0.5rem 1rem; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
         }
+        /* Base Blue Button Hover */
         .btn-oled:hover { border-color: var(--brand-primary); color: var(--text-primary); box-shadow: var(--glow-blue); background: rgba(41, 121, 255, 0.05); text-decoration: none; }
         
+        /* Accent (Pink) Button Styles */
         .btn-oled-accent { border-color: rgba(255, 64, 129, 0.3); color: var(--brand-accent); }
         .btn-oled-accent:hover { 
             border-color: var(--brand-accent); background: rgba(255, 64, 129, 0.05); 
@@ -169,53 +169,6 @@
         .thumbnail-strip-container { position: absolute; bottom: 0; width: 100%; height: 100px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 20px; overflow-x: auto; }
         .thumb-item { width: 60px; height: 60px; margin-right: 10px; opacity: 0.5; cursor: pointer; flex-shrink: 0; }
         .thumb-item.active { opacity: 1; border: 2px solid var(--brand-primary); }
-
-        /* --- SweetAlert2 OLED Theme Overrides --- */
-        div:where(.swal2-container) div:where(.swal2-popup) {
-            background: rgba(10, 10, 15, 0.95) !important;
-            border: 1px solid var(--border-subtle);
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            border-radius: var(--radius-md);
-            backdrop-filter: blur(10px);
-        }
-        div:where(.swal2-container) h2:where(.swal2-title) {
-            color: var(--text-primary) !important;
-            font-family: var(--font-sans);
-        }
-        div:where(.swal2-container) div:where(.swal2-html-container) {
-            color: var(--text-secondary) !important;
-            font-family: var(--font-mono);
-        }
-        /* Buttons */
-        div:where(.swal2-container) button.swal2-confirm {
-            background-color: transparent !important;
-            border: 1px solid var(--brand-primary) !important;
-            color: var(--brand-primary) !important;
-            border-radius: var(--radius-md) !important;
-            padding: 0.6rem 1.5rem !important;
-            font-family: var(--font-mono) !important;
-            box-shadow: none !important;
-            transition: all 0.3s !important;
-        }
-        div:where(.swal2-container) button.swal2-confirm:hover {
-            background-color: rgba(41, 121, 255, 0.1) !important;
-            box-shadow: var(--glow-blue) !important;
-            color: #fff !important;
-        }
-        div:where(.swal2-container) button.swal2-cancel {
-            background-color: transparent !important;
-            border: 1px solid var(--brand-danger) !important;
-            color: var(--brand-danger) !important;
-            border-radius: var(--radius-md) !important;
-            padding: 0.6rem 1.5rem !important;
-            font-family: var(--font-mono) !important;
-            transition: all 0.3s !important;
-        }
-        div:where(.swal2-container) button.swal2-cancel:hover {
-            background-color: rgba(255, 23, 68, 0.1) !important;
-            box-shadow: 0 0 15px rgba(255, 23, 68, 0.3) !important;
-            color: #fff !important;
-        }
     </style>
 </head>
 <body>
@@ -280,6 +233,7 @@
                 <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
                     <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
                 </button>
+                <!-- Uniform Button Style applied to Download/Upload -->
                 <button id="downloadAllBtn" class="btn-oled hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
                 <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
                     <i class="bi bi-cloud-upload me-2"></i> 上傳相片
@@ -503,17 +457,6 @@
         const SESSION_KEY_ADMIN = "gas_album_admin_token";
         const SESSION_KEY_CURRENT_ALBUM = "gas_album_active_id";
         
-        // SweetAlert2 Mixins
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            background: '#111111',
-            color: '#ffffff',
-        });
-
         // Fast UI Toggle
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -622,18 +565,9 @@
                 } else { throw new Error(json.message); }
             } catch (err) {
                 console.error(err);
-                if(err.message.includes("權限錯誤")) Swal.fire("錯誤", err.message, "error");
+                if(err.message.includes("權限錯誤")) alert(err.message);
                 showLoading(false);
             } finally { showLoading(false); }
-        }
-
-        // Toggle Mobile Menu Items
-        function toggleMobileMenuItem(id, show) {
-            const el = document.getElementById(id);
-            if(el) {
-                if(show) el.classList.remove('hidden');
-                else el.classList.add('hidden');
-            }
         }
 
         function showAlbumList() {
@@ -643,20 +577,10 @@
             document.getElementById('photoView').classList.add('hidden');
             document.getElementById('separator').classList.add('hidden');
             document.getElementById('currentAlbumName').classList.add('hidden');
-            
-            // Hide Desktop Buttons
             document.getElementById('downloadAllBtn').classList.add('hidden');
             document.getElementById('uploadToAlbumBtn').classList.add('hidden');
             document.getElementById('batchDeleteBtn').classList.add('hidden');
-            
-            // Show Directory
             document.getElementById('directoryBtn').classList.remove('hidden');
-            
-            // Hide Mobile Menu Items
-            toggleMobileMenuItem('liDownload', false);
-            toggleMobileMenuItem('liUpload', false);
-            toggleMobileMenuItem('liBatchDelete', false);
-            
             document.getElementById('setupState').classList.add('hidden');
             
             const view = document.getElementById('albumView');
@@ -707,10 +631,9 @@
             const album = allData.find(a => a.id === albumId);
             if (!album) return;
             
-            // Sort Logic: Check LocalStorage for custom order
             const storedOrder = localStorage.getItem('album_sort_' + albumId);
             if (storedOrder) {
-                const sortOrder = JSON.parse(storedOrder); // Array of IDs
+                const sortOrder = JSON.parse(storedOrder); 
                 album.photos.sort((a, b) => {
                     const idxA = sortOrder.indexOf(a.id);
                     const idxB = sortOrder.indexOf(b.id);
@@ -732,7 +655,6 @@
             document.getElementById('photoView').classList.remove('hidden');
             
             document.getElementById('downloadAllBtn').classList.remove('hidden');
-            toggleMobileMenuItem('liDownload', true);
             
             document.getElementById('separator').classList.remove('hidden');
             document.getElementById('currentAlbumName').innerText = album.name;
@@ -740,13 +662,8 @@
             
             if(adminToken) {
                 document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
-                toggleMobileMenuItem('liUpload', true);
-                
                 document.getElementById('uploadToAlbumBtn').onclick = () => openUploadModal(album.name);
-                
                 document.getElementById('batchDeleteBtn').classList.add('hidden');
-                toggleMobileMenuItem('liBatchDelete', false);
-                
                 document.getElementById('deleteCount').innerText = '0';
             }
             
@@ -757,7 +674,7 @@
                 photoGrid._sortable = new Sortable(photoGrid, {
                     animation: 150,
                     ghostClass: 'sortable-ghost',
-                    draggable: ".draggable", // Only items with draggable class
+                    draggable: ".draggable",
                     onEnd: function (evt) {
                         const newOrderIds = [];
                         const itemEls = photoGrid.querySelectorAll('.photo-item');
@@ -813,7 +730,11 @@
         
         function setAlbumCover(albumId, url) {
             localStorage.setItem('album_cover_' + albumId, url);
-            Toast.fire({ icon: 'success', title: '已設為封面' });
+            // SweetAlert2 Toast
+            Swal.mixin({
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 2000,
+                background: '#111', color: '#fff'
+            }).fire({ icon: 'success', title: '已設為封面' });
         }
 
         function handlePhotoSelect(event, id, index) {
@@ -833,19 +754,11 @@
             
             if (count > 0) {
                 delBtn.classList.remove('hidden');
-                toggleMobileMenuItem('liBatchDelete', true);
-                
                 document.getElementById('deleteCount').innerText = count;
-                document.getElementById('deleteCountMobile').innerText = count;
-                
                 dlBtn.classList.add('hidden'); 
-                toggleMobileMenuItem('liDownload', false);
             } else {
                 delBtn.classList.add('hidden');
-                toggleMobileMenuItem('liBatchDelete', false);
-                
                 dlBtn.classList.remove('hidden');
-                toggleMobileMenuItem('liDownload', true);
             }
         }
 
@@ -853,17 +766,8 @@
             const count = selectedPhotoIds.size;
             if (count === 0) return;
             
-            const confirmResult = await Swal.fire({
-                title: `確定要刪除選取的 ${count} 張照片嗎？`,
-                text: "此動作無法復原",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '確定刪除',
-                cancelButtonText: '取消',
-                reverseButtons: true
-            });
-
-            if (!confirmResult.isConfirmed) return;
+            // Standard confirm
+            if (!confirm(`確定要刪除選取的 ${count} 張照片嗎？\n(此動作無法復原)`)) return;
             
             const ids = Array.from(selectedPhotoIds);
             showProgressModal("刪除進度");
@@ -895,7 +799,7 @@
             await new Promise(r => setTimeout(r, 500));
             
             bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
-            Swal.fire('刪除完成', `成功 ${success} / ${count}`, 'success');
+            alert(`刪除完成！成功 ${success} / ${count}`);
             selectedPhotoIds.clear();
             fetchAlbums(true); 
         }
@@ -927,8 +831,7 @@
 
         async function verifyAdmin() {
             const pwd = document.getElementById('adminPassword').value;
-            if(!pwd) return Toast.fire({ icon: 'warning', title: '請輸入密碼' });
-            
+            if(!pwd) return alert("請輸入密碼");
             showLoading(true);
             try {
                 const url = `${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`;
@@ -942,10 +845,10 @@
                     toggleAdminUI(true);
                     openAdminModal(); 
                     
-                    Toast.fire({ icon: 'success', title: '登入成功' });
+                    alert("登入成功！");
                     fetchAlbums(true); 
-                } else { Swal.fire('登入失敗', '密碼錯誤', 'error'); }
-            } catch(e) { Swal.fire('錯誤', e.message, 'error'); }
+                } else { alert("密碼錯誤"); }
+            } catch(e) { alert("驗證失敗: " + e.message); }
             finally { showLoading(false); }
         }
 
@@ -958,12 +861,12 @@
             
             toggleAdminUI(false);
             showAlbumList();
-            Toast.fire({ icon: 'success', title: '已登出' });
+            alert("已登出");
         }
 
         async function createAlbum() {
             const name = document.getElementById('createAlbumName').value.trim();
-            if(!name) return Toast.fire({ icon: 'warning', title: '請輸入相簿名稱' });
+            if(!name) return alert("請輸入相簿名稱");
             
             bootstrap.Modal.getInstance(document.getElementById('createAlbumModal')).hide();
             
@@ -971,17 +874,7 @@
         }
 
         async function deleteAlbum(id, name) {
-            const result = await Swal.fire({
-                title: `確定要刪除相簿「${name}」？`,
-                text: "此動作無法復原，所有照片將一併刪除。",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '確定刪除',
-                cancelButtonText: '取消',
-                reverseButtons: true
-            });
-            if(!result.isConfirmed) return;
-            
+            if(!confirm(`確定要刪除相簿「${name}」及其所有照片嗎？\n(此動作無法復原)`)) return;
             callApi({ action: 'deleteAlbum', id: id, password: adminToken });
         }
 
@@ -994,7 +887,7 @@
         async function confirmRename() {
             const id = document.getElementById('renameTargetId').value;
             const newName = document.getElementById('renameInput').value.trim();
-            if(!newName) return Toast.fire({ icon: 'warning', title: '名稱不能為空' });
+            if(!newName) return alert("名稱不能為空");
             bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide();
             callApi({ action: 'renameAlbum', id: id, newName: newName, password: adminToken });
         }
@@ -1005,12 +898,12 @@
                 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const json = await res.json();
                 if(json.status === "success") {
-                    if(successMsg) Swal.fire('成功', successMsg, 'success');
+                    if(successMsg) alert(successMsg);
                     fetchAlbums(true);
                 } else {
-                    Swal.fire('操作失敗', json.message, 'error');
+                    alert("操作失敗: " + json.message);
                 }
-            } catch(e) { console.error(e); Swal.fire('錯誤', '連線錯誤', 'error'); }
+            } catch(e) { console.error(e); alert("連線錯誤"); }
             finally { showLoading(false); }
         }
 
@@ -1025,9 +918,9 @@
 
         async function startBatchUpload() {
             const albumName = document.getElementById('uploadModal').dataset.targetAlbum;
-            if(!albumName) return Toast.fire({ icon: 'warning', title: '無法確認目標相簿' });
+            if(!albumName) return alert("無法確認目標相簿");
             const files = document.getElementById('uploadFiles').files;
-            if(files.length === 0) return Toast.fire({ icon: 'warning', title: '請選擇檔案' });
+            if(files.length === 0) return alert("請選擇檔案");
 
             document.getElementById('uploadStatus').classList.remove('hidden');
             const pBar = document.getElementById('uploadProgressBar');
@@ -1068,12 +961,12 @@
             doBtn.disabled = false;
             bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
             
-            Swal.fire('上傳完成', `成功 ${successCount} / ${total}`, 'success');
+            alert(`上傳完成！成功 ${successCount} / ${total}`);
             fetchAlbums(true);
         }
 
         function performBatchUpload(files, albumName) {
-            if(!adminToken) return Toast.fire({ icon: 'warning', title: '請先登入' });
+            if(!adminToken) return alert("請先登入");
             
             showProgressModal("上傳進度");
             const pBar = document.getElementById('genericProgressBar');
@@ -1108,7 +1001,7 @@
                 
                 bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
                 document.getElementById('hiddenUploadInput').value = "";
-                Swal.fire('上傳完成', `成功 ${successCount} / ${total}`, 'success');
+                alert(`上傳完成！成功 ${successCount} / ${total}`);
                 fetchAlbums(true);
             })();
         }
@@ -1191,16 +1084,7 @@
         }
 
         async function downloadAllCurrentPhotos() {
-            const result = await Swal.fire({
-                title: `下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`,
-                text: "這可能需要一點時間",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: '下載',
-                cancelButtonText: '取消'
-            });
-
-            if(!result.isConfirmed) return;
+            if(!confirm(`下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`)) return;
             const btn = document.getElementById('downloadAllBtn');
             const txt = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<div class="spinner-border spinner-border-sm"></div> 打包中...`;
@@ -1224,7 +1108,7 @@
                 if(count===0) throw new Error("No images loaded");
                 const content = await zip.generateAsync({type:"blob"});
                 saveAs(content, `${currentAlbumNameStr}.zip`);
-            } catch(e) { Swal.fire('錯誤', '下載失敗', 'error'); } 
+            } catch(e) { alert("下載失敗"); } 
             finally { btn.disabled = false; btn.innerHTML = txt; }
         }
 
@@ -1240,7 +1124,7 @@
         function saveSettings() {
             const url = document.getElementById('settingGasUrl').value.trim();
             const title = document.getElementById('settingPageTitle').value.trim();
-            if(!url) return Toast.fire({ icon: 'warning', title: '請輸入 URL' });
+            if(!url) return alert("請輸入 URL");
             localStorage.setItem(STORAGE_KEY_URL, url);
             localStorage.setItem(STORAGE_KEY_TITLE, title);
             SCRIPT_URL = url; initShareUi();
@@ -1248,23 +1132,13 @@
         }
 
         function clearSettings() {
-            Swal.fire({
-                title: '確定清除設定？',
-                text: "這將移除所有本地儲存的設定。",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '清除',
-                cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    localStorage.removeItem(STORAGE_KEY_URL);
-                    localStorage.removeItem(STORAGE_KEY_TITLE);
-                    sessionStorage.removeItem(SESSION_KEY_VIEWER);
-                    localStorage.clear(); 
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    location.reload();
-                }
-            });
+            if(confirm("確定清除設定？")) {
+                localStorage.removeItem(STORAGE_KEY_URL);
+                localStorage.removeItem(STORAGE_KEY_TITLE);
+                sessionStorage.removeItem(SESSION_KEY_VIEWER);
+                window.history.replaceState({}, document.title, window.location.pathname);
+                location.reload();
+            }
         }
 
         function initShareUi() {
@@ -1277,7 +1151,7 @@
         }
 
         function copyShareLink() {
-            navigator.clipboard.writeText(document.getElementById('shareLinkInput').value).then(()=>Toast.fire({ icon: 'success', title: '已複製連結' }));
+            navigator.clipboard.writeText(document.getElementById('shareLinkInput').value).then(()=>alert("已複製連結"));
         }
 
         function showSetupState() {
