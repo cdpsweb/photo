@@ -33,6 +33,7 @@
             --brand-accent: #FF4081;
             --brand-success: #00E676;
             --brand-danger: #FF1744;
+            --brand-warning: #FFAB00;
             --border-subtle: rgba(41, 121, 255, 0.2);
             --glow-blue: 0 0 30px rgba(41, 121, 255, 0.3);
             --glow-pink: 0 0 30px rgba(255, 64, 129, 0.3);
@@ -94,11 +95,7 @@
         .album-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.4; }
         .album-meta { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); }
         
-        /* Admin Controls on Album Card */
-        .admin-album-controls {
-            padding: 10px; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2);
-            display: flex; gap: 5px; justify-content: space-between;
-        }
+        .admin-album-controls { padding: 10px; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2); display: flex; gap: 5px; justify-content: space-between; }
         .btn-card-action { flex: 1; font-size: 0.8rem; padding: 4px; }
 
         /* Photo Grid */
@@ -110,12 +107,23 @@
         .photo-item:hover img { transform: scale(1.05); }
         .sortable-ghost { opacity: 0.4; background-color: var(--brand-primary); border: 2px dashed var(--brand-primary); }
 
-        /* Multi-select Styles */
+        /* Multi-select & Cover Actions */
         .photo-item.selected { border: 2px solid var(--brand-danger); box-shadow: 0 0 15px rgba(255, 23, 68, 0.4); }
         .photo-item.selected img { opacity: 0.6; }
-        .photo-checkbox { position: absolute; top: 10px; left: 10px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: 0.2s; }
+        .photo-checkbox { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: 0.2s; }
         .photo-item.selected .photo-checkbox { background: var(--brand-danger); border-color: var(--brand-danger); }
         .photo-item.selected .photo-checkbox::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
+        
+        /* Set Cover Button (Top Right Star) */
+        .btn-set-cover {
+            position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
+            background: rgba(0,0,0,0.6); border: 1px solid var(--brand-warning); color: var(--brand-warning);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            z-index: 20; cursor: pointer; transition: 0.2s; opacity: 0; font-size: 14px;
+        }
+        .photo-item:hover .btn-set-cover { opacity: 1; }
+        .btn-set-cover:hover { background: var(--brand-warning); color: black; box-shadow: 0 0 10px var(--brand-warning); }
+        .btn-set-cover i { pointer-events: none; }
 
         /* Header Breadcrumb */
         #navHeader { border-bottom: 1px solid var(--border-subtle); padding-bottom: 2rem; margin-bottom: 2rem; background: radial-gradient(circle at top right, rgba(41, 121, 255, 0.1), transparent 40%); }
@@ -482,6 +490,8 @@
         <button class="btn-oled btn-oled-danger btn-sm mt-3" onclick="forceStopLoading()">終止程序</button>
     </div>
 
+    <input type="file" id="hiddenUploadInput" multiple accept="image/*" class="d-none">
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
@@ -551,6 +561,10 @@
             } else {
                 fetchAlbums();
             }
+
+            document.getElementById('hiddenUploadInput').addEventListener('change', function() {
+                if(this.files.length > 0) performBatchUpload(this.files, uploadTargetAlbumName);
+            });
         });
 
         function toggleAdminUI(isAdmin) {
@@ -772,6 +786,7 @@
                 
                 if(adminToken) {
                     selectionHtml = `<div class="photo-checkbox"></div>`;
+                    // Set Cover Button
                     setCoverBtn = `<div class="btn-set-cover" onclick="event.stopPropagation(); setAlbumCover('${album.id}', '${photo.url}')" title="設為封面"><i class="bi bi-star-fill"></i></div>`;
                     
                     clickAction = `handlePhotoSelect(event, '${photo.id}', ${index})`;
@@ -1042,6 +1057,47 @@
             fetchAlbums(true);
         }
 
+        function performBatchUpload(files, albumName) {
+            if(!adminToken) return Toast.fire({ icon: 'warning', title: '請先登入' });
+            
+            showProgressModal("上傳進度");
+            const pBar = document.getElementById('genericProgressBar');
+            const pText = document.getElementById('progressText');
+            const pCount = document.getElementById('progressCount');
+            
+            pBar.style.width = "0%";
+            pCount.innerText = "0%";
+            
+            (async () => {
+                let successCount = 0;
+                const total = files.length;
+                for(let i=0; i<total; i++) {
+                    const file = files[i];
+                    pText.innerText = `上傳中: ${i+1}/${total}`;
+                    try {
+                        const base64 = await toBase64(file);
+                        const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
+                        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                        const json = await res.json();
+                        if(json.status === "success") successCount++;
+                    } catch(e) {}
+                    const pct = Math.round(((i+1)/total)*100);
+                    pBar.style.width = `${pct}%`;
+                    pCount.innerText = `${pct}%`;
+                }
+                
+                pBar.style.width = "100%";
+                pCount.innerText = "100%";
+                pText.innerText = "完成";
+                await new Promise(r => setTimeout(r, 500));
+                
+                bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
+                document.getElementById('hiddenUploadInput').value = "";
+                Swal.fire('上傳完成', `成功 ${successCount} / ${total}`, 'success');
+                fetchAlbums(true);
+            })();
+        }
+        
         function showProgressModal(title) {
             document.getElementById('progressModalTitle').innerText = title;
             document.getElementById('genericProgressBar').style.width = '0%';
