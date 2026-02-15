@@ -52,6 +52,9 @@
             background-size: 40px 40px;
         }
 
+        /* Utility Class for Auth Visibility */
+        .auth-hidden { display: none !important; }
+
         /* Navbar */
         .navbar-custom {
             background: rgba(0, 0, 0, 0.8);
@@ -71,15 +74,18 @@
         }
         .btn-oled:hover { border-color: var(--brand-primary); color: var(--text-primary); box-shadow: var(--glow-blue); background: rgba(41, 121, 255, 0.05); text-decoration: none; }
         
-        .btn-oled-accent { border-color: rgba(255, 64, 129, 0.3); color: var(--brand-accent); }
-        .btn-oled-accent:hover { border-color: var(--brand-accent); background: rgba(255, 64, 129, 0.05); color: #fff; box-shadow: var(--glow-pink); text-decoration: none; }
+        .btn-oled-accent { border-color: rgba(41, 121, 255, 0.2); color: var(--text-secondary); }
+        .btn-oled-accent:hover { 
+            border-color: var(--brand-primary); background: rgba(41, 121, 255, 0.05); 
+            color: #fff; box-shadow: var(--glow-blue); text-decoration: none;
+        }
         
         .btn-oled-danger { border-color: var(--brand-danger); color: var(--brand-danger); }
         .btn-oled-danger:hover { background: rgba(255, 23, 68, 0.1); box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); text-decoration: none; color: #fff; }
         
         .btn-icon { width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; }
 
-        /* Dropdown Menu (OLED Style) */
+        /* Dropdown Menu */
         .dropdown-menu-oled {
             background-color: rgba(15, 15, 20, 0.95);
             border: 1px solid var(--border-subtle);
@@ -119,8 +125,9 @@
         .admin-album-controls { padding: 10px; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2); display: flex; gap: 5px; justify-content: space-between; }
         .btn-card-action { flex: 1; font-size: 0.8rem; padding: 4px; }
 
-        /* Photo Grid */
+        /* Photo Grid & Drag */
         .photo-item { position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1/1; border: 1px solid transparent; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        /* Only draggable items get the grab cursor */
         .photo-item.draggable { cursor: grab; }
         .photo-item.draggable:active { cursor: grabbing; }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; pointer-events: none; }
@@ -135,7 +142,6 @@
         .photo-item.selected .photo-checkbox { background: var(--brand-danger); border-color: var(--brand-danger); }
         .photo-item.selected .photo-checkbox::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
         
-        /* Set Cover Button (Top Right) */
         .btn-set-cover {
             position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
             background: rgba(0,0,0,0.6); border: 1px solid var(--brand-warning); color: var(--brand-warning);
@@ -170,7 +176,7 @@
         .admin-section-title { font-family: var(--font-mono); font-size: 0.8rem; color: var(--brand-accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; }
         .admin-section-title::after { content: ''; flex-grow: 1; height: 1px; background: rgba(255,64,129,0.2); margin-left: 10px; }
 
-        /* Progress Styles */
+        /* Progress Modal Styles */
         .progress-container { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin-top: 1rem; }
         .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
         .progress-text { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; font-family: var(--font-mono); font-size: 0.9rem; }
@@ -201,9 +207,9 @@
         div:where(.swal2-container) div:where(.swal2-popup) { background: rgba(10, 10, 15, 0.95) !important; border: 1px solid var(--border-subtle); backdrop-filter: blur(10px); }
         div:where(.swal2-container) h2:where(.swal2-title) { color: var(--text-primary) !important; font-family: var(--font-sans); }
         div:where(.swal2-container) div:where(.swal2-html-container) { color: var(--text-secondary) !important; font-family: var(--font-mono); }
-        div:where(.swal2-container) button.swal2-confirm { background-color: transparent !important; border: 1px solid var(--brand-primary) !important; color: var(--brand-primary) !important; border-radius: var(--radius-md) !important; box-shadow: none !important; }
+        div:where(.swal2-container) button.swal2-confirm { background-color: transparent !important; border: 1px solid var(--brand-primary) !important; color: var(--brand-primary) !important; border-radius: var(--radius-md) !important; box-shadow: none !important; transition: all 0.3s !important; }
         div:where(.swal2-container) button.swal2-confirm:hover { background-color: rgba(41, 121, 255, 0.1) !important; box-shadow: var(--glow-blue) !important; color: #fff !important; }
-        div:where(.swal2-container) button.swal2-cancel { background-color: transparent !important; border: 1px solid var(--brand-danger) !important; color: var(--brand-danger) !important; border-radius: var(--radius-md) !important; }
+        div:where(.swal2-container) button.swal2-cancel { background-color: transparent !important; border: 1px solid var(--brand-danger) !important; color: var(--brand-danger) !important; border-radius: var(--radius-md) !important; transition: all 0.3s !important; }
         div:where(.swal2-container) button.swal2-cancel:hover { background-color: rgba(255, 23, 68, 0.1) !important; box-shadow: 0 0 15px rgba(255, 23, 68, 0.3) !important; color: #fff !important; }
     </style>
 </head>
@@ -234,8 +240,8 @@
                         <i class="bi bi-key-fill"></i>
                     </button>
 
-                    <!-- Admin Controls (Desktop) -->
-                    <div id="adminControlsDesktop" class="d-none d-md-flex align-items-center gap-2">
+                    <!-- Admin Controls (Desktop) - auth-hidden controls visibility via JS -->
+                    <div id="adminControlsDesktop" class="d-none d-md-flex align-items-center gap-2 auth-hidden">
                         <button class="btn-oled" onclick="openCreateAlbumModal()">
                             <i class="bi bi-folder-plus me-1"></i> 建立相簿
                         </button>
@@ -248,7 +254,7 @@
                     </div>
 
                     <!-- Admin Controls (Mobile Menu) -->
-                    <div id="adminControlsMobile" class="d-none dropdown ms-2 d-md-none">
+                    <div id="adminControlsMobile" class="dropdown ms-2 d-md-none auth-hidden">
                         <button class="btn-oled btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-list"></i>
                         </button>
@@ -334,7 +340,6 @@
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
                 <div class="modal-header border-0 d-flex justify-content-center position-relative">
-                    <!-- Updated Title -->
                     <h5 class="modal-title w-100 text-center">相簿管理系統</h5>
                     <button class="btn-close position-absolute end-0 me-3" data-bs-dismiss="modal"></button>
                 </div>
@@ -587,12 +592,14 @@
             
             if(isAdmin) {
                 loginBtn.classList.add('d-none');
-                adminControlsDesktop.classList.remove('d-none');
-                adminControlsMobile.classList.remove('d-none');
+                // Remove auth-hidden class to show controls
+                adminControlsDesktop.classList.remove('auth-hidden');
+                adminControlsMobile.classList.remove('auth-hidden');
             } else {
                 loginBtn.classList.remove('d-none');
-                adminControlsDesktop.classList.add('d-none');
-                adminControlsMobile.classList.add('d-none');
+                // Add auth-hidden class to hide controls
+                adminControlsDesktop.classList.add('auth-hidden');
+                adminControlsMobile.classList.add('auth-hidden');
             }
         }
 
@@ -734,17 +741,13 @@
             const storedOrder = localStorage.getItem('album_sort_' + albumId);
             if (storedOrder) {
                 const sortOrder = JSON.parse(storedOrder); // Array of IDs
-                // Sort currentAlbumPhotos based on sortOrder index
                 album.photos.sort((a, b) => {
                     const idxA = sortOrder.indexOf(a.id);
                     const idxB = sortOrder.indexOf(b.id);
-                    // If both exist in sort order, compare indices
                     if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                    // If only one exists, put it first? Or put unsorted at the end. 
-                    // Let's put unsorted at the end (idx -1 becomes infinity effectively)
                     if (idxA !== -1) return -1;
                     if (idxB !== -1) return 1;
-                    return 0; // Keep original relative order if both unsorted
+                    return 0; 
                 });
             }
 
@@ -778,7 +781,6 @@
             }
             
             const photoGrid = document.getElementById('photoView');
-            // Destroy old instance if any
             if(photoGrid._sortable) photoGrid._sortable.destroy();
             
             if(adminToken) {
@@ -787,7 +789,6 @@
                     ghostClass: 'sortable-ghost',
                     draggable: ".draggable", // Only items with draggable class
                     onEnd: function (evt) {
-                        // Reorder currentAlbumPhotos array based on DOM
                         const newOrderIds = [];
                         const itemEls = photoGrid.querySelectorAll('.photo-item');
                         const newPhotosArr = [];
@@ -799,8 +800,7 @@
                              if(photoObj) newPhotosArr.push(photoObj);
                         });
                         
-                        currentAlbumPhotos = newPhotosArr; // Update runtime array
-                        // Save to LocalStorage
+                        currentAlbumPhotos = newPhotosArr; 
                         localStorage.setItem('album_sort_' + currentAlbumIdStr, JSON.stringify(newOrderIds));
                     }
                 });
@@ -825,7 +825,6 @@
                 
                 if(adminToken) {
                     selectionHtml = `<div class="photo-checkbox"></div>`;
-                    // v9.0 Add Set Cover Button
                     setCoverBtn = `<div class="btn-set-cover" onclick="event.stopPropagation(); setAlbumCover('${album.id}', '${photo.url}')" title="設為封面"><i class="bi bi-star-fill"></i></div>`;
                     
                     clickAction = `handlePhotoSelect(event, '${photo.id}', ${index})`;
@@ -842,7 +841,6 @@
             });
         }
         
-        // v9.0 Set Album Cover
         function setAlbumCover(albumId, url) {
             localStorage.setItem('album_cover_' + albumId, url);
             Toast.fire({ icon: 'success', title: '已設為封面' });
@@ -860,23 +858,16 @@
             }
             const count = selectedPhotoIds.size;
             
-            // Desktop Button
             const delBtn = document.getElementById('batchDeleteBtn');
-            // Mobile Item
-            const delMobile = document.getElementById('liBatchDelete');
-            
             const dlBtn = document.getElementById('downloadAllBtn');
-            const dlMobile = document.getElementById('liDownload');
             
             if (count > 0) {
-                // Show delete
                 delBtn.classList.remove('hidden');
                 toggleMobileMenuItem('liBatchDelete', true);
                 
                 document.getElementById('deleteCount').innerText = count;
                 document.getElementById('deleteCountMobile').innerText = count;
                 
-                // Hide download to declutter
                 dlBtn.classList.add('hidden'); 
                 toggleMobileMenuItem('liDownload', false);
             } else {
@@ -1230,7 +1221,6 @@
         }
 
         async function downloadAllCurrentPhotos() {
-            // Sortable modifies currentAlbumPhotos order via onEnd
             const result = await Swal.fire({
                 title: `下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`,
                 text: "這可能需要一點時間",
@@ -1256,7 +1246,6 @@
                         const blob = await res.blob();
                         let ext = 'jpg';
                         if(blob.type.includes('png')) ext='png';
-                        // Add index to filename to respect sort order
                         folder.file(`${currentAlbumNameStr}_${(i+1).toString().padStart(3,'0')}.${ext}`, blob);
                         count++;
                     } catch(e) { }
@@ -1301,8 +1290,6 @@
                     localStorage.removeItem(STORAGE_KEY_URL);
                     localStorage.removeItem(STORAGE_KEY_TITLE);
                     sessionStorage.removeItem(SESSION_KEY_VIEWER);
-                    // Also clear sort/cover preferences if desired, or keep them? 
-                    // Let's clear everything for a fresh start.
                     localStorage.clear(); 
                     window.history.replaceState({}, document.title, window.location.pathname);
                     location.reload();
