@@ -17,6 +17,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         /* --- S92 OLED Style Tokens --- */
@@ -31,6 +33,7 @@
             --brand-accent: #FF4081;
             --brand-success: #00E676;
             --brand-danger: #FF1744;
+            --brand-warning: #FFAB00;
             --border-subtle: rgba(41, 121, 255, 0.2);
             --glow-blue: 0 0 30px rgba(41, 121, 255, 0.3);
             --glow-pink: 0 0 30px rgba(255, 64, 129, 0.3);
@@ -108,14 +111,20 @@
         .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; pointer-events: none; }
         .photo-item:hover { border-color: var(--brand-primary); }
         .photo-item:hover img { transform: scale(1.05); }
+        
+        /* Sortable Ghost */
         .sortable-ghost { opacity: 0.4; background-color: var(--brand-primary); border: 2px dashed var(--brand-primary); }
 
-        /* Multi-select Styles */
-        .photo-item.selected { border: 2px solid var(--brand-danger); box-shadow: 0 0 15px rgba(255, 23, 68, 0.4); }
-        .photo-item.selected img { opacity: 0.6; }
-        .photo-checkbox { position: absolute; top: 10px; left: 10px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: 0.2s; }
-        .photo-item.selected .photo-checkbox { background: var(--brand-danger); border-color: var(--brand-danger); }
-        .photo-item.selected .photo-checkbox::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
+        /* Set Cover Button (Top Right Star) */
+        .btn-set-cover {
+            position: absolute; top: 8px; right: 8px; width: 30px; height: 30px;
+            background: rgba(0,0,0,0.6); border: 1px solid var(--brand-warning); color: var(--brand-warning);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            z-index: 20; cursor: pointer; transition: 0.2s; opacity: 0; font-size: 14px;
+        }
+        .photo-item:hover .btn-set-cover { opacity: 1; }
+        .btn-set-cover:hover { background: var(--brand-warning); color: black; box-shadow: 0 0 10px var(--brand-warning); }
+        .btn-set-cover i { pointer-events: none; }
 
         /* Header Breadcrumb */
         #navHeader { border-bottom: 1px solid var(--border-subtle); padding-bottom: 2rem; margin-bottom: 2rem; background: radial-gradient(circle at top right, rgba(41, 121, 255, 0.1), transparent 40%); }
@@ -169,6 +178,58 @@
         .thumbnail-strip-container { position: absolute; bottom: 0; width: 100%; height: 100px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 20px; overflow-x: auto; }
         .thumb-item { width: 60px; height: 60px; margin-right: 10px; opacity: 0.5; cursor: pointer; flex-shrink: 0; }
         .thumb-item.active { opacity: 1; border: 2px solid var(--brand-primary); }
+
+        /* --- SweetAlert2 OLED Theme Overrides --- */
+        div:where(.swal2-container) div:where(.swal2-popup) {
+            background: rgba(15, 15, 20, 0.95) !important;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(10px);
+        }
+        div:where(.swal2-container) h2:where(.swal2-title) {
+            color: var(--text-primary) !important;
+            font-family: var(--font-sans);
+        }
+        div:where(.swal2-container) div:where(.swal2-html-container) {
+            color: var(--text-secondary) !important;
+            font-family: var(--font-mono);
+        }
+        /* Buttons */
+        div:where(.swal2-container) button.swal2-confirm {
+            background-color: transparent !important;
+            border: 1px solid var(--brand-primary) !important;
+            color: var(--brand-primary) !important;
+            border-radius: var(--radius-md) !important;
+            padding: 0.6rem 1.5rem !important;
+            font-family: var(--font-mono) !important;
+            box-shadow: none !important;
+            transition: all 0.3s !important;
+        }
+        div:where(.swal2-container) button.swal2-confirm:hover {
+            background-color: rgba(41, 121, 255, 0.1) !important;
+            box-shadow: var(--glow-blue) !important;
+            color: #fff !important;
+        }
+        div:where(.swal2-container) button.swal2-cancel {
+            background-color: transparent !important;
+            border: 1px solid var(--brand-danger) !important;
+            color: var(--brand-danger) !important;
+            border-radius: var(--radius-md) !important;
+            padding: 0.6rem 1.5rem !important;
+            font-family: var(--font-mono) !important;
+            transition: all 0.3s !important;
+        }
+        div:where(.swal2-container) button.swal2-cancel:hover {
+            background-color: rgba(255, 23, 68, 0.1) !important;
+            box-shadow: 0 0 15px rgba(255, 23, 68, 0.3) !important;
+            color: #fff !important;
+        }
+        /* Icons */
+        div:where(.swal2-icon).swal2-warning { border-color: var(--brand-warning) !important; color: var(--brand-warning) !important; }
+        div:where(.swal2-icon).swal2-error { border-color: var(--brand-danger) !important; color: var(--brand-danger) !important; }
+        div:where(.swal2-icon).swal2-success { border-color: var(--brand-success) !important; color: var(--brand-success) !important; }
+        div:where(.swal2-icon).swal2-info { border-color: var(--brand-primary) !important; color: var(--brand-primary) !important; }
     </style>
 </head>
 <body>
@@ -186,12 +247,13 @@
                     <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
                 </span>
                 
+                <!-- Admin Mode Label -->
+                <span id="adminModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
+                    <i class="bi bi-shield-check me-1"></i> 管理者模式
+                </span>
+                
                 <!-- Admin Controls Container -->
                 <div id="adminControls" class="d-none d-inline-flex align-items-center gap-2">
-                    <span style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
-                        <i class="bi bi-shield-check me-1"></i> 管理者模式
-                    </span>
-                    
                     <!-- Create Album Button -->
                     <button class="btn-oled btn-sm" onclick="openCreateAlbumModal()">
                         <i class="bi bi-folder-plus me-1"></i> 建立相簿
@@ -208,7 +270,7 @@
                 </div>
                 
                 <!-- Login Button -->
-                <button id="loginBtn" class="btn-oled btn-icon btn-settings" onclick="openLoginModal()" title="管理者登入">
+                <button id="loginBtn" class="btn-oled btn-icon btn-oled-accent btn-settings" onclick="openLoginModal()" title="管理者登入">
                     <i class="bi bi-key-fill"></i>
                 </button>
             </div>
@@ -230,9 +292,6 @@
             </div>
             <div class="d-flex gap-2">
                 <button id="directoryBtn" class="btn-oled" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i> 目錄檢索</button>
-                <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
-                    <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
-                </button>
                 <!-- Uniform Button Style applied to Download/Upload -->
                 <button id="downloadAllBtn" class="btn-oled hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
                 <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
@@ -457,6 +516,17 @@
         const SESSION_KEY_ADMIN = "gas_album_admin_token";
         const SESSION_KEY_CURRENT_ALBUM = "gas_album_active_id";
         
+        // SweetAlert2 Mixins
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#111111',
+            color: '#ffffff',
+        });
+
         // Fast UI Toggle
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -565,7 +635,7 @@
                 } else { throw new Error(json.message); }
             } catch (err) {
                 console.error(err);
-                if(err.message.includes("權限錯誤")) alert(err.message);
+                if(err.message.includes("權限錯誤")) Swal.fire("錯誤", err.message, "error");
                 showLoading(false);
             } finally { showLoading(false); }
         }
@@ -577,10 +647,15 @@
             document.getElementById('photoView').classList.add('hidden');
             document.getElementById('separator').classList.add('hidden');
             document.getElementById('currentAlbumName').classList.add('hidden');
+            
+            // Hide Desktop Buttons
             document.getElementById('downloadAllBtn').classList.add('hidden');
             document.getElementById('uploadToAlbumBtn').classList.add('hidden');
             document.getElementById('batchDeleteBtn').classList.add('hidden');
+            
+            // Show Directory
             document.getElementById('directoryBtn').classList.remove('hidden');
+            
             document.getElementById('setupState').classList.add('hidden');
             
             const view = document.getElementById('albumView');
@@ -631,9 +706,10 @@
             const album = allData.find(a => a.id === albumId);
             if (!album) return;
             
+            // Sort Logic: Check LocalStorage for custom order
             const storedOrder = localStorage.getItem('album_sort_' + albumId);
             if (storedOrder) {
-                const sortOrder = JSON.parse(storedOrder); 
+                const sortOrder = JSON.parse(storedOrder); // Array of IDs
                 album.photos.sort((a, b) => {
                     const idxA = sortOrder.indexOf(a.id);
                     const idxB = sortOrder.indexOf(b.id);
@@ -731,10 +807,7 @@
         function setAlbumCover(albumId, url) {
             localStorage.setItem('album_cover_' + albumId, url);
             // SweetAlert2 Toast
-            Swal.mixin({
-                toast: true, position: 'top-end', showConfirmButton: false, timer: 2000,
-                background: '#111', color: '#fff'
-            }).fire({ icon: 'success', title: '已設為封面' });
+            Toast.fire({ icon: 'success', title: '已設為封面' });
         }
 
         function handlePhotoSelect(event, id, index) {
@@ -766,8 +839,17 @@
             const count = selectedPhotoIds.size;
             if (count === 0) return;
             
-            // Standard confirm
-            if (!confirm(`確定要刪除選取的 ${count} 張照片嗎？\n(此動作無法復原)`)) return;
+            const confirmResult = await Swal.fire({
+                title: `確定要刪除選取的 ${count} 張照片嗎？`,
+                text: "此動作無法復原",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '確定刪除',
+                cancelButtonText: '取消',
+                reverseButtons: true
+            });
+
+            if (!confirmResult.isConfirmed) return;
             
             const ids = Array.from(selectedPhotoIds);
             showProgressModal("刪除進度");
@@ -799,7 +881,7 @@
             await new Promise(r => setTimeout(r, 500));
             
             bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
-            alert(`刪除完成！成功 ${success} / ${count}`);
+            Swal.fire('刪除完成', `成功 ${success} / ${count}`, 'success');
             selectedPhotoIds.clear();
             fetchAlbums(true); 
         }
@@ -831,7 +913,8 @@
 
         async function verifyAdmin() {
             const pwd = document.getElementById('adminPassword').value;
-            if(!pwd) return alert("請輸入密碼");
+            if(!pwd) return Toast.fire({ icon: 'warning', title: '請輸入密碼' });
+            
             showLoading(true);
             try {
                 const url = `${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`;
@@ -845,10 +928,10 @@
                     toggleAdminUI(true);
                     openAdminModal(); 
                     
-                    alert("登入成功！");
+                    Toast.fire({ icon: 'success', title: '登入成功' });
                     fetchAlbums(true); 
-                } else { alert("密碼錯誤"); }
-            } catch(e) { alert("驗證失敗: " + e.message); }
+                } else { Swal.fire('登入失敗', '密碼錯誤', 'error'); }
+            } catch(e) { Swal.fire('錯誤', e.message, 'error'); }
             finally { showLoading(false); }
         }
 
@@ -861,12 +944,12 @@
             
             toggleAdminUI(false);
             showAlbumList();
-            alert("已登出");
+            Toast.fire({ icon: 'success', title: '已登出' });
         }
 
         async function createAlbum() {
             const name = document.getElementById('createAlbumName').value.trim();
-            if(!name) return alert("請輸入相簿名稱");
+            if(!name) return Toast.fire({ icon: 'warning', title: '請輸入相簿名稱' });
             
             bootstrap.Modal.getInstance(document.getElementById('createAlbumModal')).hide();
             
@@ -874,7 +957,17 @@
         }
 
         async function deleteAlbum(id, name) {
-            if(!confirm(`確定要刪除相簿「${name}」及其所有照片嗎？\n(此動作無法復原)`)) return;
+            const result = await Swal.fire({
+                title: `確定要刪除相簿「${name}」？`,
+                text: "此動作無法復原，所有照片將一併刪除。",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '確定刪除',
+                cancelButtonText: '取消',
+                reverseButtons: true
+            });
+            if(!result.isConfirmed) return;
+            
             callApi({ action: 'deleteAlbum', id: id, password: adminToken });
         }
 
@@ -887,7 +980,7 @@
         async function confirmRename() {
             const id = document.getElementById('renameTargetId').value;
             const newName = document.getElementById('renameInput').value.trim();
-            if(!newName) return alert("名稱不能為空");
+            if(!newName) return Toast.fire({ icon: 'warning', title: '名稱不能為空' });
             bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide();
             callApi({ action: 'renameAlbum', id: id, newName: newName, password: adminToken });
         }
@@ -898,12 +991,12 @@
                 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const json = await res.json();
                 if(json.status === "success") {
-                    if(successMsg) alert(successMsg);
+                    if(successMsg) Swal.fire('成功', successMsg, 'success');
                     fetchAlbums(true);
                 } else {
-                    alert("操作失敗: " + json.message);
+                    Swal.fire('操作失敗', json.message, 'error');
                 }
-            } catch(e) { console.error(e); alert("連線錯誤"); }
+            } catch(e) { console.error(e); Swal.fire('錯誤', '連線錯誤', 'error'); }
             finally { showLoading(false); }
         }
 
@@ -918,9 +1011,9 @@
 
         async function startBatchUpload() {
             const albumName = document.getElementById('uploadModal').dataset.targetAlbum;
-            if(!albumName) return alert("無法確認目標相簿");
+            if(!albumName) return Toast.fire({ icon: 'warning', title: '無法確認目標相簿' });
             const files = document.getElementById('uploadFiles').files;
-            if(files.length === 0) return alert("請選擇檔案");
+            if(files.length === 0) return Toast.fire({ icon: 'warning', title: '請選擇檔案' });
 
             document.getElementById('uploadStatus').classList.remove('hidden');
             const pBar = document.getElementById('uploadProgressBar');
@@ -961,12 +1054,12 @@
             doBtn.disabled = false;
             bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
             
-            alert(`上傳完成！成功 ${successCount} / ${total}`);
+            Swal.fire('上傳完成', `成功 ${successCount} / ${total}`, 'success');
             fetchAlbums(true);
         }
 
         function performBatchUpload(files, albumName) {
-            if(!adminToken) return alert("請先登入");
+            if(!adminToken) return Toast.fire({ icon: 'warning', title: '請先登入' });
             
             showProgressModal("上傳進度");
             const pBar = document.getElementById('genericProgressBar');
@@ -1001,7 +1094,7 @@
                 
                 bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
                 document.getElementById('hiddenUploadInput').value = "";
-                alert(`上傳完成！成功 ${successCount} / ${total}`);
+                Swal.fire('上傳完成', `成功 ${successCount} / ${total}`, 'success');
                 fetchAlbums(true);
             })();
         }
@@ -1084,7 +1177,16 @@
         }
 
         async function downloadAllCurrentPhotos() {
-            if(!confirm(`下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`)) return;
+            const result = await Swal.fire({
+                title: `下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`,
+                text: "這可能需要一點時間",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '下載',
+                cancelButtonText: '取消'
+            });
+
+            if(!result.isConfirmed) return;
             const btn = document.getElementById('downloadAllBtn');
             const txt = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<div class="spinner-border spinner-border-sm"></div> 打包中...`;
@@ -1108,7 +1210,7 @@
                 if(count===0) throw new Error("No images loaded");
                 const content = await zip.generateAsync({type:"blob"});
                 saveAs(content, `${currentAlbumNameStr}.zip`);
-            } catch(e) { alert("下載失敗"); } 
+            } catch(e) { Swal.fire('錯誤', '下載失敗', 'error'); } 
             finally { btn.disabled = false; btn.innerHTML = txt; }
         }
 
@@ -1124,7 +1226,7 @@
         function saveSettings() {
             const url = document.getElementById('settingGasUrl').value.trim();
             const title = document.getElementById('settingPageTitle').value.trim();
-            if(!url) return alert("請輸入 URL");
+            if(!url) return Toast.fire({ icon: 'warning', title: '請輸入 URL' });
             localStorage.setItem(STORAGE_KEY_URL, url);
             localStorage.setItem(STORAGE_KEY_TITLE, title);
             SCRIPT_URL = url; initShareUi();
@@ -1132,13 +1234,23 @@
         }
 
         function clearSettings() {
-            if(confirm("確定清除設定？")) {
-                localStorage.removeItem(STORAGE_KEY_URL);
-                localStorage.removeItem(STORAGE_KEY_TITLE);
-                sessionStorage.removeItem(SESSION_KEY_VIEWER);
-                window.history.replaceState({}, document.title, window.location.pathname);
-                location.reload();
-            }
+            Swal.fire({
+                title: '確定清除設定？',
+                text: "這將移除所有本地儲存的設定。",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '清除',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem(STORAGE_KEY_URL);
+                    localStorage.removeItem(STORAGE_KEY_TITLE);
+                    sessionStorage.removeItem(SESSION_KEY_VIEWER);
+                    localStorage.clear(); 
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    location.reload();
+                }
+            });
         }
 
         function initShareUi() {
@@ -1151,7 +1263,7 @@
         }
 
         function copyShareLink() {
-            navigator.clipboard.writeText(document.getElementById('shareLinkInput').value).then(()=>alert("已複製連結"));
+            navigator.clipboard.writeText(document.getElementById('shareLinkInput').value).then(()=>Toast.fire({ icon: 'success', title: '已複製連結' }));
         }
 
         function showSetupState() {
