@@ -33,10 +33,12 @@
             --brand-accent: #FF4081;
             --brand-success: #00E676;
             --brand-danger: #FF1744;
-            --brand-warning: #FFAB00;
             --border-subtle: rgba(41, 121, 255, 0.2);
             --glow-blue: 0 0 30px rgba(41, 121, 255, 0.3);
             --glow-pink: 0 0 30px rgba(255, 64, 129, 0.3);
+            --glow-text: 0 0 10px rgba(255, 255, 255, 0.5);
+            
+            /* Typography */
             --font-sans: 'Inter', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
             --radius-md: 12px;
@@ -52,15 +54,12 @@
             background-size: 40px 40px;
         }
 
-        /* Utility Class for Auth Visibility */
-        .auth-hidden { display: none !important; }
-
         /* Navbar */
         .navbar-custom {
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-subtle);
-            padding: 0.8rem 0;
+            padding: 1rem 0;
             position: sticky; top: 0; z-index: 1020;
         }
         .navbar-brand { font-weight: 700; color: var(--text-primary) !important; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
@@ -70,46 +69,19 @@
         .btn-oled {
             background: transparent; border: 1px solid var(--border-subtle); color: var(--text-secondary);
             font-family: var(--font-mono); font-size: 0.85rem; border-radius: var(--radius-md);
-            padding: 0.5rem 1rem; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; white-space: nowrap;
+            padding: 0.5rem 1rem; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
         }
         .btn-oled:hover { border-color: var(--brand-primary); color: var(--text-primary); box-shadow: var(--glow-blue); background: rgba(41, 121, 255, 0.05); text-decoration: none; }
         
-        .btn-oled-accent { border-color: rgba(41, 121, 255, 0.2); color: var(--text-secondary); }
+        .btn-oled-accent { border-color: rgba(255, 64, 129, 0.3); color: var(--brand-accent); }
         .btn-oled-accent:hover { 
-            border-color: var(--brand-primary); background: rgba(41, 121, 255, 0.05); 
-            color: #fff; box-shadow: var(--glow-blue); text-decoration: none;
+            border-color: var(--brand-accent); background: rgba(255, 64, 129, 0.05); 
+            color: #fff; box-shadow: var(--glow-pink); text-decoration: none;
         }
         
         .btn-oled-danger { border-color: var(--brand-danger); color: var(--brand-danger); }
         .btn-oled-danger:hover { background: rgba(255, 23, 68, 0.1); box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); text-decoration: none; color: #fff; }
-        
-        .btn-icon { width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; }
-
-        /* Dropdown Menu */
-        .dropdown-menu-oled {
-            background-color: rgba(15, 15, 20, 0.95);
-            border: 1px solid var(--border-subtle);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            min-width: 200px;
-        }
-        .dropdown-menu-oled .dropdown-item {
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            font-size: 0.9rem;
-            padding: 0.6rem 1rem;
-            transition: all 0.2s;
-        }
-        .dropdown-menu-oled .dropdown-item:hover {
-            background-color: rgba(41, 121, 255, 0.1);
-            color: var(--brand-primary);
-        }
-        .dropdown-menu-oled .dropdown-item:active {
-            background-color: rgba(41, 121, 255, 0.2);
-        }
-        .dropdown-menu-oled .dropdown-divider {
-            border-top-color: var(--border-subtle);
-        }
+        .btn-icon { width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; }
 
         /* Cards */
         .album-card {
@@ -122,12 +94,15 @@
         .album-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.4; }
         .album-meta { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); }
         
-        .admin-album-controls { padding: 10px; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2); display: flex; gap: 5px; justify-content: space-between; }
+        /* Admin Controls on Album Card */
+        .admin-album-controls {
+            padding: 10px; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2);
+            display: flex; gap: 5px; justify-content: space-between;
+        }
         .btn-card-action { flex: 1; font-size: 0.8rem; padding: 4px; }
 
-        /* Photo Grid & Drag */
+        /* Photo Grid */
         .photo-item { position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1/1; border: 1px solid transparent; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        /* Only draggable items get the grab cursor */
         .photo-item.draggable { cursor: grab; }
         .photo-item.draggable:active { cursor: grabbing; }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; pointer-events: none; }
@@ -135,21 +110,12 @@
         .photo-item:hover img { transform: scale(1.05); }
         .sortable-ghost { opacity: 0.4; background-color: var(--brand-primary); border: 2px dashed var(--brand-primary); }
 
-        /* Multi-select & Cover Actions */
+        /* Multi-select Styles */
         .photo-item.selected { border: 2px solid var(--brand-danger); box-shadow: 0 0 15px rgba(255, 23, 68, 0.4); }
         .photo-item.selected img { opacity: 0.6; }
-        .photo-checkbox { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: 0.2s; }
+        .photo-checkbox { position: absolute; top: 10px; left: 10px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: 0.2s; }
         .photo-item.selected .photo-checkbox { background: var(--brand-danger); border-color: var(--brand-danger); }
         .photo-item.selected .photo-checkbox::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
-        
-        .btn-set-cover {
-            position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
-            background: rgba(0,0,0,0.6); border: 1px solid var(--brand-warning); color: var(--brand-warning);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            z-index: 20; cursor: pointer; transition: 0.2s; opacity: 0; font-size: 14px;
-        }
-        .photo-item:hover .btn-set-cover { opacity: 1; }
-        .btn-set-cover:hover { background: var(--brand-warning); color: black; box-shadow: 0 0 10px var(--brand-warning); }
 
         /* Header Breadcrumb */
         #navHeader { border-bottom: 1px solid var(--border-subtle); padding-bottom: 2rem; margin-bottom: 2rem; background: radial-gradient(circle at top right, rgba(41, 121, 255, 0.1), transparent 40%); }
@@ -180,6 +146,7 @@
         .progress-container { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin-top: 1rem; }
         .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
         .progress-text { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; font-family: var(--font-mono); font-size: 0.9rem; }
+        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
         .upload-text-high-contrast { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; }
 
         /* Directory List */
@@ -203,14 +170,52 @@
         .thumb-item { width: 60px; height: 60px; margin-right: 10px; opacity: 0.5; cursor: pointer; flex-shrink: 0; }
         .thumb-item.active { opacity: 1; border: 2px solid var(--brand-primary); }
 
-        /* SweetAlert2 Overrides */
-        div:where(.swal2-container) div:where(.swal2-popup) { background: rgba(10, 10, 15, 0.95) !important; border: 1px solid var(--border-subtle); backdrop-filter: blur(10px); }
-        div:where(.swal2-container) h2:where(.swal2-title) { color: var(--text-primary) !important; font-family: var(--font-sans); }
-        div:where(.swal2-container) div:where(.swal2-html-container) { color: var(--text-secondary) !important; font-family: var(--font-mono); }
-        div:where(.swal2-container) button.swal2-confirm { background-color: transparent !important; border: 1px solid var(--brand-primary) !important; color: var(--brand-primary) !important; border-radius: var(--radius-md) !important; box-shadow: none !important; transition: all 0.3s !important; }
-        div:where(.swal2-container) button.swal2-confirm:hover { background-color: rgba(41, 121, 255, 0.1) !important; box-shadow: var(--glow-blue) !important; color: #fff !important; }
-        div:where(.swal2-container) button.swal2-cancel { background-color: transparent !important; border: 1px solid var(--brand-danger) !important; color: var(--brand-danger) !important; border-radius: var(--radius-md) !important; transition: all 0.3s !important; }
-        div:where(.swal2-container) button.swal2-cancel:hover { background-color: rgba(255, 23, 68, 0.1) !important; box-shadow: 0 0 15px rgba(255, 23, 68, 0.3) !important; color: #fff !important; }
+        /* --- SweetAlert2 OLED Theme Overrides --- */
+        div:where(.swal2-container) div:where(.swal2-popup) {
+            background: rgba(10, 10, 15, 0.95) !important;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(10px);
+        }
+        div:where(.swal2-container) h2:where(.swal2-title) {
+            color: var(--text-primary) !important;
+            font-family: var(--font-sans);
+        }
+        div:where(.swal2-container) div:where(.swal2-html-container) {
+            color: var(--text-secondary) !important;
+            font-family: var(--font-mono);
+        }
+        /* Buttons */
+        div:where(.swal2-container) button.swal2-confirm {
+            background-color: transparent !important;
+            border: 1px solid var(--brand-primary) !important;
+            color: var(--brand-primary) !important;
+            border-radius: var(--radius-md) !important;
+            padding: 0.6rem 1.5rem !important;
+            font-family: var(--font-mono) !important;
+            box-shadow: none !important;
+            transition: all 0.3s !important;
+        }
+        div:where(.swal2-container) button.swal2-confirm:hover {
+            background-color: rgba(41, 121, 255, 0.1) !important;
+            box-shadow: var(--glow-blue) !important;
+            color: #fff !important;
+        }
+        div:where(.swal2-container) button.swal2-cancel {
+            background-color: transparent !important;
+            border: 1px solid var(--brand-danger) !important;
+            color: var(--brand-danger) !important;
+            border-radius: var(--radius-md) !important;
+            padding: 0.6rem 1.5rem !important;
+            font-family: var(--font-mono) !important;
+            transition: all 0.3s !important;
+        }
+        div:where(.swal2-container) button.swal2-cancel:hover {
+            background-color: rgba(255, 23, 68, 0.1) !important;
+            box-shadow: 0 0 15px rgba(255, 23, 68, 0.3) !important;
+            color: #fff !important;
+        }
     </style>
 </head>
 <body>
@@ -218,58 +223,49 @@
     <!-- Navbar -->
     <nav class="navbar navbar-custom">
         <div class="container-fluid px-lg-5">
-            <div class="d-flex align-items-center justify-content-between w-100">
-                <a class="navbar-brand" href="#" onclick="showAlbumList()">
-                    <span class="brand-dot"></span>
-                    <span id="navbarTitle">雲端相簿</span>
-                </a>
+            <a class="navbar-brand" href="#" onclick="showAlbumList()">
+                <span class="brand-dot"></span>
+                <span id="navbarTitle">雲端相簿</span>
+            </a>
+            <div>
+                <!-- Viewer Mode Label -->
+                <span id="viewerModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
+                    <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
+                </span>
                 
-                <div class="d-flex align-items-center">
-                    <!-- Viewer Mode Label -->
-                    <span id="viewerModeLabel" class="d-none user-select-none me-3 d-none d-md-inline-block" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 4px 10px; border-radius: 20px;">
-                        <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
-                    </span>
-                    
-                    <!-- Admin Mode Label -->
-                    <span id="adminModeLabel" class="d-none user-select-none me-3 d-none d-md-inline-block" style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 4px 10px; border-radius: 20px;">
+                <!-- Admin Controls Container -->
+                <div id="adminControls" class="d-none d-inline-flex align-items-center gap-2">
+                    <span style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
                         <i class="bi bi-shield-check me-1"></i> 管理者模式
                     </span>
                     
-                    <!-- Login Button (Guest) -->
-                    <button id="loginBtn" class="btn-oled btn-icon btn-settings" onclick="openLoginModal()" title="管理者登入">
-                        <i class="bi bi-key-fill"></i>
+                    <!-- Create Album Button -->
+                    <button class="btn-oled btn-sm" onclick="openCreateAlbumModal()">
+                        <i class="bi bi-folder-plus me-1"></i> 建立相簿
                     </button>
 
-                    <!-- Admin Controls (Desktop) - auth-hidden controls visibility via JS -->
-                    <div id="adminControlsDesktop" class="d-none d-md-flex align-items-center gap-2 auth-hidden">
-                        <button class="btn-oled" onclick="openCreateAlbumModal()">
-                            <i class="bi bi-folder-plus me-1"></i> 建立相簿
-                        </button>
-                        <button class="btn-oled" onclick="openAdminModal()">
-                            <i class="bi bi-gear-fill me-1"></i> 系統設定
-                        </button>
-                        <button class="btn-oled btn-oled-danger" onclick="logoutAdmin()">
-                            <i class="bi bi-box-arrow-right"></i>
-                        </button>
-                    </div>
-
-                    <!-- Admin Controls (Mobile Menu) -->
-                    <div id="adminControlsMobile" class="dropdown ms-2 d-md-none auth-hidden">
-                        <button class="btn-oled btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-list"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-oled">
-                            <li><h6 class="dropdown-header text-muted">管理者功能</h6></li>
-                            <li><a class="dropdown-item" href="#" onclick="openCreateAlbumModal()"><i class="bi bi-folder-plus me-2"></i>建立相簿</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="openAdminModal()"><i class="bi bi-gear-fill me-2"></i>系統設定</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#" onclick="logoutAdmin()"><i class="bi bi-box-arrow-right me-2"></i>登出</a></li>
-                        </ul>
-                    </div>
+                    <!-- Settings Button -->
+                    <button class="btn-oled btn-sm" onclick="openAdminModal()">
+                        <i class="bi bi-gear-fill me-1"></i> 系統設定
+                    </button>
+                    
+                    <button class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
                 </div>
+                
+                <!-- Login Button -->
+                <button id="loginBtn" class="btn-oled btn-icon btn-settings" onclick="openLoginModal()" title="管理者登入">
+                    <i class="bi bi-key-fill"></i>
+                </button>
             </div>
         </div>
     </nav>
+
+    <!-- Admin Panel (Embedded at Top) -->
+    <div id="adminPanel" class="hidden">
+        <!-- Kept hidden/removed functionality as per previous request to move to modal -->
+    </div>
 
     <!-- Main Content -->
     <div class="container-fluid px-lg-5 py-5">
@@ -279,39 +275,16 @@
                 <span id="separator" class="breadcrumb-separator hidden">//</span>
                 <span id="currentAlbumName" class="breadcrumb-item-custom breadcrumb-active hidden"></span>
             </div>
-            
-            <div class="d-flex align-items-center gap-2">
-                <!-- Desktop Album Tools -->
-                <div class="d-none d-md-flex gap-2">
-                    <button id="directoryBtn" class="btn-oled" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i> 目錄檢索</button>
-                    <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
-                        <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
-                    </button>
-                    <button id="downloadAllBtn" class="btn-oled hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
-                    <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
-                        <i class="bi bi-cloud-upload me-2"></i> 上傳相片
-                    </button>
-                </div>
-
-                <!-- Mobile Album Tools Menu -->
-                <div class="dropdown d-md-none">
-                     <button class="btn-oled" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-three-dots"></i> 選項
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-oled">
-                        <li><a class="dropdown-item" href="#" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i>目錄檢索</a></li>
-                        <li id="liRefreshMobile"><a class="dropdown-item" href="#" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise me-2"></i>同步資料</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        
-                        <!-- Mobile Hidden Items -->
-                        <li id="liBatchDelete" class="hidden"><a class="dropdown-item text-danger" href="#" onclick="executeBatchDelete()"><i class="bi bi-trash3 me-2"></i>刪除選取 (<span id="deleteCountMobile">0</span>)</a></li>
-                        <li id="liDownload" class="hidden"><a class="dropdown-item" href="#" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i>相簿下載</a></li>
-                        <li id="liUpload" class="hidden"><a class="dropdown-item" href="#" onclick="openUploadModal()"><i class="bi bi-cloud-upload me-2"></i>上傳相片</a></li>
-                    </ul>
-                </div>
-
-                <!-- Refresh (Desktop Only to save space on mobile, mapped to menu) -->
-                <button id="refreshBtn" class="btn-oled d-none d-md-inline-flex" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise"></i></button>
+            <div class="d-flex gap-2">
+                <button id="directoryBtn" class="btn-oled" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i> 目錄檢索</button>
+                <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
+                    <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
+                </button>
+                <button id="downloadAllBtn" class="btn-oled hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
+                <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
+                    <i class="bi bi-cloud-upload me-2"></i> 上傳相片
+                </button>
+                <button id="refreshBtn" class="btn-oled" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
         </div>
 
@@ -587,19 +560,16 @@
 
         function toggleAdminUI(isAdmin) {
             const loginBtn = document.getElementById('loginBtn');
-            const adminControlsDesktop = document.getElementById('adminControlsDesktop');
-            const adminControlsMobile = document.getElementById('adminControlsMobile');
+            const adminControls = document.getElementById('adminControls');
             
             if(isAdmin) {
                 loginBtn.classList.add('d-none');
-                // Remove auth-hidden class to show controls
-                adminControlsDesktop.classList.remove('auth-hidden');
-                adminControlsMobile.classList.remove('auth-hidden');
+                adminControls.classList.remove('d-none');
+                adminControls.classList.add('d-flex');
             } else {
                 loginBtn.classList.remove('d-none');
-                // Add auth-hidden class to hide controls
-                adminControlsDesktop.classList.add('auth-hidden');
-                adminControlsMobile.classList.add('auth-hidden');
+                adminControls.classList.add('d-none');
+                adminControls.classList.remove('d-flex');
             }
         }
 
