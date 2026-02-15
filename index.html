@@ -216,6 +216,11 @@
             box-shadow: 0 0 15px rgba(255, 23, 68, 0.3) !important;
             color: #fff !important;
         }
+        /* Icons */
+        div:where(.swal2-icon).swal2-warning { border-color: var(--brand-warning) !important; color: var(--brand-warning) !important; }
+        div:where(.swal2-icon).swal2-error { border-color: var(--brand-danger) !important; color: var(--brand-danger) !important; }
+        div:where(.swal2-icon).swal2-success { border-color: var(--brand-success) !important; color: var(--brand-success) !important; }
+        div:where(.swal2-icon).swal2-info { border-color: var(--brand-primary) !important; color: var(--brand-primary) !important; }
     </style>
 </head>
 <body>
@@ -262,11 +267,6 @@
         </div>
     </nav>
 
-    <!-- Admin Panel (Embedded at Top) -->
-    <div id="adminPanel" class="hidden">
-        <!-- Kept hidden/removed functionality as per previous request to move to modal -->
-    </div>
-
     <!-- Main Content -->
     <div class="container-fluid px-lg-5 py-5">
         <div id="navHeader" class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
@@ -280,6 +280,7 @@
                 <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
                     <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
                 </button>
+                <!-- Uniform Button Style -->
                 <button id="downloadAllBtn" class="btn-oled hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
                 <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
                     <i class="bi bi-cloud-upload me-2"></i> 上傳相片
@@ -481,8 +482,6 @@
         <button class="btn-oled btn-oled-danger btn-sm mt-3" onclick="forceStopLoading()">終止程序</button>
     </div>
 
-    <input type="file" id="hiddenUploadInput" multiple accept="image/*" class="d-none">
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
@@ -552,10 +551,6 @@
             } else {
                 fetchAlbums();
             }
-
-            document.getElementById('hiddenUploadInput').addEventListener('change', function() {
-                if(this.files.length > 0) performBatchUpload(this.files, uploadTargetAlbumName);
-            });
         });
 
         function toggleAdminUI(isAdmin) {
@@ -634,10 +629,15 @@
             document.getElementById('photoView').classList.add('hidden');
             document.getElementById('separator').classList.add('hidden');
             document.getElementById('currentAlbumName').classList.add('hidden');
+            
+            // Hide Desktop Buttons
             document.getElementById('downloadAllBtn').classList.add('hidden');
             document.getElementById('uploadToAlbumBtn').classList.add('hidden');
             document.getElementById('batchDeleteBtn').classList.add('hidden');
+            
+            // Show Directory
             document.getElementById('directoryBtn').classList.remove('hidden');
+            
             document.getElementById('setupState').classList.add('hidden');
             
             const view = document.getElementById('albumView');
@@ -688,6 +688,20 @@
             const album = allData.find(a => a.id === albumId);
             if (!album) return;
             
+            // Sort Logic: Check LocalStorage for custom order
+            const storedOrder = localStorage.getItem('album_sort_' + albumId);
+            if (storedOrder) {
+                const sortOrder = JSON.parse(storedOrder); // Array of IDs
+                album.photos.sort((a, b) => {
+                    const idxA = sortOrder.indexOf(a.id);
+                    const idxB = sortOrder.indexOf(b.id);
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    if (idxA !== -1) return -1;
+                    if (idxB !== -1) return 1;
+                    return 0; 
+                });
+            }
+
             currentAlbumPhotos = album.photos;
             currentAlbumNameStr = album.name;
             currentAlbumIdStr = album.id;
@@ -707,7 +721,9 @@
             if(adminToken) {
                 document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
                 document.getElementById('uploadToAlbumBtn').onclick = () => openUploadModal(album.name);
+                
                 document.getElementById('batchDeleteBtn').classList.add('hidden');
+                
                 document.getElementById('deleteCount').innerText = '0';
             }
             
@@ -720,8 +736,19 @@
                     ghostClass: 'sortable-ghost',
                     draggable: ".draggable", // Only items with draggable class
                     onEnd: function (evt) {
-                        // Drag event handled but array not reordered here to avoid complexity with indexes
-                        // Just visual reorder
+                        const newOrderIds = [];
+                        const itemEls = photoGrid.querySelectorAll('.photo-item');
+                        const newPhotosArr = [];
+                        
+                        itemEls.forEach(el => {
+                             const id = el.id.replace('p-item-', '');
+                             newOrderIds.push(id);
+                             const photoObj = currentAlbumPhotos.find(p => p.id === id);
+                             if(photoObj) newPhotosArr.push(photoObj);
+                        });
+                        
+                        currentAlbumPhotos = newPhotosArr; 
+                        localStorage.setItem('album_sort_' + currentAlbumIdStr, JSON.stringify(newOrderIds));
                     }
                 });
             }
@@ -738,12 +765,14 @@
                 col.className = 'col-6 col-md-3 col-lg-2';
                 
                 let selectionHtml = "";
+                let setCoverBtn = "";
                 let clickAction = `openLightbox(${index})`;
                 let dragClass = "";
                 let itemId = `p-item-${photo.id}`;
                 
                 if(adminToken) {
                     selectionHtml = `<div class="photo-checkbox"></div>`;
+                    setCoverBtn = `<div class="btn-set-cover" onclick="event.stopPropagation(); setAlbumCover('${album.id}', '${photo.url}')" title="設為封面"><i class="bi bi-star-fill"></i></div>`;
                     
                     clickAction = `handlePhotoSelect(event, '${photo.id}', ${index})`;
                     dragClass = "draggable";
@@ -752,12 +781,19 @@
                 col.innerHTML = `
                     <div class="photo-item ${dragClass}" id="${itemId}" onclick="${clickAction}">
                         ${selectionHtml}
+                        ${setCoverBtn}
                         <img src="${photo.url.replace('=s800', '=s400')}" loading="lazy">
                     </div>`;
                 view.appendChild(col);
             });
         }
         
+        function setAlbumCover(albumId, url) {
+            localStorage.setItem('album_cover_' + albumId, url);
+            // SweetAlert2 Toast
+            Toast.fire({ icon: 'success', title: '已設為封面' });
+        }
+
         function handlePhotoSelect(event, id, index) {
             event.stopPropagation();
             const el = document.getElementById(`p-item-${id}`);
@@ -1006,47 +1042,6 @@
             fetchAlbums(true);
         }
 
-        function performBatchUpload(files, albumName) {
-            if(!adminToken) return Toast.fire({ icon: 'warning', title: '請先登入' });
-            
-            showProgressModal("上傳進度");
-            const pBar = document.getElementById('genericProgressBar');
-            const pText = document.getElementById('progressText');
-            const pCount = document.getElementById('progressCount');
-            
-            pBar.style.width = "0%";
-            pCount.innerText = "0%";
-            
-            (async () => {
-                let successCount = 0;
-                const total = files.length;
-                for(let i=0; i<total; i++) {
-                    const file = files[i];
-                    pText.innerText = `上傳中: ${i+1}/${total}`;
-                    try {
-                        const base64 = await toBase64(file);
-                        const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
-                        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                        const json = await res.json();
-                        if(json.status === "success") successCount++;
-                    } catch(e) {}
-                    const pct = Math.round(((i+1)/total)*100);
-                    pBar.style.width = `${pct}%`;
-                    pCount.innerText = `${pct}%`;
-                }
-                
-                pBar.style.width = "100%";
-                pCount.innerText = "100%";
-                pText.innerText = "完成";
-                await new Promise(r => setTimeout(r, 500));
-                
-                bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
-                document.getElementById('hiddenUploadInput').value = "";
-                Swal.fire('上傳完成', `成功 ${successCount} / ${total}`, 'success');
-                fetchAlbums(true);
-            })();
-        }
-        
         function showProgressModal(title) {
             document.getElementById('progressModalTitle').innerText = title;
             document.getElementById('genericProgressBar').style.width = '0%';
@@ -1194,7 +1189,6 @@
                     localStorage.removeItem(STORAGE_KEY_URL);
                     localStorage.removeItem(STORAGE_KEY_TITLE);
                     sessionStorage.removeItem(SESSION_KEY_VIEWER);
-                    localStorage.clear(); 
                     window.history.replaceState({}, document.title, window.location.pathname);
                     location.reload();
                 }
