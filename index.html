@@ -12,13 +12,15 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     
-    <!-- Libraries -->
+    <!-- Libraries (Place JS at the end of head or before body close) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Bootstrap 5 JS Bundle (Includes Popper) - CRITICAL FIX -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
         /* --- S92 OLED Style Tokens --- */
@@ -92,24 +94,12 @@
         .album-info { padding: 1.2rem; flex-grow: 1; cursor: pointer; }
         .album-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.4; }
         .album-meta { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); }
-        
-        .admin-album-controls {
-            padding: 10px; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2);
-            display: flex; gap: 5px; justify-content: space-between;
-        }
-        .btn-card-action { flex: 1; font-size: 0.8rem; padding: 4px; }
 
         /* Photo Grid */
         .photo-item { position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1/1; border: 1px solid transparent; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; pointer-events: none; }
         .photo-item:hover { border-color: var(--brand-primary); }
         .photo-item:hover img { transform: scale(1.05); }
-
-        .photo-item.selected { border: 2px solid var(--brand-danger); box-shadow: 0 0 15px rgba(255, 23, 68, 0.4); }
-        .photo-item.selected img { opacity: 0.6; }
-        .photo-checkbox { position: absolute; top: 10px; left: 10px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-        .photo-item.selected .photo-checkbox { background: var(--brand-danger); border-color: var(--brand-danger); }
-        .photo-item.selected .photo-checkbox::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
 
         /* Breadcrumb */
         #navHeader { border-bottom: 1px solid var(--border-subtle); padding-bottom: 2rem; margin-bottom: 2rem; }
@@ -124,10 +114,6 @@
         .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
         .form-control { background-color: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); }
         .form-control:focus { background-color: var(--bg-tertiary); border-color: var(--brand-primary); color: var(--text-primary); box-shadow: none; }
-
-        /* Footer */
-        .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; text-align: center; }
-        .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; }
 
         .hidden { display: none !important; }
 
@@ -151,9 +137,6 @@
                 </span>
                 
                 <div id="adminControls" class="d-none d-inline-flex align-items-center gap-2">
-                    <button class="btn-oled btn-sm" onclick="openCreateAlbumModal()">
-                        <i class="bi bi-folder-plus me-1"></i> 建立相簿
-                    </button>
                     <button class="btn-oled btn-sm" onclick="openSettingsModal()">
                         <i class="bi bi-gear-fill me-1"></i> 系統設定
                     </button>
@@ -178,19 +161,12 @@
                 <span id="currentAlbumName" class="breadcrumb-item-custom breadcrumb-active hidden"></span>
             </div>
             <div class="d-flex gap-2">
-                <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
-                    <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
-                </button>
-                <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
-                    <i class="bi bi-cloud-upload me-2"></i> 上傳相片
-                </button>
                 <button class="btn-oled" onclick="refreshData()"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
         </div>
 
         <!-- Views -->
         <div id="albumView" class="row g-4">
-            <!-- Mock Data Placeholder -->
             <div class="text-center py-5">
                 <h2 class="text-muted font-monospace">正在載入相簿資料...</h2>
             </div>
@@ -198,19 +174,15 @@
         
         <div id="photoView" class="row g-3 hidden"></div>
         
+        <!-- Setup State -->
         <div id="setupState" class="text-center py-5 hidden">
-            <h1 class="display-4 mb-3">系統初始化</h1>
-            <p class="text-muted">尚未設定服務端點。</p>
-            <button class="btn-oled btn-oled-accent px-5" onclick="openSettingsModal()">開始設定</button>
+            <h1 class="display-4 mb-3" style="color: var(--brand-primary); text-shadow: var(--glow-blue);">系統初始化</h1>
+            <p class="text-muted mb-4">偵測到尚未設定後端服務端點 (GAS URL)。<br>請點擊下方按鈕進行設定，以串接您的 Google Drive 相簿。</p>
+            <button class="btn-oled btn-oled-accent px-5 py-3" onclick="openSettingsModal()">
+                <i class="bi bi-plug-fill me-2"></i>開始設定 API URL
+            </button>
         </div>
     </div>
-
-    <!-- Footer -->
-    <footer class="footer-custom">
-        <div class="container">
-            <span class="footer-text">© 新北市崇德國小 | All Rights Reserved.</span>
-        </div>
-    </footer>
 
     <!-- Modals -->
     <div class="modal fade" id="loginModal" tabindex="-1">
@@ -236,14 +208,17 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label small">API服務端點 (GAS URL)</label>
-                        <input type="url" class="form-control" id="settingGasUrl" placeholder="https://script.google.com/...">
+                        <label class="form-label small">API 服務端點 (GAS 部署網址)</label>
+                        <input type="url" class="form-control" id="settingGasUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                        <div class="form-text text-muted mt-2">請貼上您在 GAS 部署為網頁應用程式後獲得的網址。</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">網頁標題</label>
-                        <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
+                        <input type="text" class="form-control" id="settingPageTitle" placeholder="雲端相簿">
                     </div>
-                    <button class="btn-oled w-100 btn-oled-accent" onclick="saveSettings()">儲存設定</button>
+                    <button class="btn-oled w-100 btn-oled-accent mt-3" onclick="saveSettings()">
+                        <i class="bi bi-save2 me-2"></i>儲存並更新
+                    </button>
                 </div>
             </div>
         </div>
@@ -258,18 +233,27 @@
         let currentAlbumId = null;
 
         // --- Init ---
-        window.onload = () => {
+        window.addEventListener('DOMContentLoaded', () => {
+            // 套用基礎設定
             document.getElementById('navbarTitle').innerText = PAGE_TITLE;
             document.getElementById('settingGasUrl').value = SCRIPT_URL;
             document.getElementById('settingPageTitle').value = PAGE_TITLE;
 
-            if (!SCRIPT_URL) {
+            // 判斷是否需要進入初始化狀態
+            if (!SCRIPT_URL || SCRIPT_URL.trim() === "") {
                 document.getElementById('albumView').classList.add('hidden');
                 document.getElementById('setupState').classList.remove('hidden');
+                
+                // 確保 Bootstrap JS 載入後再開啟彈窗
+                setTimeout(() => {
+                    if (typeof bootstrap !== 'undefined') {
+                        openSettingsModal();
+                    }
+                }, 1000);
             } else {
                 fetchAlbums();
             }
-        };
+        });
 
         // --- API Functions ---
         async function fetchAlbums(refresh = false) {
@@ -283,12 +267,15 @@
                 }
             } catch (e) {
                 console.error("Fetch failed", e);
+                Swal.fire('連線失敗', '無法從 API 獲取資料，請檢查 GAS URL 是否正確。', 'error');
             }
         }
 
         function renderAlbums() {
             const container = document.getElementById('albumView');
             container.innerHTML = '';
+            document.getElementById('setupState').classList.add('hidden');
+            container.classList.remove('hidden');
             
             if (albums.length === 0) {
                 container.innerHTML = '<div class="text-center py-5"><h2 class="text-muted font-monospace">尚無相簿資料</h2></div>';
@@ -305,11 +292,6 @@
                             <div class="album-title">${album.name}</div>
                             <div class="album-meta">${album.photos ? album.photos.length : 0} 個項目</div>
                         </div>
-                        ${isAdmin ? `
-                        <div class="admin-album-controls">
-                            <button class="btn-oled btn-card-action" onclick="openRenameModal('${album.id}')"><i class="bi bi-pencil"></i></button>
-                            <button class="btn-oled btn-card-action btn-oled-danger" onclick="deleteAlbum('${album.id}')"><i class="bi bi-trash"></i></button>
-                        </div>` : ''}
                     </div>
                 `;
                 container.appendChild(col);
@@ -327,8 +309,6 @@
             document.getElementById('currentAlbumName').classList.remove('hidden');
             document.getElementById('currentAlbumName').innerText = album.name;
             
-            if (isAdmin) document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
-
             const container = document.getElementById('photoView');
             container.innerHTML = '';
             
@@ -355,8 +335,30 @@
             document.getElementById('photoView').classList.add('hidden');
             document.getElementById('separator').classList.add('hidden');
             document.getElementById('currentAlbumName').classList.add('hidden');
-            document.getElementById('uploadToAlbumBtn').classList.add('hidden');
-            document.getElementById('batchDeleteBtn').classList.add('hidden');
+        }
+
+        // --- Core Action ---
+        function saveSettings() {
+            const urlInput = document.getElementById('settingGasUrl').value.trim();
+            const titleInput = document.getElementById('settingPageTitle').value.trim();
+            
+            if (urlInput === "") {
+                Swal.fire('提醒', '請輸入有效的 API URL', 'warning');
+                return;
+            }
+
+            localStorage.setItem('gas_api_url', urlInput);
+            localStorage.setItem('page_title', titleInput || "雲端相簿");
+
+            Swal.fire({
+                icon: 'success',
+                title: '設定已儲存',
+                text: '正在重新載入系統...',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                window.location.reload();
+            });
         }
 
         // --- Admin Functions ---
@@ -373,15 +375,16 @@
                     document.getElementById('adminBadge').classList.remove('d-none');
                     document.getElementById('adminControls').classList.remove('d-none');
                     document.getElementById('loginBtn').classList.add('d-none');
-                    bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                    const modalEl = document.getElementById('loginModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                    modal.hide();
                     renderAlbums();
-                    if (currentAlbumId) openAlbum(currentAlbumId);
-                    Swal.fire({ icon: 'success', title: '登入成功', timer: 1500, showConfirmButton: false });
+                    Swal.fire({ icon: 'success', title: '管理者已登入', timer: 1500, showConfirmButton: false });
                 } else {
                     Swal.fire('錯誤', '密碼不正確', 'error');
                 }
             } catch (e) {
-                Swal.fire('錯誤', '無法連線至 API', 'error');
+                Swal.fire('錯誤', '無法連線至 API 驗證密碼', 'error');
             }
         }
 
@@ -391,26 +394,28 @@
             document.getElementById('adminControls').classList.add('d-none');
             document.getElementById('loginBtn').classList.remove('d-none');
             renderAlbums();
-            if (currentAlbumId) openAlbum(currentAlbumId);
-        }
-
-        function saveSettings() {
-            const url = document.getElementById('settingGasUrl').value;
-            const title = document.getElementById('settingPageTitle').value;
-            localStorage.setItem('gas_api_url', url);
-            localStorage.setItem('page_title', title);
-            location.reload();
         }
 
         function refreshData() {
+            if (!SCRIPT_URL) return;
             fetchAlbums(true);
         }
 
-        // --- Helper UI ---
-        function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
-        function openSettingsModal() { new bootstrap.Modal(document.getElementById('settingsModal')).show(); }
-        function openCreateAlbumModal() { Swal.fire('提示', '此為展示功能', 'info'); }
-        function openUploadModal() { Swal.fire('提示', '請先在 GAS 端配置完成再進行上傳測試', 'info'); }
+        // --- Modal Helpers ---
+        function openLoginModal() { 
+            const modalEl = document.getElementById('loginModal');
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+        function openSettingsModal() { 
+            const modalEl = document.getElementById('settingsModal');
+            if (typeof bootstrap !== 'undefined') {
+                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modal.show();
+            } else {
+                console.error("Bootstrap is not loaded yet.");
+            }
+        }
     </script>
 </body>
 </html>
