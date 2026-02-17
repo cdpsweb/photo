@@ -33,13 +33,11 @@
             --brand-accent: #FF4081;
             --brand-success: #00E676;
             --brand-danger: #FF1744;
-            --brand-warning: #FFAB00;
             --border-subtle: rgba(41, 121, 255, 0.2);
             --glow-blue: 0 0 30px rgba(41, 121, 255, 0.3);
             --glow-pink: 0 0 30px rgba(255, 64, 129, 0.3);
             --glow-text: 0 0 10px rgba(255, 255, 255, 0.5);
             
-            /* Typography */
             --font-sans: 'Inter', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
             --radius-md: 12px;
@@ -90,145 +88,52 @@
             overflow: hidden; transition: all 0.3s; height: 100%; display: flex; flex-direction: column; position: relative;
         }
         .album-card:hover { transform: translateY(-4px); border-color: var(--brand-primary); box-shadow: var(--glow-blue); }
-        .album-cover { height: 220px; width: 100%; object-fit: cover; border-bottom: 1px solid var(--border-subtle); }
-        .album-info { padding: 1.2rem; flex-grow: 1; }
+        .album-cover { height: 220px; width: 100%; object-fit: cover; border-bottom: 1px solid var(--border-subtle); cursor: pointer; }
+        .album-info { padding: 1.2rem; flex-grow: 1; cursor: pointer; }
         .album-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.4; }
         .album-meta { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); }
         
-        .admin-album-controls { padding: 10px; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2); display: flex; gap: 5px; justify-content: space-between; }
+        .admin-album-controls {
+            padding: 10px; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2);
+            display: flex; gap: 5px; justify-content: space-between;
+        }
         .btn-card-action { flex: 1; font-size: 0.8rem; padding: 4px; }
 
         /* Photo Grid */
         .photo-item { position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1/1; border: 1px solid transparent; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        .photo-item.draggable { cursor: grab; }
-        .photo-item.draggable:active { cursor: grabbing; }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; pointer-events: none; }
         .photo-item:hover { border-color: var(--brand-primary); }
         .photo-item:hover img { transform: scale(1.05); }
-        .sortable-ghost { opacity: 0.4; background-color: var(--brand-primary); border: 2px dashed var(--brand-primary); }
 
-        /* Multi-select & Cover Actions */
         .photo-item.selected { border: 2px solid var(--brand-danger); box-shadow: 0 0 15px rgba(255, 23, 68, 0.4); }
         .photo-item.selected img { opacity: 0.6; }
-        .photo-checkbox { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: 0.2s; }
+        .photo-checkbox { position: absolute; top: 10px; left: 10px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .photo-item.selected .photo-checkbox { background: var(--brand-danger); border-color: var(--brand-danger); }
         .photo-item.selected .photo-checkbox::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
-        
-        /* Set Cover Button (Top Right Star) */
-        .btn-set-cover {
-            position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
-            background: rgba(0,0,0,0.6); border: 1px solid var(--brand-warning); color: var(--brand-warning);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            z-index: 20; cursor: pointer; transition: 0.2s; opacity: 0; font-size: 14px;
-        }
-        .photo-item:hover .btn-set-cover { opacity: 1; }
-        .btn-set-cover:hover { background: var(--brand-warning); color: black; box-shadow: 0 0 10px var(--brand-warning); }
-        .btn-set-cover i { pointer-events: none; }
 
-        /* Header Breadcrumb */
-        #navHeader { border-bottom: 1px solid var(--border-subtle); padding-bottom: 2rem; margin-bottom: 2rem; background: radial-gradient(circle at top right, rgba(41, 121, 255, 0.1), transparent 40%); }
-        .breadcrumb-item-custom { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-muted); letter-spacing: 0.05em; cursor: pointer !important; transition: color 0.2s; text-decoration: none; }
-        .breadcrumb-item-custom:hover { color: var(--brand-primary); text-shadow: 0 0 8px rgba(41, 121, 255, 0.5); text-decoration: underline; }
+        /* Breadcrumb */
+        #navHeader { border-bottom: 1px solid var(--border-subtle); padding-bottom: 2rem; margin-bottom: 2rem; }
+        .breadcrumb-item-custom { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-muted); letter-spacing: 0.05em; cursor: pointer; text-decoration: none; }
+        .breadcrumb-item-custom:hover { color: var(--brand-primary); text-shadow: 0 0 8px rgba(41, 121, 255, 0.5); }
         .breadcrumb-active { color: var(--brand-primary); text-shadow: 0 0 8px rgba(41, 121, 255, 0.5); }
         .breadcrumb-separator { color: var(--text-muted); margin: 0 0.5rem; }
 
-        /* Inputs & Modals */
-        .modal-content { background-color: var(--bg-secondary); border: 1px solid var(--border-subtle); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        /* Modals */
+        .modal-content { background-color: var(--bg-secondary); border: 1px solid var(--border-subtle); }
         .modal-header, .modal-footer { border-color: var(--border-subtle); }
-        .modal-title { color: var(--text-primary); font-weight: bold; }
         .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
-        .form-control, .form-select { background-color: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 0.6rem; font-size: 0.9rem; }
-        .form-control:focus, .form-select:focus { background-color: var(--bg-tertiary); border-color: var(--brand-primary); color: var(--text-primary); box-shadow: none; }
-        .form-label { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.3rem; }
-        .form-control::placeholder { color: #AAAAAA; opacity: 1; }
+        .form-control { background-color: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); }
+        .form-control:focus { background-color: var(--bg-tertiary); border-color: var(--brand-primary); color: var(--text-primary); box-shadow: none; }
 
         /* Footer */
-        .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
-        .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; }
+        .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; text-align: center; }
+        .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; }
 
-        /* Admin Panel Styles */
-        .admin-section-title { font-family: var(--font-mono); font-size: 0.8rem; color: var(--brand-accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; }
-        .admin-section-title::after { content: ''; flex-grow: 1; height: 1px; background: rgba(255,64,129,0.2); margin-left: 10px; }
-
-        /* Progress Modal Styles */
-        .progress-container { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin-top: 1rem; }
-        .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
-        .progress-text { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; font-family: var(--font-mono); font-size: 0.9rem; }
-        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
-        .upload-text-high-contrast { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; }
-
-        /* Directory List */
-        .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
-        .directory-item { padding: 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
-        .directory-item:hover { background: rgba(41, 121, 255, 0.1); padding-left: 1.5rem; color: var(--brand-primary); }
-        .directory-item:last-child { border-bottom: none; }
-        .dir-index { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem; }
-        .dir-count { font-family: var(--font-mono); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
-
-        /* Utils */
         .hidden { display: none !important; }
-        .d-none { display: none !important; }
-        
-        /* Lightbox */
-        #imageModal .modal-content { background: rgba(0,0,0,0.95); border: none; }
-        #previewImage { max-height: calc(100vh - 160px); max-width: 90vw; }
-        .lightbox-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 56px; height: 56px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: rgba(0,0,0,0.5); z-index: 1060; }
-        .lightbox-prev { left: 20px; } .lightbox-next { right: 20px; }
-        .thumbnail-strip-container { position: absolute; bottom: 0; width: 100%; height: 100px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 20px; overflow-x: auto; }
-        .thumb-item { width: 60px; height: 60px; margin-right: 10px; opacity: 0.5; cursor: pointer; flex-shrink: 0; }
-        .thumb-item.active { opacity: 1; border: 2px solid var(--brand-primary); }
 
-        /* --- SweetAlert2 OLED Theme Overrides --- */
-        div:where(.swal2-container) div:where(.swal2-popup) {
-            background: rgba(10, 10, 15, 0.95) !important;
-            border: 1px solid var(--border-subtle);
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            border-radius: var(--radius-md);
-            backdrop-filter: blur(10px);
-        }
-        div:where(.swal2-container) h2:where(.swal2-title) {
-            color: var(--text-primary) !important;
-            font-family: var(--font-sans);
-        }
-        div:where(.swal2-container) div:where(.swal2-html-container) {
-            color: var(--text-secondary) !important;
-            font-family: var(--font-mono);
-        }
-        /* Buttons */
-        div:where(.swal2-container) button.swal2-confirm {
-            background-color: transparent !important;
-            border: 1px solid var(--brand-primary) !important;
-            color: var(--brand-primary) !important;
-            border-radius: var(--radius-md) !important;
-            padding: 0.6rem 1.5rem !important;
-            font-family: var(--font-mono) !important;
-            box-shadow: none !important;
-            transition: all 0.3s !important;
-        }
-        div:where(.swal2-container) button.swal2-confirm:hover {
-            background-color: rgba(41, 121, 255, 0.1) !important;
-            box-shadow: var(--glow-blue) !important;
-            color: #fff !important;
-        }
-        div:where(.swal2-container) button.swal2-cancel {
-            background-color: transparent !important;
-            border: 1px solid var(--brand-danger) !important;
-            color: var(--brand-danger) !important;
-            border-radius: var(--radius-md) !important;
-            padding: 0.6rem 1.5rem !important;
-            font-family: var(--font-mono) !important;
-            transition: all 0.3s !important;
-        }
-        div:where(.swal2-container) button.swal2-cancel:hover {
-            background-color: rgba(255, 23, 68, 0.1) !important;
-            box-shadow: 0 0 15px rgba(255, 23, 68, 0.3) !important;
-            color: #fff !important;
-        }
-        /* Icons */
-        div:where(.swal2-icon).swal2-warning { border-color: var(--brand-warning) !important; color: var(--brand-warning) !important; }
-        div:where(.swal2-icon).swal2-error { border-color: var(--brand-danger) !important; color: var(--brand-danger) !important; }
-        div:where(.swal2-icon).swal2-success { border-color: var(--brand-success) !important; color: var(--brand-success) !important; }
-        div:where(.swal2-icon).swal2-info { border-color: var(--brand-primary) !important; color: var(--brand-primary) !important; }
+        /* SweetAlert2 OLED Theme */
+        .swal2-popup { background: var(--bg-secondary) !important; color: white !important; border: 1px solid var(--border-subtle) !important; }
+        .swal2-title, .swal2-html-container { color: white !important; }
     </style>
 </head>
 <body>
@@ -241,34 +146,23 @@
                 <span id="navbarTitle">雲端相簿</span>
             </a>
             <div>
-                <!-- Viewer Mode Label -->
-                <span id="viewerModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
-                    <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
+                <span id="adminBadge" class="d-none me-2" style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
+                    <i class="bi bi-shield-check me-1"></i> 管理者模式
                 </span>
                 
-                <!-- Admin Controls Container -->
                 <div id="adminControls" class="d-none d-inline-flex align-items-center gap-2">
-                    <span style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
-                        <i class="bi bi-shield-check me-1"></i> 管理者模式
-                    </span>
-                    
-                    <!-- Create Album Button -->
                     <button class="btn-oled btn-sm" onclick="openCreateAlbumModal()">
                         <i class="bi bi-folder-plus me-1"></i> 建立相簿
                     </button>
-
-                    <!-- Settings Button -->
-                    <button class="btn-oled btn-sm" onclick="openAdminModal()">
+                    <button class="btn-oled btn-sm" onclick="openSettingsModal()">
                         <i class="bi bi-gear-fill me-1"></i> 系統設定
                     </button>
-                    
                     <button class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()">
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
                 </div>
                 
-                <!-- Login Button -->
-                <button id="loginBtn" class="btn-oled btn-icon btn-settings" onclick="openLoginModal()" title="管理者登入">
+                <button id="loginBtn" class="btn-oled btn-icon btn-oled-accent" onclick="openLoginModal()" title="管理者登入">
                     <i class="bi bi-key-fill"></i>
                 </button>
             </div>
@@ -279,32 +173,35 @@
     <div class="container-fluid px-lg-5 py-5">
         <div id="navHeader" class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
             <div>
-                <span id="homeLink" class="breadcrumb-item-custom" onclick="showAlbumList()">相簿首頁</span>
+                <span class="breadcrumb-item-custom" onclick="showAlbumList()">相簿首頁</span>
                 <span id="separator" class="breadcrumb-separator hidden">//</span>
                 <span id="currentAlbumName" class="breadcrumb-item-custom breadcrumb-active hidden"></span>
             </div>
             <div class="d-flex gap-2">
-                <button id="directoryBtn" class="btn-oled" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i> 目錄檢索</button>
                 <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
                     <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
                 </button>
-                <!-- Uniform Button Style -->
-                <button id="downloadAllBtn" class="btn-oled hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
                 <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
                     <i class="bi bi-cloud-upload me-2"></i> 上傳相片
                 </button>
-                <button id="refreshBtn" class="btn-oled" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise"></i></button>
+                <button class="btn-oled" onclick="refreshData()"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
         </div>
 
-        <div id="albumView" class="row g-4"></div>
+        <!-- Views -->
+        <div id="albumView" class="row g-4">
+            <!-- Mock Data Placeholder -->
+            <div class="text-center py-5">
+                <h2 class="text-muted font-monospace">正在載入相簿資料...</h2>
+            </div>
+        </div>
+        
         <div id="photoView" class="row g-3 hidden"></div>
-        <div id="emptyState" class="text-center py-5 hidden"><h2 class="text-muted font-monospace">查無資料 (NO_DATA)</h2></div>
         
         <div id="setupState" class="text-center py-5 hidden">
             <h1 class="display-4 mb-3">系統初始化</h1>
             <p class="text-muted">尚未設定服務端點。</p>
-            <button class="btn-oled btn-oled-accent px-5" onclick="openAdminModal(true)">開始設定</button>
+            <button class="btn-oled btn-oled-accent px-5" onclick="openSettingsModal()">開始設定</button>
         </div>
     </div>
 
@@ -316,964 +213,204 @@
     </footer>
 
     <!-- Modals -->
-
-    <!-- Login Modal -->
     <div class="modal fade" id="loginModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
-                <div class="modal-header border-0 d-flex justify-content-center position-relative">
-                    <h5 class="modal-title w-100 text-center">相簿管理系統</h5>
-                    <button class="btn-close position-absolute end-0 me-3" data-bs-dismiss="modal"></button>
+                <div class="modal-header border-0 justify-content-center">
+                    <h5 class="modal-title">管理者登入</h5>
                 </div>
                 <div class="modal-body">
-                    <input type="password" class="form-control text-center mb-3" id="adminPassword" placeholder="請輸入密碼" autocomplete="off">
+                    <input type="password" class="form-control text-center mb-3" id="adminPassword" placeholder="請輸入密碼">
                     <button class="btn-oled w-100" onclick="verifyAdmin()">登入</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Create Album Modal -->
-    <div class="modal fade" id="createAlbumModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">建立新相簿</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="text" class="form-control mb-3" id="createAlbumName" placeholder="例如:20260507_運動會">
-                    <p class="small text-white-50 text-center mb-3">* 建立後請在相簿卡片上點擊「上傳」新增照片。</p>
-                    <button class="btn-oled w-100" onclick="createAlbum()">確認建立</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Admin Settings Modal -->
-    <div class="modal fade" id="adminControlModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal fade" id="settingsModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-gear-wide-connected me-2"></i>系統設定</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label small">API服務端點 (GAS URL)</label>
-                        <input type="url" class="form-control form-control-sm" id="settingGasUrl" placeholder="https://script.google.com/...">
+                        <input type="url" class="form-control" id="settingGasUrl" placeholder="https://script.google.com/...">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">網頁標題</label>
-                        <div class="input-group input-group-sm">
-                            <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
-                            <button class="btn-oled btn-sm" onclick="saveSettings()">儲存</button>
-                        </div>
+                        <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
                     </div>
-                    <hr style="border-color: var(--border-subtle);">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <button class="btn-oled btn-sm" onclick="initShareUi(); new bootstrap.Modal(document.getElementById('shareModal')).show()">
-                            <i class="bi bi-share me-1"></i> 取得分享連結
-                        </button>
-                        <button class="btn-oled btn-sm btn-oled-danger" onclick="clearSettings()">清除本機設定</button>
-                    </div>
+                    <button class="btn-oled w-100 btn-oled-accent" onclick="saveSettings()">儲存設定</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Upload Modal -->
-    <div class="modal fade" id="uploadModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">上傳相片</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="mb-2 text-white-50">上傳至: <span id="uploadTargetName" class="text-white fw-bold"></span></p>
-                    <input type="file" class="form-control mb-3" id="uploadFiles" multiple accept="image/*">
-                    <div id="uploadStatus" class="hidden">
-                        <div class="progress-container"><div id="uploadProgressBar" class="progress-bar"></div></div>
-                        <div class="d-flex justify-content-between mt-1 font-monospace small">
-                            <span id="uploadProgressText" class="upload-text-high-contrast">準備中...</span>
-                            <span id="uploadCount" class="upload-text-high-contrast"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="doUploadBtn" class="btn-oled w-100" onclick="startBatchUpload()">開始上傳</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Rename Modal -->
-    <div class="modal fade" id="renameModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">更名相簿</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <input type="text" class="form-control mb-3" id="renameInput">
-                    <input type="hidden" id="renameTargetId">
-                    <button class="btn-oled w-100" onclick="confirmRename()">確認更名</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Progress Modal (Generic) -->
-    <div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="progressModalTitle">處理中</h5>
-                </div>
-                <div class="modal-body">
-                    <div class="progress-container"><div id="genericProgressBar" class="progress-bar"></div></div>
-                    <div class="d-flex justify-content-between mt-2 font-monospace">
-                        <span id="progressText" class="progress-text">初始化...</span>
-                        <span id="progressCount" class="progress-text">0%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Share Link Modal -->
-    <div class="modal fade" id="shareModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">分享連結</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body text-center">
-                    <div id="qrcode" class="d-flex justify-content-center mb-3 bg-white p-2 rounded w-auto d-inline-block"></div>
-                    <div class="input-group input-group-sm mb-3">
-                        <input type="text" class="form-control text-center" id="shareLinkInput" readonly>
-                        <button class="btn btn-outline-secondary" onclick="copyShareLink()">複製</button>
-                    </div>
-                    <p class="small text-muted">* 此連結包含設定參數，訪客掃描後可直接瀏覽。</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Directory Modal -->
-    <div class="modal fade" id="directoryModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">相簿目錄索引</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body p-0"><ul id="directoryList" class="directory-list"></ul></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Lightbox -->
-    <div class="modal fade" id="imageModal" tabindex="-1">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content">
-                <div class="modal-body p-0 d-flex flex-column justify-content-center align-items-center position-relative">
-                    <button class="btn-close btn-close-white position-absolute top-0 end-0 m-4 z-3" data-bs-dismiss="modal"></button>
-                    <a id="downloadLink" href="#" target="_blank" class="btn-oled position-absolute top-0 start-0 m-4 z-3">照片下載</a>
-                    <button class="lightbox-nav-btn lightbox-prev" onclick="navigateLightbox(-1)"><i class="bi bi-chevron-left"></i></button>
-                    <button class="lightbox-nav-btn lightbox-next" onclick="navigateLightbox(1)"><i class="bi bi-chevron-right"></i></button>
-                    <img id="previewImage" src="" class="img-fluid">
-                    <div class="thumbnail-strip-container" id="thumbnailStrip"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading -->
-    <div id="loadingOverlay" class="hidden">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-3 text-muted font-monospace">系統載入中...</p>
-        <button class="btn-oled btn-oled-danger btn-sm mt-3" onclick="forceStopLoading()">終止程序</button>
-    </div>
-
-    <input type="file" id="hiddenUploadInput" multiple accept="image/*" class="d-none">
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        let SCRIPT_URL = "";
-        let PAGE_TITLE = "雲端相簿";
-        let allData = [];
-        let currentAlbumPhotos = [];
-        let currentAlbumNameStr = "";
-        let currentAlbumIdStr = "";
-        let currentPhotoIndex = 0;
-        let adminToken = ""; 
-        let selectedPhotoIds = new Set();
-        let uploadTargetAlbumName = "";
+        // --- Global State ---
+        let SCRIPT_URL = localStorage.getItem('gas_api_url') || "";
+        let PAGE_TITLE = localStorage.getItem('page_title') || "雲端相簿";
+        let isAdmin = false;
+        let albums = [];
+        let currentAlbumId = null;
 
-        const STORAGE_KEY_URL = "gas_album_url_v5";
-        const STORAGE_KEY_TITLE = "gas_album_title_v5";
-        const SESSION_KEY_VIEWER = "is_viewer_mode";
-        const SESSION_KEY_ADMIN = "gas_album_admin_token";
-        const SESSION_KEY_CURRENT_ALBUM = "gas_album_active_id";
-        
-        // SweetAlert2 Mixins
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            background: '#111111',
-            color: '#ffffff',
-        });
+        // --- Init ---
+        window.onload = () => {
+            document.getElementById('navbarTitle').innerText = PAGE_TITLE;
+            document.getElementById('settingGasUrl').value = SCRIPT_URL;
+            document.getElementById('settingPageTitle').value = PAGE_TITLE;
 
-        // Fast UI Toggle
-        (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const ref = urlParams.get('ref');
-            if(ref) {
-                try {
-                    localStorage.setItem(STORAGE_KEY_URL, atob(ref));
-                    sessionStorage.setItem(SESSION_KEY_VIEWER, "true");
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                } catch(e){}
-            }
-            if (sessionStorage.getItem(SESSION_KEY_VIEWER) === "true") {
-                const style = document.createElement('style');
-                style.innerHTML = '#loginBtn { display: none !important; } #viewerModeLabel { display: inline-block !important; }';
-                document.head.appendChild(style);
-            }
-        })();
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadSettings();
-
-            const storedAdmin = sessionStorage.getItem(SESSION_KEY_ADMIN);
-            if(storedAdmin) {
-                adminToken = storedAdmin;
-                toggleAdminUI(true);
-            }
-            
-            document.addEventListener('keydown', (e) => {
-                if(document.getElementById('imageModal').classList.contains('show')) {
-                    if(e.key === "ArrowLeft") navigateLightbox(-1);
-                    if(e.key === "ArrowRight") navigateLightbox(1);
-                }
-            });
             if (!SCRIPT_URL) {
-                showSetupState();
+                document.getElementById('albumView').classList.add('hidden');
+                document.getElementById('setupState').classList.remove('hidden');
             } else {
                 fetchAlbums();
             }
+        };
 
-            document.getElementById('hiddenUploadInput').addEventListener('change', function() {
-                if(this.files.length > 0) performBatchUpload(this.files, uploadTargetAlbumName);
-            });
-        });
-
-        function toggleAdminUI(isAdmin) {
-            const loginBtn = document.getElementById('loginBtn');
-            const adminControls = document.getElementById('adminControls');
-            
-            if(isAdmin) {
-                loginBtn.classList.add('d-none');
-                adminControls.classList.remove('d-none');
-                adminControls.classList.add('d-flex');
-            } else {
-                loginBtn.classList.remove('d-none');
-                adminControls.classList.add('d-none');
-                adminControls.classList.remove('d-flex');
-            }
-        }
-
-        // --- Core Functions ---
-
-        async function safeFetchJson(url, options = {}) {
-            try {
-                const res = await fetch(url, options);
-                const text = await res.text();
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    if (text.trim().startsWith("<")) {
-                        throw new Error("權限錯誤：GAS 回傳了登入頁面而非資料。\n請檢查部署設定：「誰可以存取」必須設為「所有人」。");
-                    }
-                    throw new Error("資料格式錯誤 (非JSON)");
-                }
-            } catch (err) {
-                throw err;
-            }
-        }
-
-        async function fetchAlbums(forceRefresh = false) {
+        // --- API Functions ---
+        async function fetchAlbums(refresh = false) {
             if (!SCRIPT_URL) return;
-            showLoading(true);
             try {
-                let url = `${SCRIPT_URL}?action=getAlbums`;
-                if (forceRefresh) url += "&refresh=true";
-                const json = await safeFetchJson(url);
-                if (json.status === "success") {
-                    allData = json.data;
-                    allData.sort((a, b) => {
-                        const getDigits = s => {
-                            const d = s.replace(/\D/g, '');
-                            return d.length > 0 ? parseInt(d.substring(0, 8), 10) : 0;
-                        };
-                        const dA = getDigits(a.name||""), dB = getDigits(b.name||"");
-                        if(dB !== dA) return dB - dA;
-                        return (b.name||"").localeCompare((a.name||""), 'zh-TW');
-                    });
-                    
-                    const savedAlbumId = sessionStorage.getItem(SESSION_KEY_CURRENT_ALBUM);
-                    showAlbumList();
-                    
-                    if (savedAlbumId) {
-                        const savedAlbum = allData.find(a => a.id === savedAlbumId);
-                        if (savedAlbum) showPhotos(savedAlbum.id);
-                        else sessionStorage.removeItem(SESSION_KEY_CURRENT_ALBUM);
-                    }
-                } else { throw new Error(json.message); }
-            } catch (err) {
-                console.error(err);
-                if(err.message.includes("權限錯誤")) Swal.fire("錯誤", err.message, "error");
-                showLoading(false);
-            } finally { showLoading(false); }
+                const response = await fetch(`${SCRIPT_URL}?action=getAlbums${refresh ? '&refresh=true' : ''}`);
+                const result = await response.json();
+                if (result.status === "success") {
+                    albums = result.data;
+                    renderAlbums();
+                }
+            } catch (e) {
+                console.error("Fetch failed", e);
+            }
+        }
+
+        function renderAlbums() {
+            const container = document.getElementById('albumView');
+            container.innerHTML = '';
+            
+            if (albums.length === 0) {
+                container.innerHTML = '<div class="text-center py-5"><h2 class="text-muted font-monospace">尚無相簿資料</h2></div>';
+                return;
+            }
+
+            albums.forEach(album => {
+                const col = document.createElement('div');
+                col.className = 'col-12 col-md-6 col-lg-4 col-xl-3';
+                col.innerHTML = `
+                    <div class="album-card">
+                        <img src="${album.cover || 'https://via.placeholder.com/400x220/111/fff?text=No+Image'}" class="album-cover" onclick="openAlbum('${album.id}')">
+                        <div class="album-info" onclick="openAlbum('${album.id}')">
+                            <div class="album-title">${album.name}</div>
+                            <div class="album-meta">${album.photos ? album.photos.length : 0} 個項目</div>
+                        </div>
+                        ${isAdmin ? `
+                        <div class="admin-album-controls">
+                            <button class="btn-oled btn-card-action" onclick="openRenameModal('${album.id}')"><i class="bi bi-pencil"></i></button>
+                            <button class="btn-oled btn-card-action btn-oled-danger" onclick="deleteAlbum('${album.id}')"><i class="bi bi-trash"></i></button>
+                        </div>` : ''}
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function openAlbum(id) {
+            currentAlbumId = id;
+            const album = albums.find(a => a.id === id);
+            if (!album) return;
+
+            document.getElementById('albumView').classList.add('hidden');
+            document.getElementById('photoView').classList.remove('hidden');
+            document.getElementById('separator').classList.remove('hidden');
+            document.getElementById('currentAlbumName').classList.remove('hidden');
+            document.getElementById('currentAlbumName').innerText = album.name;
+            
+            if (isAdmin) document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
+
+            const container = document.getElementById('photoView');
+            container.innerHTML = '';
+            
+            if (!album.photos || album.photos.length === 0) {
+                container.innerHTML = '<div class="text-center py-5 w-100"><h2 class="text-muted font-monospace">此相簿內沒有相片</h2></div>';
+                return;
+            }
+
+            album.photos.forEach(photo => {
+                const col = document.createElement('div');
+                col.className = 'col-6 col-md-4 col-lg-2';
+                col.innerHTML = `
+                    <div class="photo-item">
+                        <img src="${photo.url}" loading="lazy">
+                    </div>
+                `;
+                container.appendChild(col);
+            });
         }
 
         function showAlbumList() {
-            sessionStorage.removeItem(SESSION_KEY_CURRENT_ALBUM);
-
+            currentAlbumId = null;
             document.getElementById('albumView').classList.remove('hidden');
             document.getElementById('photoView').classList.add('hidden');
             document.getElementById('separator').classList.add('hidden');
             document.getElementById('currentAlbumName').classList.add('hidden');
-            
-            // Hide Desktop Buttons
-            document.getElementById('downloadAllBtn').classList.add('hidden');
             document.getElementById('uploadToAlbumBtn').classList.add('hidden');
             document.getElementById('batchDeleteBtn').classList.add('hidden');
-            
-            // Show Directory
-            document.getElementById('directoryBtn').classList.remove('hidden');
-            
-            document.getElementById('setupState').classList.add('hidden');
-            
-            const view = document.getElementById('albumView');
-            view.innerHTML = '';
-            
-            if(allData.length === 0 && !adminToken) {
-                document.getElementById('emptyState').classList.remove('hidden');
-                return;
-            } else {
-                document.getElementById('emptyState').classList.add('hidden');
-            }
-
-            allData.forEach(album => {
-                const col = document.createElement('div');
-                col.className = 'col-12 col-md-4 col-lg-3';
-                
-                // Check if custom cover exists in local storage
-                let coverImg = album.cover || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PC9zdmc+';
-                const customCover = localStorage.getItem('album_cover_' + album.id);
-                if(customCover) coverImg = customCover;
-
-                let adminBtns = "";
-                if(adminToken) {
-                    adminBtns = `
-                        <div class="admin-album-controls">
-                            <button class="btn btn-sm btn-dark btn-card-action" onclick="event.stopPropagation(); prepareRename('${album.id}', '${album.name}')">更名</button>
-                            <button class="btn btn-sm btn-dark btn-card-action" onclick="event.stopPropagation(); openUploadModal('${album.name}')">上傳</button>
-                            <button class="btn btn-sm btn-danger btn-card-action" onclick="event.stopPropagation(); deleteAlbum('${album.id}', '${album.name}')">刪除</button>
-                        </div>`;
-                }
-
-                col.innerHTML = `
-                    <div class="album-card" onclick="showPhotos('${album.id}')">
-                        <img src="${coverImg}" class="album-cover" loading="lazy">
-                        <div class="album-info">
-                            <h5 class="album-title">${album.name}</h5>
-                            <div class="album-meta"><i class="bi bi-images me-1"></i> ${album.photos.length} 項目</div>
-                        </div>
-                        ${adminBtns}
-                    </div>`;
-                view.appendChild(col);
-            });
         }
 
-        function showPhotos(albumId) {
-            sessionStorage.setItem(SESSION_KEY_CURRENT_ALBUM, albumId);
-
-            const album = allData.find(a => a.id === albumId);
-            if (!album) return;
-            
-            // Sort Logic: Check LocalStorage for custom order
-            const storedOrder = localStorage.getItem('album_sort_' + albumId);
-            if (storedOrder) {
-                const sortOrder = JSON.parse(storedOrder); // Array of IDs
-                album.photos.sort((a, b) => {
-                    const idxA = sortOrder.indexOf(a.id);
-                    const idxB = sortOrder.indexOf(b.id);
-                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                    if (idxA !== -1) return -1;
-                    if (idxB !== -1) return 1;
-                    return 0; 
-                });
-            }
-
-            currentAlbumPhotos = album.photos;
-            currentAlbumNameStr = album.name;
-            currentAlbumIdStr = album.id;
-            selectedPhotoIds.clear();
-
-            bootstrap.Modal.getInstance(document.getElementById('directoryModal'))?.hide();
-
-            document.getElementById('albumView').classList.add('hidden');
-            document.getElementById('photoView').classList.remove('hidden');
-            
-            document.getElementById('downloadAllBtn').classList.remove('hidden');
-            
-            document.getElementById('separator').classList.remove('hidden');
-            document.getElementById('currentAlbumName').innerText = album.name;
-            document.getElementById('currentAlbumName').classList.remove('hidden');
-            
-            if(adminToken) {
-                document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
-                document.getElementById('uploadToAlbumBtn').onclick = () => openUploadModal(album.name);
-                
-                document.getElementById('batchDeleteBtn').classList.add('hidden');
-                
-                document.getElementById('deleteCount').innerText = '0';
-            }
-            
-            const photoGrid = document.getElementById('photoView');
-            if(photoGrid._sortable) photoGrid._sortable.destroy();
-            
-            if(adminToken) {
-                photoGrid._sortable = new Sortable(photoGrid, {
-                    animation: 150,
-                    ghostClass: 'sortable-ghost',
-                    draggable: ".draggable", // Only items with draggable class
-                    onEnd: function (evt) {
-                        const newOrderIds = [];
-                        const itemEls = photoGrid.querySelectorAll('.photo-item');
-                        const newPhotosArr = [];
-                        
-                        itemEls.forEach(el => {
-                             const id = el.id.replace('p-item-', '');
-                             newOrderIds.push(id);
-                             const photoObj = currentAlbumPhotos.find(p => p.id === id);
-                             if(photoObj) newPhotosArr.push(photoObj);
-                        });
-                        
-                        currentAlbumPhotos = newPhotosArr; 
-                        localStorage.setItem('album_sort_' + currentAlbumIdStr, JSON.stringify(newOrderIds));
-                    }
-                });
-            }
-
-            const view = document.getElementById('photoView');
-            view.innerHTML = '';
-            
-            if(album.photos.length === 0) {
-                view.innerHTML = '<div class="col-12 text-center text-muted py-5">此相簿是空的</div>';
-            }
-
-            album.photos.forEach((photo, index) => {
-                const col = document.createElement('div');
-                col.className = 'col-6 col-md-3 col-lg-2';
-                
-                let selectionHtml = "";
-                let setCoverBtn = "";
-                let clickAction = `openLightbox(${index})`;
-                let dragClass = "";
-                let itemId = `p-item-${photo.id}`;
-                
-                if(adminToken) {
-                    selectionHtml = `<div class="photo-checkbox"></div>`;
-                    // Set Cover Button
-                    setCoverBtn = `<div class="btn-set-cover" onclick="event.stopPropagation(); setAlbumCover('${album.id}', '${photo.url}')" title="設為封面"><i class="bi bi-star-fill"></i></div>`;
-                    
-                    clickAction = `handlePhotoSelect(event, '${photo.id}', ${index})`;
-                    dragClass = "draggable";
-                }
-
-                col.innerHTML = `
-                    <div class="photo-item ${dragClass}" id="${itemId}" onclick="${clickAction}">
-                        ${selectionHtml}
-                        ${setCoverBtn}
-                        <img src="${photo.url.replace('=s800', '=s400')}" loading="lazy">
-                    </div>`;
-                view.appendChild(col);
-            });
-        }
-        
-        function setAlbumCover(albumId, url) {
-            localStorage.setItem('album_cover_' + albumId, url);
-            // SweetAlert2 Toast
-            Toast.fire({ icon: 'success', title: '已設為封面' });
-        }
-
-        function handlePhotoSelect(event, id, index) {
-            event.stopPropagation();
-            const el = document.getElementById(`p-item-${id}`);
-            if (selectedPhotoIds.has(id)) {
-                selectedPhotoIds.delete(id);
-                el.classList.remove('selected');
-            } else {
-                selectedPhotoIds.add(id);
-                el.classList.add('selected');
-            }
-            const count = selectedPhotoIds.size;
-            
-            const delBtn = document.getElementById('batchDeleteBtn');
-            const dlBtn = document.getElementById('downloadAllBtn');
-            
-            if (count > 0) {
-                delBtn.classList.remove('hidden');
-                document.getElementById('deleteCount').innerText = count;
-                dlBtn.classList.add('hidden'); 
-            } else {
-                delBtn.classList.add('hidden');
-                dlBtn.classList.remove('hidden');
-            }
-        }
-
-        async function executeBatchDelete() {
-            const count = selectedPhotoIds.size;
-            if (count === 0) return;
-            
-            const confirmResult = await Swal.fire({
-                title: `確定要刪除選取的 ${count} 張照片嗎？`,
-                text: "此動作無法復原",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '確定刪除',
-                cancelButtonText: '取消',
-                reverseButtons: true
-            });
-
-            if (!confirmResult.isConfirmed) return;
-            
-            const ids = Array.from(selectedPhotoIds);
-            showProgressModal("刪除進度");
-            
-            const pBar = document.getElementById('genericProgressBar');
-            const pText = document.getElementById('progressText');
-            const pCount = document.getElementById('progressCount');
-            
-            let success = 0;
-            
-            for (let i=0; i<ids.length; i++) {
-                const id = ids[i];
-                pText.innerText = `刪除中: ${i+1}/${count}`;
-                const pct = Math.round(((i)/count)*100);
-                pCount.innerText = `${pct}%`;
-                pBar.style.width = `${pct}%`;
-                
-                try {
-                    const payload = { action: 'deletePhoto', id: id, password: adminToken };
-                    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                    const json = await res.json();
-                    if(json.status === "success") success++;
-                } catch(e) { console.error(e); }
-            }
-            
-            pBar.style.width = "100%";
-            pCount.innerText = "100%";
-            pText.innerText = "完成";
-            await new Promise(r => setTimeout(r, 500));
-            
-            bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
-            Swal.fire('刪除完成', `成功 ${success} / ${count}`, 'success');
-            selectedPhotoIds.clear();
-            fetchAlbums(true); 
-        }
-
-        // --- Admin Logic ---
-
-        function openAdminModal(isSetup = false) {
-            const modal = new bootstrap.Modal(document.getElementById('adminControlModal'));
-            modal.show();
-            // Load settings
-            document.getElementById('settingGasUrl').value = SCRIPT_URL;
-            document.getElementById('settingPageTitle').value = PAGE_TITLE;
-            initShareUi(); 
-        }
-
-        function openCreateAlbumModal() {
-            document.getElementById('createAlbumName').value = "";
-            new bootstrap.Modal(document.getElementById('createAlbumModal')).show();
-        }
-
-        function openLoginModal() {
-            document.getElementById('adminPassword').value = "";
-            if(!SCRIPT_URL) { 
-                openAdminModal(true); 
-                return;
-            }
-            new bootstrap.Modal(document.getElementById('loginModal')).show();
-        }
-
+        // --- Admin Functions ---
         async function verifyAdmin() {
             const pwd = document.getElementById('adminPassword').value;
-            if(!pwd) return Toast.fire({ icon: 'warning', title: '請輸入密碼' });
+            if (!pwd) return;
             
-            showLoading(true);
             try {
-                const url = `${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`;
-                const json = await safeFetchJson(url);
-                if(json.status === "success") {
-                    adminToken = pwd;
-                    sessionStorage.setItem(SESSION_KEY_ADMIN, pwd);
-                    document.getElementById('adminPassword').value = "";
+                const response = await fetch(`${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`);
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    isAdmin = true;
+                    document.getElementById('adminBadge').classList.remove('d-none');
+                    document.getElementById('adminControls').classList.remove('d-none');
+                    document.getElementById('loginBtn').classList.add('d-none');
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
-                    
-                    toggleAdminUI(true);
-                    openAdminModal(); 
-                    
-                    Toast.fire({ icon: 'success', title: '登入成功' });
-                    fetchAlbums(true); 
-                } else { Swal.fire('登入失敗', '密碼錯誤', 'error'); }
-            } catch(e) { Swal.fire('錯誤', e.message, 'error'); }
-            finally { showLoading(false); }
+                    renderAlbums();
+                    if (currentAlbumId) openAlbum(currentAlbumId);
+                    Swal.fire({ icon: 'success', title: '登入成功', timer: 1500, showConfirmButton: false });
+                } else {
+                    Swal.fire('錯誤', '密碼不正確', 'error');
+                }
+            } catch (e) {
+                Swal.fire('錯誤', '無法連線至 API', 'error');
+            }
         }
 
         function logoutAdmin() {
-            adminToken = "";
-            sessionStorage.removeItem(SESSION_KEY_ADMIN);
-            
-            const adminModal = bootstrap.Modal.getInstance(document.getElementById('adminControlModal'));
-            if(adminModal) adminModal.hide();
-            
-            toggleAdminUI(false);
-            showAlbumList();
-            Toast.fire({ icon: 'success', title: '已登出' });
-        }
-
-        async function createAlbum() {
-            const name = document.getElementById('createAlbumName').value.trim();
-            if(!name) return Toast.fire({ icon: 'warning', title: '請輸入相簿名稱' });
-            
-            bootstrap.Modal.getInstance(document.getElementById('createAlbumModal')).hide();
-            
-            callApi({ action: 'createAlbum', albumName: name, password: adminToken }, "相簿建立成功！");
-        }
-
-        async function deleteAlbum(id, name) {
-            const result = await Swal.fire({
-                title: `確定要刪除相簿「${name}」？`,
-                text: "此動作無法復原，所有照片將一併刪除。",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '確定刪除',
-                cancelButtonText: '取消',
-                reverseButtons: true
-            });
-            if(!result.isConfirmed) return;
-            
-            callApi({ action: 'deleteAlbum', id: id, password: adminToken });
-        }
-
-        function prepareRename(id, oldName) {
-            document.getElementById('renameTargetId').value = id;
-            document.getElementById('renameInput').value = oldName;
-            new bootstrap.Modal(document.getElementById('renameModal')).show();
-        }
-
-        async function confirmRename() {
-            const id = document.getElementById('renameTargetId').value;
-            const newName = document.getElementById('renameInput').value.trim();
-            if(!newName) return Toast.fire({ icon: 'warning', title: '名稱不能為空' });
-            bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide();
-            callApi({ action: 'renameAlbum', id: id, newName: newName, password: adminToken });
-        }
-
-        async function callApi(payload, successMsg) {
-            showLoading(true);
-            try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const json = await res.json();
-                if(json.status === "success") {
-                    if(successMsg) Swal.fire('成功', successMsg, 'success');
-                    fetchAlbums(true);
-                } else {
-                    Swal.fire('操作失敗', json.message, 'error');
-                }
-            } catch(e) { console.error(e); Swal.fire('錯誤', '連線錯誤', 'error'); }
-            finally { showLoading(false); }
-        }
-
-        // Upload Logic
-        function openUploadModal(preselectName = null) {
-            const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
-            document.getElementById('uploadTargetName').innerText = preselectName || currentAlbumNameStr || "未選擇";
-            // Store target name in modal dataset or variable logic
-            document.getElementById('uploadModal').dataset.targetAlbum = preselectName || currentAlbumNameStr;
-            modal.show();
-        }
-
-        async function startBatchUpload() {
-            const albumName = document.getElementById('uploadModal').dataset.targetAlbum;
-            if(!albumName) return Toast.fire({ icon: 'warning', title: '無法確認目標相簿' });
-            const files = document.getElementById('uploadFiles').files;
-            if(files.length === 0) return Toast.fire({ icon: 'warning', title: '請選擇檔案' });
-
-            document.getElementById('uploadStatus').classList.remove('hidden');
-            const pBar = document.getElementById('uploadProgressBar');
-            const pText = document.getElementById('uploadProgressText');
-            const pCount = document.getElementById('uploadCount');
-            const doBtn = document.getElementById('doUploadBtn');
-            
-            doBtn.disabled = true;
-            pBar.style.width = "0%";
-            pCount.innerText = "0%";
-            
-            let successCount = 0;
-            const total = files.length;
-
-            for(let i=0; i<total; i++) {
-                const file = files[i];
-                pText.innerText = `上傳中 (${i+1}/${total}): ${file.name}`;
-                try {
-                    const base64 = await toBase64(file);
-                    const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
-                    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                    const json = await res.json();
-                    if(json.status === "success") successCount++;
-                } catch(e) { console.error(e); }
-                
-                const pct = Math.round(((i+1)/total)*100);
-                pBar.style.width = `${pct}%`;
-                pCount.innerText = `${pct}%`;
-            }
-            
-            pBar.style.width = "100%";
-            pCount.innerText = "100%";
-            pText.innerText = "處理完成";
-            await new Promise(r => setTimeout(r, 500)); 
-
-            document.getElementById('uploadFiles').value = "";
-            document.getElementById('uploadStatus').classList.add('hidden');
-            doBtn.disabled = false;
-            bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
-            
-            Swal.fire('上傳完成', `成功 ${successCount} / ${total}`, 'success');
-            fetchAlbums(true);
-        }
-
-        function performBatchUpload(files, albumName) {
-            if(!adminToken) return Toast.fire({ icon: 'warning', title: '請先登入' });
-            
-            showProgressModal("上傳進度");
-            const pBar = document.getElementById('genericProgressBar');
-            const pText = document.getElementById('progressText');
-            const pCount = document.getElementById('progressCount');
-            
-            pBar.style.width = "0%";
-            pCount.innerText = "0%";
-            
-            (async () => {
-                let successCount = 0;
-                const total = files.length;
-                for(let i=0; i<total; i++) {
-                    const file = files[i];
-                    pText.innerText = `上傳中: ${i+1}/${total}`;
-                    try {
-                        const base64 = await toBase64(file);
-                        const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
-                        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                        const json = await res.json();
-                        if(json.status === "success") successCount++;
-                    } catch(e) {}
-                    const pct = Math.round(((i+1)/total)*100);
-                    pBar.style.width = `${pct}%`;
-                    pCount.innerText = `${pct}%`;
-                }
-                
-                pBar.style.width = "100%";
-                pCount.innerText = "100%";
-                pText.innerText = "完成";
-                await new Promise(r => setTimeout(r, 500));
-                
-                bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
-                document.getElementById('hiddenUploadInput').value = "";
-                Swal.fire('上傳完成', `成功 ${successCount} / ${total}`, 'success');
-                fetchAlbums(true);
-            })();
-        }
-        
-        function showProgressModal(title) {
-            document.getElementById('progressModalTitle').innerText = title;
-            document.getElementById('genericProgressBar').style.width = '0%';
-            document.getElementById('progressText').innerText = '準備中...';
-            document.getElementById('progressCount').innerText = '0%';
-            new bootstrap.Modal(document.getElementById('progressModal')).show();
-        }
-
-        function toBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        function openDirectoryModal() {
-            const list = document.getElementById('directoryList');
-            list.innerHTML = '';
-            allData.forEach((album, i) => {
-                const li = document.createElement('li');
-                li.className = 'directory-item';
-                const num = (i+1).toString().padStart(2,'0');
-                li.innerHTML = `<div><span class="dir-index">[${num}]</span> ${album.name}</div><span class="dir-count">${album.photos.length}</span>`;
-                li.onclick = () => { showPhotos(album.id); bootstrap.Modal.getInstance(document.getElementById('directoryModal')).hide(); };
-                list.appendChild(li);
-            });
-            new bootstrap.Modal(document.getElementById('directoryModal')).show();
-        }
-
-        function openLightbox(index) {
-            currentPhotoIndex = index;
-            updateLightbox();
-            renderThumbs();
-            new bootstrap.Modal(document.getElementById('imageModal')).show();
-        }
-
-        function updateLightbox() {
-            const p = currentAlbumPhotos[currentPhotoIndex];
-            const img = document.getElementById('previewImage');
-            img.style.opacity = '0.5';
-            const url = p.url.replace('=s800','=s1600').replace('&sz=w800','&sz=w1600');
-            const newI = new Image();
-            newI.onload = () => { img.src = url; img.style.opacity = '1'; };
-            newI.src = url;
-            document.getElementById('downloadLink').href = p.downloadUrl;
-            
-            document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
-            const active = document.querySelector(`.thumb-item[data-idx="${currentPhotoIndex}"]`);
-            if(active) {
-                active.classList.add('active');
-                active.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-            }
-        }
-
-        function renderThumbs() {
-            const c = document.getElementById('thumbnailStrip');
-            c.innerHTML = '';
-            currentAlbumPhotos.forEach((p, i) => {
-                const d = document.createElement('div');
-                d.className = 'thumb-item';
-                d.dataset.idx = i;
-                d.onclick = () => { currentPhotoIndex = i; updateLightbox(); };
-                const url = p.url.replace('=s800','=s200').replace('&sz=w800','&sz=w200');
-                d.innerHTML = `<img src="${url}">`;
-                c.appendChild(d);
-            });
-        }
-
-        function navigateLightbox(dir) {
-            currentPhotoIndex += dir;
-            if(currentPhotoIndex < 0) currentPhotoIndex = currentAlbumPhotos.length-1;
-            if(currentPhotoIndex >= currentAlbumPhotos.length) currentPhotoIndex = 0;
-            updateLightbox();
-        }
-
-        async function downloadAllCurrentPhotos() {
-            const result = await Swal.fire({
-                title: `下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`,
-                text: "這可能需要一點時間",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: '下載',
-                cancelButtonText: '取消'
-            });
-
-            if(!result.isConfirmed) return;
-            const btn = document.getElementById('downloadAllBtn');
-            const txt = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = `<div class="spinner-border spinner-border-sm"></div> 打包中...`;
-            try {
-                const zip = new JSZip();
-                const folder = zip.folder(currentAlbumNameStr || "album");
-                let count = 0;
-                const promises = currentAlbumPhotos.map(async (p, i) => {
-                    try {
-                        const url = `https://lh3.googleusercontent.com/d/${p.id}=s2500`;
-                        const res = await fetch(url);
-                        if(!res.ok) throw new Error("err");
-                        const blob = await res.blob();
-                        let ext = 'jpg';
-                        if(blob.type.includes('png')) ext='png';
-                        folder.file(`${currentAlbumNameStr}_${(i+1).toString().padStart(3,'0')}.${ext}`, blob);
-                        count++;
-                    } catch(e) { }
-                });
-                await Promise.all(promises);
-                if(count===0) throw new Error("No images loaded");
-                const content = await zip.generateAsync({type:"blob"});
-                saveAs(content, `${currentAlbumNameStr}.zip`);
-            } catch(e) { Swal.fire('錯誤', '下載失敗', 'error'); } 
-            finally { btn.disabled = false; btn.innerHTML = txt; }
-        }
-
-        function loadSettings() {
-            SCRIPT_URL = localStorage.getItem(STORAGE_KEY_URL) || "";
-            PAGE_TITLE = localStorage.getItem(STORAGE_KEY_TITLE) || "雲端相簿";
-            document.title = PAGE_TITLE;
-            document.getElementById('navbarTitle').innerText = PAGE_TITLE;
-            document.getElementById('settingGasUrl').value = SCRIPT_URL;
-            document.getElementById('settingPageTitle').value = PAGE_TITLE;
+            isAdmin = false;
+            document.getElementById('adminBadge').classList.add('d-none');
+            document.getElementById('adminControls').classList.add('d-none');
+            document.getElementById('loginBtn').classList.remove('d-none');
+            renderAlbums();
+            if (currentAlbumId) openAlbum(currentAlbumId);
         }
 
         function saveSettings() {
-            const url = document.getElementById('settingGasUrl').value.trim();
-            const title = document.getElementById('settingPageTitle').value.trim();
-            if(!url) return Toast.fire({ icon: 'warning', title: '請輸入 URL' });
-            localStorage.setItem(STORAGE_KEY_URL, url);
-            localStorage.setItem(STORAGE_KEY_TITLE, title);
-            SCRIPT_URL = url; initShareUi();
+            const url = document.getElementById('settingGasUrl').value;
+            const title = document.getElementById('settingPageTitle').value;
+            localStorage.setItem('gas_api_url', url);
+            localStorage.setItem('page_title', title);
             location.reload();
         }
 
-        function clearSettings() {
-            Swal.fire({
-                title: '確定清除設定？',
-                text: "這將移除所有本地儲存的設定。",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '清除',
-                cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    localStorage.removeItem(STORAGE_KEY_URL);
-                    localStorage.removeItem(STORAGE_KEY_TITLE);
-                    sessionStorage.removeItem(SESSION_KEY_VIEWER);
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    location.reload();
-                }
-            });
+        function refreshData() {
+            fetchAlbums(true);
         }
 
-        function initShareUi() {
-            if(!SCRIPT_URL) return;
-            const base = window.location.href.split('?')[0];
-            const url = `${base}?ref=${btoa(SCRIPT_URL)}`;
-            document.getElementById('shareLinkInput').value = url;
-            document.getElementById("qrcode").innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: url, width: 128, height: 128 });
-        }
-
-        function copyShareLink() {
-            navigator.clipboard.writeText(document.getElementById('shareLinkInput').value).then(()=>Toast.fire({ icon: 'success', title: '已複製連結' }));
-        }
-
-        function showSetupState() {
-            document.getElementById('albumView').classList.add('hidden');
-            document.getElementById('setupState').classList.remove('hidden');
-        }
+        // --- Helper UI ---
+        function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
         function openSettingsModal() { new bootstrap.Modal(document.getElementById('settingsModal')).show(); }
-        function showLoading(show) { 
-            const el = document.getElementById('loadingOverlay');
-            show ? el.classList.remove('hidden') : el.classList.add('hidden');
-        }
-        function forceStopLoading() { showLoading(false); }
+        function openCreateAlbumModal() { Swal.fire('提示', '此為展示功能', 'info'); }
+        function openUploadModal() { Swal.fire('提示', '請先在 GAS 端配置完成再進行上傳測試', 'info'); }
     </script>
 </body>
 </html>
