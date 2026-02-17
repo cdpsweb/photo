@@ -55,6 +55,9 @@
             background-size: 40px 40px;
         }
 
+        /* Utility Class for Auth Visibility */
+        .auth-hidden { display: none !important; }
+
         /* Navbar */
         .navbar-custom {
             background: rgba(0, 0, 0, 0.8);
@@ -84,6 +87,32 @@
         .btn-oled-danger:hover { background: rgba(255, 23, 68, 0.1); box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); text-decoration: none; color: #fff; }
         .btn-icon { width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; }
 
+        /* Dropdown Menu (OLED Style) */
+        .dropdown-menu-oled {
+            background-color: rgba(15, 15, 20, 0.95);
+            border: 1px solid var(--border-subtle);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            min-width: 200px;
+        }
+        .dropdown-menu-oled .dropdown-item {
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            padding: 0.6rem 1rem;
+            transition: all 0.2s;
+        }
+        .dropdown-menu-oled .dropdown-item:hover {
+            background-color: rgba(41, 121, 255, 0.1);
+            color: var(--brand-primary);
+        }
+        .dropdown-menu-oled .dropdown-item:active {
+            background-color: rgba(41, 121, 255, 0.2);
+        }
+        .dropdown-menu-oled .dropdown-divider {
+            border-top-color: var(--border-subtle);
+        }
+
         /* Cards */
         .album-card {
             background-color: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
@@ -110,20 +139,35 @@
         /* Multi-select & Cover Actions */
         .photo-item.selected { border: 2px solid var(--brand-danger); box-shadow: 0 0 15px rgba(255, 23, 68, 0.4); }
         .photo-item.selected img { opacity: 0.6; }
-        .photo-checkbox { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: 0.2s; }
+        
+        /* Checkbox - Pointer Events Auto to allow clicking specifically */
+        .photo-checkbox { 
+            position: absolute; top: 5px; left: 5px; width: 30px; height: 30px; 
+            background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; 
+            z-index: 20; display: flex; align-items: center; justify-content: center; 
+            pointer-events: auto; /* v9.4 Fix */
+            cursor: pointer;
+            transition: 0.2s; 
+        }
         .photo-item.selected .photo-checkbox { background: var(--brand-danger); border-color: var(--brand-danger); }
-        .photo-item.selected .photo-checkbox::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
+        .photo-item.selected .photo-checkbox::after { content: '✓'; color: white; font-weight: bold; font-size: 18px; }
         
         /* Set Cover Button (Top Right Star) */
         .btn-set-cover {
-            position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
+            position: absolute; top: 5px; right: 5px; width: 30px; height: 30px;
             background: rgba(0,0,0,0.6); border: 1px solid var(--brand-warning); color: var(--brand-warning);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
             z-index: 20; cursor: pointer; transition: 0.2s; opacity: 0; font-size: 14px;
+            pointer-events: auto;
         }
         .photo-item:hover .btn-set-cover { opacity: 1; }
         .btn-set-cover:hover { background: var(--brand-warning); color: black; box-shadow: 0 0 10px var(--brand-warning); }
-        .btn-set-cover i { pointer-events: none; }
+        
+        /* Mobile Touch target improvements */
+        @media (max-width: 768px) {
+            .btn-set-cover { opacity: 1; /* Always show on mobile admin */ }
+            .photo-checkbox { opacity: 1; }
+        }
 
         /* Header Breadcrumb */
         #navHeader { border-bottom: 1px solid var(--border-subtle); padding-bottom: 2rem; margin-bottom: 2rem; background: radial-gradient(circle at top right, rgba(41, 121, 255, 0.1), transparent 40%); }
@@ -242,29 +286,42 @@
             </a>
             <div>
                 <!-- Viewer Mode Label -->
-                <span id="viewerModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
+                <span id="viewerModeLabel" class="d-none user-select-none me-3 d-none d-md-inline-block" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
                 </span>
                 
                 <!-- Admin Controls Container -->
-                <div id="adminControls" class="d-none d-inline-flex align-items-center gap-2">
+                <div id="adminControls" class="d-none d-inline-flex align-items-center gap-2 auth-hidden">
                     <span style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
                         <i class="bi bi-shield-check me-1"></i> 管理者模式
                     </span>
                     
-                    <!-- Create Album Button -->
-                    <button class="btn-oled btn-sm" onclick="openCreateAlbumModal()">
-                        <i class="bi bi-folder-plus me-1"></i> 建立相簿
-                    </button>
+                    <!-- Admin Controls (Desktop) -->
+                    <div id="adminControlsDesktop" class="d-none d-md-flex align-items-center gap-2">
+                        <button class="btn-oled" onclick="openCreateAlbumModal()">
+                            <i class="bi bi-folder-plus me-1"></i> 建立相簿
+                        </button>
+                        <button class="btn-oled" onclick="openAdminModal()">
+                            <i class="bi bi-gear-fill me-1"></i> 系統設定
+                        </button>
+                        <button class="btn-oled btn-oled-danger" onclick="logoutAdmin()">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </button>
+                    </div>
 
-                    <!-- Settings Button -->
-                    <button class="btn-oled btn-sm" onclick="openAdminModal()">
-                        <i class="bi bi-gear-fill me-1"></i> 系統設定
-                    </button>
-                    
-                    <button class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()">
-                        <i class="bi bi-box-arrow-right"></i>
-                    </button>
+                    <!-- Admin Controls (Mobile Menu) -->
+                    <div id="adminControlsMobile" class="dropdown ms-2 d-md-none">
+                        <button class="btn-oled btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-oled">
+                            <li><h6 class="dropdown-header text-muted">管理者功能</h6></li>
+                            <li><a class="dropdown-item" href="#" onclick="openCreateAlbumModal()"><i class="bi bi-folder-plus me-2"></i>建立相簿</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="openAdminModal()"><i class="bi bi-gear-fill me-2"></i>系統設定</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="logoutAdmin()"><i class="bi bi-box-arrow-right me-2"></i>登出</a></li>
+                        </ul>
+                    </div>
                 </div>
                 
                 <!-- Login Button -->
@@ -284,16 +341,36 @@
                 <span id="currentAlbumName" class="breadcrumb-item-custom breadcrumb-active hidden"></span>
             </div>
             <div class="d-flex gap-2">
-                <button id="directoryBtn" class="btn-oled" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i> 目錄檢索</button>
-                <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
-                    <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
-                </button>
-                <!-- Uniform Button Style -->
-                <button id="downloadAllBtn" class="btn-oled hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
-                <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
-                    <i class="bi bi-cloud-upload me-2"></i> 上傳相片
-                </button>
-                <button id="refreshBtn" class="btn-oled" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise"></i></button>
+                <!-- Desktop Album Tools -->
+                <div class="d-none d-md-flex gap-2">
+                    <button id="directoryBtn" class="btn-oled" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i> 目錄檢索</button>
+                    <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
+                        <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
+                    </button>
+                    <button id="downloadAllBtn" class="btn-oled hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
+                    <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
+                        <i class="bi bi-cloud-upload me-2"></i> 上傳相片
+                    </button>
+                </div>
+
+                <!-- Mobile Album Tools Menu -->
+                <div class="dropdown d-md-none">
+                     <button class="btn-oled" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-three-dots"></i> 選項
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-oled">
+                        <li><a class="dropdown-item" href="#" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i>目錄檢索</a></li>
+                        <li id="liRefreshMobile"><a class="dropdown-item" href="#" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise me-2"></i>同步資料</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        
+                        <!-- Mobile Hidden Items -->
+                        <li id="liBatchDelete" class="hidden"><a class="dropdown-item text-danger" href="#" onclick="executeBatchDelete()"><i class="bi bi-trash3 me-2"></i>刪除選取 (<span id="deleteCountMobile">0</span>)</a></li>
+                        <li id="liDownload" class="hidden"><a class="dropdown-item" href="#" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i>相簿下載</a></li>
+                        <li id="liUpload" class="hidden"><a class="dropdown-item" href="#" onclick="openUploadModal()"><i class="bi bi-cloud-upload me-2"></i>上傳相片</a></li>
+                    </ul>
+                </div>
+
+                <button id="refreshBtn" class="btn-oled d-none d-md-inline-flex" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
         </div>
 
@@ -573,12 +650,10 @@
             
             if(isAdmin) {
                 loginBtn.classList.add('d-none');
-                adminControls.classList.remove('d-none');
-                adminControls.classList.add('d-flex');
+                adminControls.classList.remove('auth-hidden');
             } else {
                 loginBtn.classList.remove('d-none');
-                adminControls.classList.add('d-none');
-                adminControls.classList.remove('d-flex');
+                adminControls.classList.add('auth-hidden');
             }
         }
 
@@ -636,6 +711,15 @@
             } finally { showLoading(false); }
         }
 
+        // Toggle Mobile Menu Items
+        function toggleMobileMenuItem(id, show) {
+            const el = document.getElementById(id);
+            if(el) {
+                if(show) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            }
+        }
+
         function showAlbumList() {
             sessionStorage.removeItem(SESSION_KEY_CURRENT_ALBUM);
 
@@ -651,6 +735,11 @@
             
             // Show Directory
             document.getElementById('directoryBtn').classList.remove('hidden');
+            
+            // Hide Mobile Menu Items
+            toggleMobileMenuItem('liDownload', false);
+            toggleMobileMenuItem('liUpload', false);
+            toggleMobileMenuItem('liBatchDelete', false);
             
             document.getElementById('setupState').classList.add('hidden');
             
@@ -727,6 +816,7 @@
             document.getElementById('photoView').classList.remove('hidden');
             
             document.getElementById('downloadAllBtn').classList.remove('hidden');
+            toggleMobileMenuItem('liDownload', true);
             
             document.getElementById('separator').classList.remove('hidden');
             document.getElementById('currentAlbumName').innerText = album.name;
@@ -734,9 +824,12 @@
             
             if(adminToken) {
                 document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
+                toggleMobileMenuItem('liUpload', true);
+                
                 document.getElementById('uploadToAlbumBtn').onclick = () => openUploadModal(album.name);
                 
                 document.getElementById('batchDeleteBtn').classList.add('hidden');
+                toggleMobileMenuItem('liBatchDelete', false);
                 
                 document.getElementById('deleteCount').innerText = '0';
             }
@@ -749,6 +842,8 @@
                     animation: 150,
                     ghostClass: 'sortable-ghost',
                     draggable: ".draggable", // Only items with draggable class
+                    delay: 200, // v9.4: Delay for mobile touch drag to prevent accidental drags
+                    delayOnTouchOnly: true,
                     onEnd: function (evt) {
                         const newOrderIds = [];
                         const itemEls = photoGrid.querySelectorAll('.photo-item');
@@ -785,11 +880,14 @@
                 let itemId = `p-item-${photo.id}`;
                 
                 if(adminToken) {
-                    selectionHtml = `<div class="photo-checkbox"></div>`;
-                    // Set Cover Button
+                    // v9.4 Fix: Separate click handlers for select and view
+                    selectionHtml = `<div class="photo-checkbox" onclick="handlePhotoSelect(event, '${photo.id}', ${index})"></div>`;
+                    
+                    // v9.3 Set Cover Button
                     setCoverBtn = `<div class="btn-set-cover" onclick="event.stopPropagation(); setAlbumCover('${album.id}', '${photo.url}')" title="設為封面"><i class="bi bi-star-fill"></i></div>`;
                     
-                    clickAction = `handlePhotoSelect(event, '${photo.id}', ${index})`;
+                    // Main click is view
+                    clickAction = `openLightbox(${index})`;
                     dragClass = "draggable";
                 }
 
@@ -824,13 +922,27 @@
             const delBtn = document.getElementById('batchDeleteBtn');
             const dlBtn = document.getElementById('downloadAllBtn');
             
+            // Mobile Items
+            const delMobile = document.getElementById('liBatchDelete');
+            const dlMobile = document.getElementById('liDownload');
+            
             if (count > 0) {
+                // Show delete
                 delBtn.classList.remove('hidden');
+                toggleMobileMenuItem('liBatchDelete', true);
+                
                 document.getElementById('deleteCount').innerText = count;
+                document.getElementById('deleteCountMobile').innerText = count;
+                
+                // Hide download to declutter
                 dlBtn.classList.add('hidden'); 
+                toggleMobileMenuItem('liDownload', false);
             } else {
                 delBtn.classList.add('hidden');
+                toggleMobileMenuItem('liBatchDelete', false);
+                
                 dlBtn.classList.remove('hidden');
+                toggleMobileMenuItem('liDownload', true);
             }
         }
 
@@ -1245,6 +1357,7 @@
                     localStorage.removeItem(STORAGE_KEY_URL);
                     localStorage.removeItem(STORAGE_KEY_TITLE);
                     sessionStorage.removeItem(SESSION_KEY_VIEWER);
+                    localStorage.clear(); 
                     window.history.replaceState({}, document.title, window.location.pathname);
                     location.reload();
                 }
