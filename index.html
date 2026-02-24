@@ -21,7 +21,6 @@
             --bg-primary: #000000;
             --bg-secondary: #121212;
             --bg-tertiary: #1e1e1e;
-            /* 全部調整為白色 */
             --text-primary: #FFFFFF; 
             --text-secondary: #F8F9FA;
             --text-muted: #E0E0E0;
@@ -30,6 +29,10 @@
             --radius-google: 24px;
             --anim-speed: 0.3s;
             --ease-google: cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* 新增狀態顏色 */
+            --status-admin: #FF4D4D; /* 紅色 */
+            --status-view: #00E676;  /* 綠色 */
         }
 
         body {
@@ -50,10 +53,24 @@
             position: sticky; top: 0; z-index: 1050;
         }
         
-        /* 標題與標籤改為純白 */
         .navbar-brand, #navTitle {
             color: #FFFFFF !important;
             font-weight: 500;
+        }
+
+        /* 狀態標籤樣式調整 */
+        .badge-view-mode {
+            background: rgba(0, 230, 118, 0.1);
+            color: var(--status-view);
+            font-weight: 500;
+            border: 1px solid rgba(0, 230, 118, 0.3);
+        }
+
+        .badge-admin-mode {
+            background: rgba(255, 77, 77, 0.1);
+            color: var(--status-admin);
+            font-weight: 500;
+            border: 1px solid rgba(255, 77, 77, 0.3);
         }
 
         /* 相簿清單網格 */
@@ -106,24 +123,26 @@
         /* 通用按鈕 */
         .circle-btn {
             background: rgba(255,255,255,0.1); border: none; color: #FFFFFF;
-            width: 42px; height: 42px; border-radius: 50%; display: flex;
+            width: 40px; height: 40px; border-radius: 50%; display: flex;
             align-items: center; justify-content: center; transition: background 0.2s;
         }
         .circle-btn:hover { background: rgba(255,255,255,0.2); }
         
+        .btn-logout {
+            background: rgba(255, 77, 77, 0.1);
+            color: var(--status-admin);
+            border: 1px solid rgba(255, 77, 77, 0.3);
+        }
+        .btn-logout:hover {
+            background: var(--status-admin);
+            color: #FFFFFF;
+        }
+
         .btn-google-primary {
             background: #FFFFFF; color: #000000; border-radius: 50px;
             font-weight: 600; border: none; padding: 8px 24px; transition: all 0.2s;
         }
         .btn-google-primary:hover { background: #F0F0F0; transform: scale(1.02); }
-
-        /* 狀態標籤 */
-        .badge-view-mode {
-            background: rgba(255, 255, 255, 0.1);
-            color: #FFFFFF;
-            font-weight: 500;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
 
         /* 燈箱 */
         .lightbox {
@@ -159,7 +178,6 @@
 
         .hidden { display: none !important; }
         
-        /* 第一次登入專用樣式 */
         .setup-card {
             max-width: 500px;
             margin: 0 auto;
@@ -169,7 +187,6 @@
             border: 1px solid var(--border-subtle);
         }
         
-        /* 表單控件白色化 */
         .form-control {
             background-color: #000000 !important;
             border-color: #444 !important;
@@ -179,7 +196,6 @@
             color: #AAAAAA !important;
         }
         
-        /* 修改 SweetAlert 預設顏色 */
         .swal2-popup {
             background: #111111 !important;
             color: #FFFFFF !important;
@@ -196,10 +212,12 @@
                 <i class="bi bi-images me-2" style="color: #FFFFFF"></i><span id="navTitle">雲端相簿</span>
             </div>
             <div class="d-flex gap-2 align-items-center">
+                <!-- 狀態標籤：瀏覽模式(綠色) / 管理者模式(紅色) -->
                 <div id="viewModeBadge" class="d-none badge rounded-pill badge-view-mode px-3 py-1-5 small me-1">瀏覽模式</div>
-                <div id="adminBadge" class="d-none badge rounded-pill bg-dark border border-light text-white px-2 py-1 small me-2" style="font-weight: 500;">管理者</div>
+                <div id="adminBadge" class="d-none badge rounded-pill badge-admin-mode px-3 py-1-5 small me-1">管理者模式</div>
                 
-                <button id="logoutBtn" class="btn btn-outline-light btn-sm rounded-pill px-3 d-none" style="font-size: 0.75rem;" onclick="doLogout()">登出</button>
+                <!-- 操作按鈕 -->
+                <button id="logoutBtn" class="circle-btn btn-logout d-none" title="登出" onclick="doLogout()"><i class="bi bi-box-arrow-right"></i></button>
                 <button id="loginBtn" class="btn btn-outline-light btn-sm rounded-pill px-3 d-none" style="font-size: 0.75rem;" onclick="openLoginModal()">管理登入</button>
                 <button id="settingsBtn" class="circle-btn d-none" onclick="openSettingsModal()"><i class="bi bi-gear"></i></button>
                 <button id="shareSystemBtn" class="circle-btn d-none" style="color: #FFFFFF" onclick="openShareSystemModal()"><i class="bi bi-share"></i></button>
