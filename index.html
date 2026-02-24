@@ -27,7 +27,7 @@
             --brand-primary: #FFFFFF; 
             --border-subtle: rgba(255, 255, 255, 0.2);
             --radius-google: 24px;
-            --anim-speed: 0.3s;
+            --anim-speed: 0.25s; /* 略微加快動畫速度以提升感官流暢度 */
             --ease-google: cubic-bezier(0.4, 0, 0.2, 1);
             
             --status-admin: #FF4D4D;
@@ -143,8 +143,8 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0); z-index: 2000; 
             display: none; flex-direction: column;
-            transition: background-color var(--anim-speed) var(--ease-google);
-            touch-action: none; /* 防止滑動時頁面捲動 */
+            transition: background-color var(--anim-speed) linear; /* 關閉時使用更線性的過渡避免頓挫感 */
+            touch-action: none;
         }
         .lightbox.active { display: flex; background-color: rgba(0,0,0,1); }
         
@@ -161,13 +161,12 @@
         
         .lightbox-img { 
             max-width: 100%; max-height: 100%; object-fit: contain; 
-            transform: scale(0.9); opacity: 0;
+            transform: scale(0.95); opacity: 0;
             transition: transform var(--anim-speed) var(--ease-google), opacity var(--anim-speed) var(--ease-google);
             user-select: none;
         }
         .lightbox.active .lightbox-img { transform: scale(1); opacity: 1; }
 
-        /* 燈箱導覽箭頭區域 (電腦端點擊用) */
         .lb-nav {
             position: absolute; top: 0; height: 100%; width: 20%;
             display: flex; align-items: center; justify-content: center;
@@ -178,7 +177,7 @@
         .lb-prev { left: 0; }
         .lb-next { right: 0; }
         @media (max-width: 768px) {
-            .lb-nav { display: none; } /* 行動端改用滑動 */
+            .lb-nav { display: none; }
         }
 
         #qrcode {
@@ -274,16 +273,13 @@
 
     <!-- 照片燈箱 -->
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
-        <!-- 控制選單 -->
         <div class="lightbox-header">
             <button class="circle-btn" onclick="closeLightbox()"><i class="bi bi-x-lg"></i></button>
             <div class="d-flex gap-2">
-                <!-- 已取消單張下載按鈕 -->
                 <button class="circle-btn" id="lbShare"><i class="bi bi-share"></i></button>
             </div>
         </div>
         
-        <!-- 導覽區域 (電腦端) -->
         <div class="lb-nav lb-prev" onclick="navLightbox(-1); event.stopPropagation();">
             <i class="bi bi-chevron-left"></i>
         </div>
@@ -291,7 +287,6 @@
             <i class="bi bi-chevron-right"></i>
         </div>
 
-        <!-- 圖片內容 -->
         <div class="lightbox-content" id="lbTouchArea">
             <img src="" id="lightboxImg" class="lightbox-img" onclick="event.stopPropagation()">
         </div>
@@ -325,13 +320,11 @@
     </div>
 
     <script>
-        // --- 核心變數 ---
         let SCRIPT_URL = localStorage.getItem('gas_api_url') || "";
         let isAdmin = localStorage.getItem('is_admin') === 'true';
         let activeAlbum = null;
         let currentPhotoIndex = -1;
 
-        // --- 初始化邏輯 ---
         window.onload = () => {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('api')) {
@@ -352,7 +345,6 @@
                 fetchAlbums();
             }
 
-            // 鍵盤監聽
             document.addEventListener('keydown', (e) => {
                 if (document.getElementById('lightbox').classList.contains('active')) {
                     if (e.key === 'ArrowLeft') navLightbox(-1);
@@ -450,7 +442,6 @@
             activeAlbum = null;
         }
 
-        // --- 燈箱邏輯 ---
         function openLightbox(index) {
             if (!activeAlbum || !activeAlbum.photos[index]) return;
             currentPhotoIndex = index;
@@ -484,16 +475,21 @@
             setTimeout(() => {
                 img.src = activeAlbum.photos[currentPhotoIndex].url;
                 img.style.opacity = '1';
-            }, 150);
+            }, 100);
         }
 
         function closeLightbox() {
             const lb = document.getElementById('lightbox');
             lb.classList.remove('active');
-            setTimeout(() => lb.style.display = 'none', 300);
+            // 縮短延遲，讓元素在動畫接近尾聲時就隱藏，減少頓挫感
+            setTimeout(() => {
+                if(!lb.classList.contains('active')) {
+                    lb.style.display = 'none';
+                    document.getElementById('lightboxImg').src = ""; // 清空圖片來源釋放內存
+                }
+            }, 250);
         }
 
-        // --- 行動端滑動導覽 ---
         function setupTouchNavigation() {
             const touchArea = document.getElementById('lbTouchArea');
             let startX = 0;
@@ -506,14 +502,61 @@
             touchArea.addEventListener('touchend', (e) => {
                 endX = e.changedTouches[0].clientX;
                 const diff = startX - endX;
-                if (Math.abs(diff) > 50) { // 滑動閾值
-                    if (diff > 0) navLightbox(1);  // 向左滑，看下一張
-                    else navLightbox(-1);         // 向右滑，看上一張
+                if (Math.abs(diff) > 50) { 
+                    if (diff > 0) navLightbox(1);  
+                    else navLightbox(-1);         
                 }
             }, { passive: true });
         }
 
-        // --- 其他工具功能 ---
+        // --- 修復後的打包下載功能 ---
+        async function requestServerDownload() {
+            if (!activeAlbum) return;
+            
+            Swal.fire({ 
+                title: '正在打包相簿', 
+                text: '準備中，請稍候...',
+                background: '#111', color: '#fff',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading() 
+            });
+
+            try {
+                // 發送請求到 GAS 後端進行打包
+                const response = await fetch(`${SCRIPT_URL}?action=downloadAlbum&albumId=${encodeURIComponent(activeAlbum.id)}`);
+                const result = await response.json();
+
+                if (result.status === "success" && result.downloadUrl) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '打包完成',
+                        text: '即將開始下載',
+                        background: '#111', color: '#fff',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    
+                    // 觸發下載
+                    const link = document.createElement('a');
+                    link.href = result.downloadUrl;
+                    link.download = `${activeAlbum.name}.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    throw new Error(result.message || '打包失敗');
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: '下載失敗',
+                    text: '無法從伺服器取得壓縮檔，請確認後端設定。',
+                    background: '#111', color: '#fff'
+                });
+            }
+        }
+
         async function doLogin() {
             const pwd = document.getElementById('adminPwd').value;
             Swal.fire({ title: '驗證中', background: '#111', color: '#fff', didOpen: () => Swal.showLoading() });
@@ -574,18 +617,6 @@
             document.execCommand("copy");
             document.body.removeChild(tempInput);
             Swal.fire({ toast: true, position: 'top', background: '#111', color: '#fff', title: msg, showConfirmButton: false, timer: 1000 });
-        }
-
-        function requestServerDownload() {
-            if (!activeAlbum) return;
-            Swal.fire({ 
-                title: '準備下載中', 
-                text: '這可能需要一點時間...',
-                background: '#111', color: '#fff',
-                didOpen: () => Swal.showLoading() 
-            });
-            // 實際下載邏輯需視 GAS API 支援度而定
-            setTimeout(() => Swal.close(), 2000);
         }
     </script>
 </body>
