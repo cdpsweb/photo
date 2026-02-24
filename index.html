@@ -118,7 +118,16 @@
         }
         .btn-google-primary:active { opacity: 0.8; }
 
-        /* 燈箱 (Google 相簿平滑縮放版) */
+        /* 標籤樣式 - 瀏覽模式對比優化 */
+        .badge-view-mode {
+            background: #007BFF;
+            color: #FFFFFF;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4);
+        }
+
+        /* 燈箱 */
         .lightbox {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0); z-index: 2000; 
@@ -146,7 +155,6 @@
         }
         .lightbox.active .lightbox-img { transform: scale(1); opacity: 1; }
 
-        /* 電腦版前後切換按鈕 */
         .lb-nav-area {
             position: absolute; top: 0; bottom: 0; width: 15%;
             display: flex; align-items: center; justify-content: center;
@@ -162,7 +170,6 @@
             font-size: 24px; border: 1px solid rgba(255,255,255,0.2);
         }
 
-        /* QR Code Modal 樣式 */
         #qrcode {
             background: white; padding: 15px; border-radius: 12px;
             display: inline-block; margin-bottom: 20px;
@@ -180,11 +187,13 @@
                 <i class="bi bi-images text-primary me-2"></i><span id="navTitle">雲端相簿</span>
             </div>
             <div class="d-flex gap-2 align-items-center">
-                <!-- 瀏覽模式與管理者標章 -->
-                <div id="viewModeBadge" class="d-none badge rounded-pill bg-dark border border-secondary text-muted px-2 py-1 small me-2">瀏覽模式</div>
+                <!-- 狀態標籤區 -->
+                <div id="viewModeBadge" class="d-none badge rounded-pill badge-view-mode px-3 py-1-5 small me-1">瀏覽模式</div>
                 <div id="adminBadge" class="d-none badge rounded-pill bg-dark border border-primary text-primary px-2 py-1 small me-2">管理者</div>
                 
-                <button id="loginBtn" class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="openLoginModal()">管理登入</button>
+                <!-- 功能按鈕區 -->
+                <button id="logoutBtn" class="btn btn-outline-danger btn-sm rounded-pill px-3 d-none" onclick="doLogout()">登出系統</button>
+                <button id="loginBtn" class="btn btn-outline-light btn-sm rounded-pill px-3 d-none" onclick="openLoginModal()">管理登入</button>
                 <button id="settingsBtn" class="circle-btn d-none" onclick="openSettingsModal()"><i class="bi bi-gear"></i></button>
                 <button id="shareSystemBtn" class="circle-btn d-none text-info" onclick="openShareSystemModal()"><i class="bi bi-share-fill"></i></button>
             </div>
@@ -213,7 +222,7 @@
             <i class="bi bi-cloud-slash display-1 text-muted mb-4"></i>
             <h4 class="fw-bold">尚未設定 API</h4>
             <p class="text-muted small mb-4">如果您是家長，請掃描老師提供的分享 QR Code</p>
-            <button class="btn btn-google-primary mt-3" onclick="openSettingsModal()">管理者設定</button>
+            <button id="setupAdminBtn" class="btn btn-google-primary mt-3 d-none" onclick="openSettingsModal()">管理者設定</button>
         </div>
 
         <div id="albumView" class="album-grid hidden"></div>
@@ -242,13 +251,10 @@
         </div>
         
         <div class="lightbox-content">
-            <!-- 電腦版導航按鈕 -->
             <div class="lb-nav-area left" onclick="prevPhoto(event)">
                 <div class="lb-nav-btn"><i class="bi bi-chevron-left"></i></div>
             </div>
-            
             <img src="" id="lightboxImg" class="lightbox-img" onclick="event.stopPropagation()">
-            
             <div class="lb-nav-area right" onclick="nextPhoto(event)">
                 <div class="lb-nav-btn"><i class="bi bi-chevron-right"></i></div>
             </div>
@@ -292,11 +298,11 @@
     </div>
 
     <script>
-        // --- 核心變數與初始化 ---
+        // --- 初始化參數與權限控制 ---
         const urlParams = new URLSearchParams(window.location.search);
+        // 如果是家長透過連結點入，設定 API
         if (urlParams.has('api')) {
-            const encodedApi = urlParams.get('api');
-            localStorage.setItem('gas_api_url', decodeURIComponent(encodedApi));
+            localStorage.setItem('gas_api_url', decodeURIComponent(urlParams.get('api')));
             window.history.replaceState({}, document.title, window.location.pathname);
         }
 
@@ -306,38 +312,89 @@
         let currentPhotoIndex = -1;
 
         window.onload = () => {
-            updateAdminUI();
+            updateUIState();
             if (!SCRIPT_URL) {
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('setupView').classList.remove('hidden');
+                // 未設定 API 時，如果是透過一般路徑進來，可以顯示一個低調的設定鈕 (僅限除錯用)
+                if(window.location.hash === "#admin") document.getElementById('setupAdminBtn').classList.remove('d-none');
             } else {
                 fetchAlbums();
             }
         };
 
-        function updateAdminUI() {
+        function updateUIState() {
             const adminBadge = document.getElementById('adminBadge');
             const viewModeBadge = document.getElementById('viewModeBadge');
             const settingsBtn = document.getElementById('settingsBtn');
-            const loginBtn = document.getElementById('loginBtn');
             const shareSystemBtn = document.getElementById('shareSystemBtn');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
 
             if (isAdmin) {
+                // 管理者模式
                 adminBadge.classList.remove('d-none');
-                viewModeBadge.classList.add('d-none');
+                viewModeBadge.classList.add('d-none'); // 管理者不顯示瀏覽模式
                 settingsBtn.classList.remove('d-none');
                 shareSystemBtn.classList.remove('d-none');
+                logoutBtn.classList.remove('d-none');
                 loginBtn.classList.add('d-none');
             } else {
+                // 瀏覽模式 (家長端)
                 adminBadge.classList.add('d-none');
-                viewModeBadge.classList.remove('d-none');
+                viewModeBadge.classList.remove('d-none'); // 顯示顯眼的瀏覽標籤
                 settingsBtn.classList.add('d-none');
                 shareSystemBtn.classList.add('d-none');
-                loginBtn.classList.remove('d-none');
+                logoutBtn.classList.add('d-none');
+                
+                // 家長端不顯示登入入口，除非網址輸入隱藏指令 #login
+                if (window.location.hash === "#login") {
+                    loginBtn.classList.remove('d-none');
+                } else {
+                    loginBtn.classList.add('d-none');
+                }
             }
         }
 
-        // --- 分享與 QR Code ---
+        // --- 登入與登出邏輯 ---
+        async function doLogin() {
+            const pwd = document.getElementById('adminPwd').value;
+            Swal.fire({ title: '驗證中...', didOpen: () => Swal.showLoading() });
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`);
+                const json = await res.json();
+                Swal.close();
+                if (json.status === "success") {
+                    isAdmin = true;
+                    localStorage.setItem('is_admin', 'true');
+                    updateUIState();
+                    bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                } else {
+                    Swal.fire('密碼錯誤', '', 'error');
+                }
+            } catch (e) { Swal.fire('錯誤', '連線失敗', 'error'); }
+        }
+
+        function doLogout() {
+            Swal.fire({
+                title: '確定要登出管理員嗎？',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '確定',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    isAdmin = false;
+                    localStorage.setItem('is_admin', 'false');
+                    // 清除 API 連結若需要家長端完全重設，可加 localStorage.removeItem('gas_api_url');
+                    location.reload();
+                }
+            });
+        }
+
+        // --- 其他功能函數 ---
+        function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
+
         function openShareSystemModal() {
             const modal = new bootstrap.Modal(document.getElementById('shareSystemModal'));
             const shareUrl = window.location.origin + window.location.pathname + "?api=" + encodeURIComponent(SCRIPT_URL);
@@ -357,15 +414,12 @@
             Swal.fire({ toast: true, position: 'top', icon: 'success', title: '連結已複製', showConfirmButton: false, timer: 1500 });
         }
 
-        // --- 資料抓取與渲染 ---
         async function fetchAlbums() {
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=getAlbums`);
                 const json = await res.json();
                 document.getElementById('loading').classList.add('hidden');
-                if (json.status === "success") {
-                    renderAlbums(json.data);
-                }
+                if (json.status === "success") renderAlbums(json.data);
             } catch (e) {
                 document.getElementById('loading').innerHTML = `<div class='p-4 text-danger'>無法連線 API</div>`;
             }
@@ -406,30 +460,21 @@
             document.getElementById('navHeader').classList.add('hidden');
         }
 
-        // --- 燈箱邏輯與鍵盤支援 ---
         function openLightbox(index) {
             currentPhotoIndex = index;
             const photo = activeAlbum.photos[index];
             const lb = document.getElementById('lightbox');
             const img = document.getElementById('lightboxImg');
-            
             img.style.opacity = '0';
             img.src = photo.url;
             lb.style.display = 'flex';
-            
-            setTimeout(() => { 
-                lb.classList.add('active'); 
-                img.style.opacity = '1';
-            }, 10);
-
-            // 更新下載按鈕
+            setTimeout(() => { lb.classList.add('active'); img.style.opacity = '1'; }, 10);
             const idMatch = photo.url.match(/id=([^&]+)/);
             const id = idMatch ? idMatch[1] : "";
             document.getElementById('lbDownload').onclick = (e) => {
                 e.stopPropagation();
                 downloadSingleImage(photo.url, `photo_${id}.jpg`);
             };
-            
             document.getElementById('lbShare').onclick = (e) => {
                 e.stopPropagation();
                 if (navigator.share) navigator.share({ url: photo.url });
@@ -446,46 +491,30 @@
             setTimeout(() => { lb.style.display = 'none'; }, 300);
         }
 
-        function nextPhoto(e) {
-            if(e) e.stopPropagation();
-            if (!activeAlbum || currentPhotoIndex >= activeAlbum.photos.length - 1) return;
-            openLightbox(currentPhotoIndex + 1);
-        }
+        function nextPhoto(e) { if(e) e.stopPropagation(); if (currentPhotoIndex < activeAlbum.photos.length - 1) openLightbox(currentPhotoIndex + 1); }
+        function prevPhoto(e) { if(e) e.stopPropagation(); if (currentPhotoIndex > 0) openLightbox(currentPhotoIndex - 1); }
 
-        function prevPhoto(e) {
-            if(e) e.stopPropagation();
-            if (!activeAlbum || currentPhotoIndex <= 0) return;
-            openLightbox(currentPhotoIndex - 1);
-        }
-
-        // 鍵盤支援
         window.addEventListener('keydown', (e) => {
-            const lb = document.getElementById('lightbox');
-            if (lb.style.display === 'flex') {
+            if (document.getElementById('lightbox').style.display === 'flex') {
                 if (e.key === 'ArrowRight') nextPhoto();
                 if (e.key === 'ArrowLeft') prevPhoto();
                 if (e.key === 'Escape') closeLightbox();
             }
         });
 
-        // --- 無跳轉下載邏輯 ---
         async function downloadSingleImage(url, filename) {
-            Swal.fire({ title: '準備下載...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            Swal.fire({ title: '下載中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
                 const response = await fetch(url);
                 const blob = await response.blob();
                 saveAs(blob, filename);
                 Swal.close();
-            } catch (error) {
-                Swal.fire('下載失敗', '請嘗試右鍵另存圖片', 'error');
-            }
+            } catch (error) { Swal.fire('下載失敗', '', 'error'); }
         }
 
-        // --- 打包下載 (GAS 端處理) ---
         async function requestServerDownload() {
             if (!activeAlbum) return;
             const container = document.getElementById('downloadProgressContainer');
-            const progressBar = document.getElementById('progressBar');
             container.style.display = 'flex';
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=downloadAlbum&albumId=${activeAlbum.id}`);
@@ -496,31 +525,9 @@
                     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
                     saveAs(new Blob([bytes], { type: "application/zip" }), json.fileName);
                 }
-            } catch (e) {
-                Swal.fire('打包失敗', '檔案可能過大', 'error');
-            } finally {
-                container.style.display = 'none';
-            }
+            } finally { container.style.display = 'none'; }
         }
 
-        // --- 登入 ---
-        async function doLogin() {
-            const pwd = document.getElementById('adminPwd').value;
-            try {
-                const res = await fetch(`${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`);
-                const json = await res.json();
-                if (json.status === "success") {
-                    isAdmin = true;
-                    localStorage.setItem('is_admin', 'true');
-                    updateAdminUI();
-                    bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
-                } else {
-                    Swal.fire('密碼錯誤', '', 'error');
-                }
-            } catch (e) { Swal.fire('錯誤', '連線失敗', 'error'); }
-        }
-
-        function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
         function openSettingsModal() {
             Swal.fire({ title: 'API 設定', input: 'text', inputValue: SCRIPT_URL, showCancelButton: true }).then(res => {
                 if (res.isConfirmed && res.value) {
