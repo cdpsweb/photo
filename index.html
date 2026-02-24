@@ -47,7 +47,7 @@
             padding: 0.75rem 1rem;
             position: sticky; top: 0; z-index: 1050;
         }
-        .navbar-brand { font-weight: 600; display: flex; align-items: center; gap: 10px; color: var(--text-primary) !important; }
+        .navbar-brand { font-weight: 600; display: flex; align-items: center; gap: 10px; color: var(--text-primary) !important; cursor: pointer; }
 
         .album-grid {
             display: grid;
@@ -83,7 +83,6 @@
         .photo-item { aspect-ratio: 1/1; background: #111; cursor: pointer; position: relative; overflow: hidden; }
         .photo-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        /* 燈箱與導覽 */
         .lightbox-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0); z-index: 2000; display: none;
@@ -113,7 +112,6 @@
             z-index: 2002;
         }
 
-        /* 左右切換按鈕 */
         .nav-arrow {
             position: absolute; top: 50%; transform: translateY(-50%);
             background: rgba(255,255,255,0.1); border: none; color: white;
@@ -162,6 +160,7 @@
             background: var(--brand-primary); color: #000; padding: 14px 28px;
             border-radius: 50px; font-weight: bold; z-index: 3000;
             box-shadow: 0 8px 32px rgba(0,0,0,0.8); display: none; align-items: center; gap: 12px;
+            min-width: 250px; justify-content: center;
         }
 
         .hidden { display: none !important; }
@@ -193,7 +192,7 @@
             <div id="currentAlbumName" class="fw-bold"></div>
         </div>
         <button class="btn btn-google btn-sm btn-google-primary" onclick="downloadZip()">
-            <i class="bi bi-cloud-arrow-down-fill me-1"></i> 全部下載
+            <i class="bi bi-cloud-arrow-down-fill me-1"></i> 全部下載 (ZIP)
         </button>
     </div>
 
@@ -216,7 +215,6 @@
         <div id="photoView" class="photo-grid hidden"></div>
     </main>
 
-    <!-- 燈箱 -->
     <div id="lightbox" class="lightbox-overlay" onclick="closeLightbox()">
         <div class="lightbox-header">
             <button class="circle-btn" onclick="closeLightbox()"><i class="bi bi-x-lg"></i></button>
@@ -239,7 +237,7 @@
         <span id="dlMsg">正在處理相簿打包...</span>
     </div>
 
-    <!-- Modals (登入/設定) 保持原樣 -->
+    <!-- Modals -->
     <div class="modal fade" id="loginModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content border-0" style="background: var(--bg-secondary); border-radius: 28px;">
@@ -290,10 +288,7 @@
         let currentPhotos = [];
         let currentIndex = 0;
         let activeAlbum = null;
-
-        // 手勢支援變數
         let touchStartX = 0;
-        let touchEndX = 0;
 
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
@@ -303,22 +298,18 @@
                 window.history.replaceState({}, "", window.location.pathname);
                 location.reload(); return;
             }
-
             document.getElementById('navbarTitle').innerText = PAGE_TITLE;
             updateAuthUi();
-
             if (!SCRIPT_URL) {
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('setupState').classList.remove('hidden');
             } else {
                 loadData();
             }
-
             initEventListeners();
         };
 
         function initEventListeners() {
-            // 鍵盤監聽
             document.addEventListener('keydown', (e) => {
                 const lb = document.getElementById('lightbox');
                 if (lb.style.display === 'flex') {
@@ -327,22 +318,12 @@
                     if (e.key === 'Escape') closeLightbox();
                 }
             });
-
-            // 滑動監聽
             const lb = document.getElementById('lightbox');
-            lb.addEventListener('touchstart', (e) => touchStartX = e.changedTouches[0].screenX);
+            lb.addEventListener('touchstart', (e) => touchStartX = e.changedTouches[0].screenX, {passive: true});
             lb.addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            });
-        }
-
-        function handleSwipe() {
-            const diff = touchStartX - touchEndX;
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) nextPhoto();
-                else prevPhoto();
-            }
+                const diff = touchStartX - e.changedTouches[0].screenX;
+                if (Math.abs(diff) > 50) diff > 0 ? nextPhoto() : prevPhoto();
+            }, {passive: true});
         }
 
         function updateAuthUi() {
@@ -395,7 +376,6 @@
             document.getElementById('photoView').classList.remove('hidden');
             document.getElementById('navHeader').classList.remove('hidden');
             document.getElementById('currentAlbumName').innerText = album.name;
-
             const grid = document.getElementById('photoView');
             grid.innerHTML = '';
             album.photos.forEach((p, i) => {
@@ -414,7 +394,6 @@
             document.getElementById('navHeader').classList.add('hidden');
         }
 
-        // --- 燈箱邏輯 ---
         function openLightbox(index, el) {
             currentIndex = index;
             const photo = currentPhotos[index];
@@ -422,24 +401,19 @@
             const rect = imgEl.getBoundingClientRect();
             const lightbox = document.getElementById('lightbox');
             const lImg = document.getElementById('lightboxImg');
-
             lImg.src = photo.url;
             lImg.style.transition = 'none';
-            
             const scale = rect.width / window.innerWidth;
-            const translateX = rect.left + rect.width/2 - window.innerWidth/2;
-            const translateY = rect.top + rect.height/2 - window.innerHeight/2;
-
-            lImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            const tx = rect.left + rect.width/2 - window.innerWidth/2;
+            const ty = rect.top + rect.height/2 - window.innerHeight/2;
+            lImg.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
             lImg.style.opacity = '1';
             lightbox.style.display = 'flex';
-            
             setTimeout(() => {
                 lightbox.classList.add('active');
                 lImg.style.transition = `transform var(--duration-google) var(--ease-google), opacity 0.2s`;
                 lImg.style.transform = `translate(0, 0) scale(1)`;
             }, 10);
-
             updateLightboxActions();
             document.body.style.overflow = 'hidden';
         }
@@ -448,26 +422,23 @@
             const photo = currentPhotos[currentIndex];
             document.getElementById('dlSingle').onclick = (e) => {
                 e.stopPropagation();
-                saveAs(photo.url, `photo_${currentIndex}.jpg`);
+                const fileId = photo.url.match(/id=([^&]+)/)[1];
+                const dlUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                window.open(dlUrl, '_blank');
+            };
+            document.getElementById('shareBtn').onclick = (e) => {
+                e.stopPropagation();
+                if(navigator.share) {
+                    navigator.share({ title: PAGE_TITLE, url: photo.url });
+                } else {
+                    navigator.clipboard.writeText(photo.url);
+                    Swal.fire({ toast: true, position: 'top', icon: 'success', title: '已複製連結', showConfirmButton: false, timer: 1500 });
+                }
             };
         }
 
-        function nextPhoto(e) {
-            if (e) e.stopPropagation();
-            if (currentIndex < currentPhotos.length - 1) {
-                currentIndex++;
-                switchPhoto();
-            }
-        }
-
-        function prevPhoto(e) {
-            if (e) e.stopPropagation();
-            if (currentIndex > 0) {
-                currentIndex--;
-                switchPhoto();
-            }
-        }
-
+        function nextPhoto(e) { e?.stopPropagation(); if (currentIndex < currentPhotos.length - 1) { currentIndex++; switchPhoto(); } }
+        function prevPhoto(e) { e?.stopPropagation(); if (currentIndex > 0) { currentIndex--; switchPhoto(); } }
         function switchPhoto() {
             const lImg = document.getElementById('lightboxImg');
             lImg.style.opacity = '0';
@@ -479,78 +450,64 @@
         }
 
         function closeLightbox() {
-            const lightbox = document.getElementById('lightbox');
-            const lImg = document.getElementById('lightboxImg');
-            const items = document.querySelectorAll('.photo-item');
-            const targetEl = items[currentIndex]?.querySelector('img');
-            
-            if (!targetEl) {
-                lightbox.style.display = 'none';
-                return;
-            }
-
-            const rect = targetEl.getBoundingClientRect();
-            const scale = rect.width / window.innerWidth;
-            const translateX = rect.left + rect.width/2 - window.innerWidth/2;
-            const translateY = rect.top + rect.height/2 - window.innerHeight/2;
-
-            lightbox.classList.remove('active');
-            lImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-
-            setTimeout(() => {
-                lightbox.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }, 350);
+            const lb = document.getElementById('lightbox');
+            lb.classList.remove('active');
+            setTimeout(() => { lb.style.display = 'none'; document.body.style.overflow = 'auto'; }, 350);
         }
 
+        // --- 修正後的雲端 ZIP 下載 ---
         async function downloadZip() {
             const indicator = document.getElementById('dlIndicator');
             const msg = document.getElementById('dlMsg');
             indicator.style.display = 'flex';
-            const zip = new JSZip();
-            const folder = zip.folder(activeAlbum.name);
+            msg.innerText = "雲端處理中，請稍候...";
 
             try {
-                for (let i = 0; i < currentPhotos.length; i++) {
-                    msg.innerText = `下載中 (${i+1}/${currentPhotos.length})`;
-                    const blob = await fetch(currentPhotos[i].url).then(r => r.blob());
-                    folder.file(`img_${i+1}.jpg`, blob);
+                // 直接請求 GAS 後端進行打包，繞過 CORS
+                const res = await fetch(`${SCRIPT_URL}?action=downloadAlbum&albumId=${activeAlbum.id}`);
+                const json = await res.json();
+
+                if (json.status === "success") {
+                    msg.innerText = "正在傳輸檔案...";
+                    // 將 Base64 轉換回 Blob
+                    const byteCharacters = atob(json.data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], {type: "application/zip"});
+                    
+                    saveAs(blob, json.fileName || "album.zip");
+                    Swal.fire('下載成功', '相簿已成功打包並開始下載。', 'success');
+                } else {
+                    throw new Error(json.message);
                 }
-                msg.innerText = "正在打包壓縮...";
-                const content = await zip.generateAsync({type: "blob"});
-                saveAs(content, `${activeAlbum.name}.zip`);
             } catch (e) {
-                Swal.fire('失敗', '下載過程中發生問題', 'error');
+                console.error(e);
+                Swal.fire('下載失敗', '請確認相簿資料夾的權限已設為「知道連結的人即可檢視」，或聯絡管理者。', 'error');
             } finally {
                 indicator.style.display = 'none';
             }
         }
 
-        // 管理員與設定邏輯 (保持原樣)
         async function doLogin() {
             const pwd = document.getElementById('adminPwd').value;
             const res = await fetch(`${SCRIPT_URL}?action=verifyAdmin&password=${pwd}`);
             const json = await res.json();
-            if (json.status === "success") {
-                localStorage.setItem('is_admin', 'true');
-                location.reload();
-            } else {
-                Swal.fire('錯誤', '密碼不正確', 'error');
-            }
+            if (json.status === "success") { localStorage.setItem('is_admin', 'true'); location.reload(); }
+            else { Swal.fire('錯誤', '密碼不正確', 'error'); }
         }
-
         function logoutAdmin() { localStorage.removeItem('is_admin'); location.reload(); }
-
         function saveConfig() {
             const url = document.getElementById('cfgUrl').value.trim();
             const title = document.getElementById('cfgTitle').value.trim();
-            if(!url) { Swal.fire('提示', '請輸入 API 網址', 'warning'); return; }
+            if(!url) return;
             localStorage.setItem('gas_api_url', url);
             localStorage.setItem('page_title', title || "雲端相簿");
             sessionStorage.removeItem('is_guest');
             location.reload();
         }
-
         function openSettingsModal() {
             document.getElementById('cfgUrl').value = SCRIPT_URL;
             document.getElementById('cfgTitle').value = PAGE_TITLE;
@@ -563,7 +520,6 @@
             }
             new bootstrap.Modal(document.getElementById('settingsModal')).show();
         }
-
         function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
     </script>
 </body>
