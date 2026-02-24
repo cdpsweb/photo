@@ -28,11 +28,12 @@
             --bg-secondary: #0D0D0D;
             --bg-tertiary: #1A1A1A;
             --text-primary: #FFFFFF;
-            --text-secondary: #F0F0F0; /* 提升亮度 */
-            --text-muted: #B0B0B0;    /* 顯著提升對比度 (原本為 #888888) */
-            --brand-primary: #448AFF; /* 調亮品牌藍 */
+            --text-secondary: #F0F0F0;
+            --text-muted: #B0B0B0;
+            --brand-primary: #448AFF;
             --brand-accent: #FF4081;
-            --info-light: #80D8FF;    /* 提示專用淺藍 */
+            --brand-guest: #00E676; /* 訪客模式綠色 */
+            --info-light: #80D8FF;
             --border-subtle: rgba(68, 138, 255, 0.35);
             --glow-blue: 0 0 30px rgba(68, 138, 255, 0.4);
             --font-sans: 'Inter', 'Microsoft JhengHei', sans-serif;
@@ -89,10 +90,11 @@
         .form-label { color: var(--text-secondary); font-weight: 500; }
         .form-text { color: var(--text-muted) !important; }
         
-        /* 提升分享區塊對比 */
         .share-box { background: rgba(68, 138, 255, 0.05); border-radius: 8px; padding: 20px; border: 1px dashed var(--brand-primary); }
         #qrcode img { margin: 0 auto; border: 8px solid white; border-radius: 4px; }
         .text-info-contrast { color: var(--info-light); font-weight: 500; }
+
+        .badge-status { font-family: var(--font-mono); font-size: 0.85rem; padding: 4px 14px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
 
         .hidden { display: none !important; }
         .swal2-popup { background: var(--bg-secondary) !important; color: white !important; border: 1px solid var(--border-subtle) !important; }
@@ -107,14 +109,20 @@
                 <span id="navbarTitle">雲端相簿</span>
             </a>
             <div class="d-flex align-items-center gap-2">
-                <span id="adminBadge" class="d-none" style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.85rem; border: 1px solid var(--brand-accent); padding: 4px 14px; border-radius: 20px; font-weight: 600;">
+                <!-- 管理者標籤 -->
+                <span id="adminBadge" class="badge-status d-none" style="color: var(--brand-accent); border: 1px solid var(--brand-accent);">
                     <i class="bi bi-shield-check"></i> 管理者模式
                 </span>
+                <!-- 訪客標籤 -->
+                <span id="guestBadge" class="badge-status d-none" style="color: var(--brand-guest); border: 1px solid var(--brand-guest);">
+                    <i class="bi bi-person-check"></i> 訪客模式
+                </span>
+
                 <div id="adminControls" class="d-none d-flex gap-2">
                     <button class="btn-oled btn-sm" onclick="openSettingsModal()" title="系統設定"><i class="bi bi-gear-fill"></i></button>
                     <button class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()" title="登出系統"><i class="bi bi-box-arrow-right"></i></button>
                 </div>
-                <button id="loginBtn" class="btn-oled btn-oled-accent" onclick="openLoginModal()" title="管理者登入"><i class="bi bi-key-fill"></i></button>
+                <button id="loginBtn" class="btn-oled btn-oled-accent d-none" onclick="openLoginModal()" title="管理者登入"><i class="bi bi-key-fill"></i></button>
             </div>
         </div>
     </nav>
@@ -168,30 +176,31 @@
                 <div class="modal-body p-4">
                     <!-- Config Section -->
                     <div class="mb-4">
-                        <label class="form-label mb-2">後端 API 端點 (GAS 部署網址)</label>
+                        <label class="form-label mb-2 text-white">後端 API 端點 (GAS 部署網址)</label>
                         <input type="url" class="form-control" id="settingGasUrl" placeholder="https://script.google.com/macros/s/...">
                         <div class="form-text mt-2 text-info-contrast">※ 由 Google Apps Script 部署生成的執行網址。</div>
                     </div>
                     <div class="mb-4">
-                        <label class="form-label mb-2">相簿顯示標題</label>
+                        <label class="form-label mb-2 text-white">相簿顯示標題</label>
                         <input type="text" class="form-control" id="settingPageTitle">
                     </div>
                     
-                    <hr class="my-4 opacity-25">
-
-                    <!-- Share Section -->
-                    <div class="mb-2">
-                        <label class="form-label mb-3"><i class="bi bi-qr-code-scan me-1"></i> 家長專用分享資訊</label>
-                        <div class="share-box text-center">
-                            <div id="qrcode" class="mb-4 d-flex justify-content-center"></div>
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control bg-dark border-secondary text-light fs-7" id="shareUrlInput" readonly style="font-size: 0.8rem;">
-                                <button class="btn btn-primary px-3" onclick="copyShareUrl()">
-                                    <i class="bi bi-clipboard"></i>
-                                </button>
-                            </div>
-                            <div class="text-info-contrast small">
-                                <i class="bi bi-lightbulb-fill me-1"></i>掃描 QR Code 後，系統將自動套用您的 API 設定，家長可直接瀏覽相簿。
+                    <div id="shareSectionWrapper" class="hidden">
+                        <hr class="my-4 opacity-25">
+                        <!-- Share Section -->
+                        <div class="mb-2">
+                            <label class="form-label mb-3 text-white"><i class="bi bi-qr-code-scan me-1"></i> 家長專用分享資訊</label>
+                            <div class="share-box text-center">
+                                <div id="qrcode" class="mb-4 d-flex justify-content-center"></div>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control bg-dark border-secondary text-light" id="shareUrlInput" readonly style="font-size: 0.8rem;">
+                                    <button class="btn btn-primary px-3" onclick="copyShareUrl()">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                                <div class="text-info-contrast small">
+                                    <i class="bi bi-lightbulb-fill me-1"></i>掃描此碼後，系統會自動配置相簿服務，家長可直接瀏覽。
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -208,18 +217,26 @@
         let SCRIPT_URL = localStorage.getItem('gas_api_url') || "";
         let PAGE_TITLE = localStorage.getItem('page_title') || "雲端相簿";
         let isAdmin = localStorage.getItem('is_admin') === 'true';
+        let isGuestMode = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const encodedUrl = urlParams.get('api');
+            
+            // 判定是否為透過分享連結進來的訪客
             if (encodedUrl) {
+                isGuestMode = true;
                 try {
                     const decodedUrl = atob(encodedUrl);
                     localStorage.setItem('gas_api_url', decodedUrl);
+                    // 訪客進來時，強制清除管理員狀態
+                    localStorage.removeItem('is_admin');
+                    isAdmin = false;
+                    
                     Swal.fire({
                         icon: 'success',
                         title: '自動設定成功',
-                        text: '正在啟動相簿服務...',
+                        text: '正在啟動相簿訪客服務...',
                         timer: 2000,
                         showConfirmButton: false,
                         background: '#0D0D0D',
@@ -246,7 +263,13 @@
         });
 
         function initShareInfo() {
-            if (!SCRIPT_URL) return;
+            // 只有在已設定 SCRIPT_URL 且非訪客模式時才顯示分享資訊
+            if (!SCRIPT_URL || isGuestMode) {
+                document.getElementById('shareSectionWrapper').classList.add('hidden');
+                return;
+            }
+            
+            document.getElementById('shareSectionWrapper').classList.remove('hidden');
             const baseUrl = window.location.href.split('?')[0];
             const shareUrl = `${baseUrl}?api=${btoa(SCRIPT_URL)}`;
             document.getElementById('shareUrlInput').value = shareUrl;
@@ -292,8 +315,8 @@
                 document.getElementById('loadingText').innerHTML = `
                     <div class="p-4 border border-danger rounded d-inline-block">
                         <i class="bi bi-exclamation-triangle text-danger fs-1"></i>
-                        <p class="text-danger mt-3">連線失敗：無法聯繫上雲端 API 服務。<br>請檢查 API 網址是否正確或 Google 服務是否已部署。</p>
-                        <button class="btn btn-outline-danger btn-sm mt-2" onclick="openSettingsModal()">修改 API 設定</button>
+                        <p class="text-danger mt-3">連線失敗：無法聯繫上雲端 API 服務。<br>請檢查 API 網址是否正確。</p>
+                        ${!isGuestMode ? `<button class="btn btn-outline-danger btn-sm mt-2" onclick="openSettingsModal()">修改 API 設定</button>` : ''}
                     </div>`;
             }
         }
@@ -368,8 +391,7 @@
                     isAdmin = true;
                     localStorage.setItem('is_admin', 'true');
                     updateAdminUi();
-                    const modalEl = document.getElementById('loginModal');
-                    bootstrap.Modal.getInstance(modalEl).hide();
+                    bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
                     Swal.fire({ 
                         icon: 'success', 
                         title: '登入成功', 
@@ -392,27 +414,40 @@
             localStorage.removeItem('is_admin');
             updateAdminUi();
             Swal.fire({
-                icon: 'success',
-                title: '已退出管理模式',
-                text: '歡迎隨時回來！',
-                timer: 1500,
-                showConfirmButton: false,
-                background: '#0D0D0D',
+                icon: 'success', 
+                title: '已退出管理模式', 
+                timer: 1500, 
+                showConfirmButton: false, 
+                background: '#0D0D0D', 
                 color: '#FFFFFF'
             });
         }
 
         function updateAdminUi() {
-            const badge = document.getElementById('adminBadge');
-            const controls = document.getElementById('adminControls');
+            const adminBadge = document.getElementById('adminBadge');
+            const guestBadge = document.getElementById('guestBadge');
+            const adminControls = document.getElementById('adminControls');
             const loginBtn = document.getElementById('loginBtn');
+
+            // 判斷訪客模式
+            const urlParams = new URLSearchParams(window.location.search);
+            // 如果當前 URL 有 api 參數，或是我們已經知道這是訪客(API已寫入且無管理員登入)
+            const showsGuest = isGuestMode || (SCRIPT_URL && !isAdmin);
+
             if (isAdmin) {
-                badge.classList.remove('d-none');
-                controls.classList.remove('d-none');
+                adminBadge.classList.remove('d-none');
+                guestBadge.classList.add('d-none');
+                adminControls.classList.remove('d-none');
                 loginBtn.classList.add('d-none');
+            } else if (showsGuest) {
+                adminBadge.classList.add('d-none');
+                guestBadge.classList.remove('d-none');
+                adminControls.classList.add('d-none');
+                loginBtn.classList.add('d-none'); // 訪客模式不顯示登入按鈕
             } else {
-                badge.classList.add('d-none');
-                controls.classList.add('d-none');
+                adminBadge.classList.add('d-none');
+                guestBadge.classList.add('d-none');
+                adminControls.classList.add('d-none');
                 loginBtn.classList.remove('d-none');
             }
         }
