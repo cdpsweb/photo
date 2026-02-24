@@ -5,15 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>雲端相簿 OLED</title>
     
-    <!-- Typography -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     
-    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -23,129 +21,150 @@
             --bg-secondary: #121212;
             --bg-tertiary: #1e1e1e;
             --text-primary: #FFFFFF;
-            --text-secondary: #E0E0E0;
-            --text-muted: #9AA0A6;
-            --brand-primary: #4285F4; /* Google Blue */
-            --brand-accent: #FBBC04; 
-            --brand-guest: #34A853; /* Google Green */
-            --border-subtle: rgba(255, 255, 255, 0.1);
-            --radius-google: 16px;
+            --text-secondary: #E8EAED;
+            --text-muted: #BDC1C6;
+            --brand-primary: #8AB4F8;
+            --brand-accent: #FBBC04;
+            --brand-guest: #81C995;
+            --border-subtle: rgba(255, 255, 255, 0.2);
+            --radius-google: 24px;
+            --ease-google: cubic-bezier(0.4, 0, 0.2, 1);
+            --duration-google: 0.35s;
         }
 
         body {
             background-color: var(--bg-primary);
             color: var(--text-primary);
-            font-family: 'Noto Sans TC', 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
+            font-family: 'Noto Sans TC', sans-serif;
+            margin: 0; padding: 0; overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 導覽列優化 */
         .navbar-custom {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(25px);
             border-bottom: 1px solid var(--border-subtle);
             padding: 0.75rem 1rem;
-            position: sticky;
-            top: 0;
-            z-index: 1050;
+            position: sticky; top: 0; z-index: 1050;
         }
-        .navbar-brand { font-weight: 500; font-size: 1.25rem; display: flex; align-items: center; gap: 10px; }
-        .google-logo { width: 24px; height: 24px; }
+        .navbar-brand { font-weight: 600; display: flex; align-items: center; gap: 10px; color: var(--text-primary) !important; }
 
-        /* 相簿網格系統 */
         .album-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 12px;
-            padding: 16px;
+            gap: 16px; padding: 16px;
         }
         @media (min-width: 768px) {
-            .album-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; padding: 24px; }
+            .album-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; padding: 24px; }
         }
 
         .album-item {
             background: var(--bg-secondary);
             border-radius: var(--radius-google);
             overflow: hidden;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background 0.2s;
             cursor: pointer;
-            position: relative;
+            border: 1px solid var(--border-subtle);
         }
-        .album-item:active { transform: scale(0.97); }
-        .album-cover-wrapper {
-            aspect-ratio: 1/1;
-            overflow: hidden;
-            background: var(--bg-tertiary);
-        }
-        .album-cover { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
-        .album-meta { padding: 10px 12px; }
-        .album-title { font-weight: 500; font-size: 0.95rem; margin-bottom: 2px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .album-item:active { transform: scale(0.96); }
+        .album-cover { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #111; }
+        .album-meta { padding: 14px; }
+        .album-title { font-weight: 500; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 4px; }
         .album-count { font-size: 0.8rem; color: var(--text-muted); }
 
-        /* 相片網格系統 (Google Photos Style) */
         .photo-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 2px;
         }
         @media (min-width: 768px) {
-            .photo-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px; padding: 4px; }
+            .photo-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; padding: 6px; }
         }
+        .photo-item { aspect-ratio: 1/1; background: #111; cursor: pointer; position: relative; overflow: hidden; }
+        .photo-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        .photo-item {
-            aspect-ratio: 1/1;
-            overflow: hidden;
-            background: var(--bg-tertiary);
-            cursor: pointer;
-            position: relative;
-        }
-        .photo-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
-        .photo-item:hover .photo-img { transform: scale(1.05); }
-
-        /* 全螢幕燈箱 (Lightbox) */
+        /* 燈箱與導覽 */
         .lightbox-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 2000; display: none;
-            flex-direction: column;
+            background: rgba(0,0,0,0); z-index: 2000; display: none;
+            flex-direction: column; transition: background-color var(--duration-google) var(--ease-google);
+            touch-action: none;
         }
+        .lightbox-overlay.active { background: rgba(0,0,0,1); }
+
         .lightbox-header {
-            padding: 16px; display: flex; justify-content: space-between; align-items: center;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
-            position: absolute; top: 0; width: 100%; z-index: 2001;
+            padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+            position: absolute; top: 0; width: 100%; z-index: 2005;
+            opacity: 0; transition: opacity 0.2s;
         }
+        .lightbox-overlay.active .lightbox-header { opacity: 1; }
+
         .lightbox-content {
             flex-grow: 1; display: flex; align-items: center; justify-content: center;
-            overflow: hidden; position: relative;
+            overflow: hidden; position: relative; z-index: 2001;
         }
-        .lightbox-img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .lightbox-btn {
+
+        .lightbox-img {
+            max-width: 100%; max-height: 100%;
+            object-fit: contain;
+            transform-origin: center center;
+            transition: transform var(--duration-google) var(--ease-google), opacity 0.2s;
+            will-change: transform, opacity;
+            z-index: 2002;
+        }
+
+        /* 左右切換按鈕 */
+        .nav-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%);
             background: rgba(255,255,255,0.1); border: none; color: white;
+            width: 56px; height: 56px; border-radius: 50%;
+            display: none; align-items: center; justify-content: center;
+            font-size: 1.5rem; z-index: 2010; transition: background 0.2s;
+        }
+        @media (min-width: 992px) {
+            .lightbox-overlay.active .nav-arrow { display: flex; }
+        }
+        .nav-arrow:hover { background: rgba(255,255,255,0.2); }
+        .nav-arrow.left { left: 20px; }
+        .nav-arrow.right { right: 20px; }
+
+        #setupState {
+            max-width: 400px; margin: 80px auto; padding: 40px 24px;
+            background: var(--bg-secondary); border-radius: 32px;
+            border: 1px solid var(--border-subtle);
+            text-align: center;
+        }
+
+        .circle-btn {
+            background: rgba(255,255,255,0.15); border: none; color: white;
             width: 44px; height: 44px; border-radius: 50%; display: flex;
-            align-items: center; justify-content: center; font-size: 1.2rem;
-            backdrop-filter: blur(10px);
+            align-items: center; justify-content: center; font-size: 1.3rem;
+            backdrop-filter: blur(15px); transition: background 0.2s;
         }
+        .circle-btn:active { background: rgba(255,255,255,0.3); }
 
-        /* 標籤樣式 */
-        .status-badge {
-            font-size: 0.75rem; padding: 4px 12px; border-radius: 50px;
-            display: flex; align-items: center; gap: 5px; font-weight: 500;
-        }
-
-        /* 按鈕優化 */
         .btn-google {
-            border-radius: 50px; padding: 8px 20px; font-weight: 500;
-            transition: all 0.2s; border: 1px solid var(--border-subtle);
-            background: transparent; color: var(--text-primary);
+            border-radius: 50px; padding: 10px 24px; font-weight: 600;
+            border: 1px solid var(--border-subtle); background: transparent; color: var(--text-primary);
+            transition: all 0.2s;
         }
-        .btn-google-primary { background: var(--brand-primary); border-color: var(--brand-primary); }
+        .btn-google-primary { background: var(--brand-primary); color: #000; border: none; }
+
+        #navHeader { 
+            padding: 12px 16px; background: var(--bg-primary); 
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 56px; z-index: 1000;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        #dlIndicator {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--brand-primary); color: #000; padding: 14px 28px;
+            border-radius: 50px; font-weight: bold; z-index: 3000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.8); display: none; align-items: center; gap: 12px;
+        }
 
         .hidden { display: none !important; }
-        
-        /* 手機板麵包屑優化 */
-        #navHeader { padding: 8px 16px; background: var(--bg-primary); display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-        .back-btn { font-size: 1.2rem; color: var(--text-primary); cursor: pointer; padding: 4px 8px; }
     </style>
 </head>
 <body>
@@ -153,116 +172,110 @@
     <nav class="navbar navbar-custom">
         <div class="container-fluid">
             <div class="navbar-brand" onclick="showAlbumList()">
-                <svg class="google-logo" viewBox="0 0 24 24">
-                    <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm0 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" fill="#4285F4"/>
-                </svg>
+                <i class="bi bi-collection-play-fill text-primary"></i>
                 <span id="navbarTitle">雲端相簿</span>
             </div>
-            
             <div class="d-flex align-items-center gap-2">
-                <div id="adminBadge" class="status-badge d-none" style="background: rgba(251, 188, 4, 0.15); color: var(--brand-accent);">
-                    <i class="bi bi-shield-lock-fill"></i> 管理模式
+                <div id="adminBadge" class="d-none badge rounded-pill" style="background: rgba(251, 188, 4, 0.25); color: var(--brand-accent); padding: 8px 14px; font-weight: 600;">管理者</div>
+                <div id="guestBadge" class="d-none badge rounded-pill" style="background: rgba(52, 168, 83, 0.25); color: var(--brand-guest); padding: 8px 14px; font-weight: 600;">訪客模式</div>
+                <div id="adminControls" class="d-none d-flex gap-1">
+                    <button class="circle-btn" onclick="openSettingsModal()"><i class="bi bi-gear"></i></button>
+                    <button class="circle-btn" onclick="logoutAdmin()"><i class="bi bi-box-arrow-right"></i></button>
                 </div>
-                <div id="guestBadge" class="status-badge d-none" style="background: rgba(52, 168, 83, 0.15); color: var(--brand-guest);">
-                    <i class="bi bi-people-fill"></i> 訪客模式
-                </div>
-
-                <div id="adminControls" class="d-none d-flex gap-2">
-                    <button class="lightbox-btn" onclick="openSettingsModal()"><i class="bi bi-gear"></i></button>
-                    <button class="lightbox-btn" onclick="logoutAdmin()"><i class="bi bi-box-arrow-right"></i></button>
-                </div>
-                <button id="loginBtn" class="btn btn-google btn-sm d-none" onclick="openLoginModal()">管理者登入</button>
+                <button id="loginBtn" class="btn btn-google btn-sm d-none" onclick="openLoginModal()">登入</button>
             </div>
         </div>
     </nav>
 
-    <!-- 導覽路徑 -->
     <div id="navHeader" class="hidden">
-        <div class="back-btn" onclick="showAlbumList()"><i class="bi bi-arrow-left"></i></div>
-        <div id="currentAlbumName" class="fw-bold text-truncate">相簿名稱</div>
+        <div class="d-flex align-items-center gap-3">
+            <div style="cursor:pointer; font-size: 1.4rem;" onclick="showAlbumList()"><i class="bi bi-chevron-left"></i></div>
+            <div id="currentAlbumName" class="fw-bold"></div>
+        </div>
+        <button class="btn btn-google btn-sm btn-google-primary" onclick="downloadZip()">
+            <i class="bi bi-cloud-arrow-down-fill me-1"></i> 全部下載
+        </button>
     </div>
 
     <main class="container-fluid p-0">
-        <!-- 相簿列表視圖 -->
-        <div id="albumView" class="album-grid">
-            <div id="loadingState" class="col-12 text-center py-5">
-                <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-3 text-muted">載入相簿中...</p>
-            </div>
+        <div id="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3 text-white-50">正在連線至雲端資料庫...</p>
         </div>
 
-        <!-- 照片列表視圖 -->
+        <div id="setupState" class="hidden">
+            <i class="bi bi-cloud-plus-fill display-3 text-primary mb-3"></i>
+            <h3 class="fw-bold">歡迎使用雲端相簿</h3>
+            <p class="text-muted mb-4">目前尚未設定 GAS API 網址，請先進行初始化設定。</p>
+            <button class="btn btn-google btn-google-primary w-100 py-3" onclick="openSettingsModal()">
+                <i class="bi bi-gear-fill me-2"></i>立即前往設定
+            </button>
+        </div>
+
+        <div id="albumView" class="album-grid hidden"></div>
         <div id="photoView" class="photo-grid hidden"></div>
-
-        <!-- 初始化提示 -->
-        <div id="setupState" class="text-center py-5 px-4 hidden">
-            <i class="bi bi-cloud-plus display-1 text-primary mb-4"></i>
-            <h2 class="fw-bold">歡迎使用雲端相簿</h2>
-            <p class="text-muted mb-4">請先完成 API 端點設定以連結您的 Google Drive 資料庫。</p>
-            <button class="btn btn-google btn-google-primary px-5 py-3" onclick="openSettingsModal()">開始設定</button>
-        </div>
     </main>
 
-    <!-- Lightbox -->
-    <div id="lightbox" class="lightbox-overlay">
+    <!-- 燈箱 -->
+    <div id="lightbox" class="lightbox-overlay" onclick="closeLightbox()">
         <div class="lightbox-header">
-            <button class="lightbox-btn" onclick="closeLightbox()"><i class="bi bi-x-lg"></i></button>
+            <button class="circle-btn" onclick="closeLightbox()"><i class="bi bi-x-lg"></i></button>
             <div class="d-flex gap-2">
-                <button class="lightbox-btn" id="downloadBtn"><i class="bi bi-download"></i></button>
-                <button class="lightbox-btn" onclick="shareCurrentPhoto()"><i class="bi bi-share"></i></button>
+                <button class="circle-btn" id="dlSingle"><i class="bi bi-download"></i></button>
+                <button class="circle-btn" id="shareBtn"><i class="bi bi-share"></i></button>
             </div>
         </div>
-        <div class="lightbox-content" id="lightboxContent" onclick="closeLightbox()">
+        
+        <button class="nav-arrow left" onclick="prevPhoto(event)"><i class="bi bi-chevron-left"></i></button>
+        <button class="nav-arrow right" onclick="nextPhoto(event)"><i class="bi bi-chevron-right"></i></button>
+
+        <div class="lightbox-content" id="lbContent">
             <img src="" class="lightbox-img" id="lightboxImg" onclick="event.stopPropagation()">
-            <!-- 控制按鈕 (隱藏於手機) -->
-            <button class="lightbox-btn position-absolute start-0 ms-3 d-none d-md-flex" onclick="prevPhoto(event)" style="z-index:10"><i class="bi bi-chevron-left"></i></button>
-            <button class="lightbox-btn position-absolute end-0 me-3 d-none d-md-flex" onclick="nextPhoto(event)" style="z-index:10"><i class="bi bi-chevron-right"></i></button>
         </div>
     </div>
 
-    <!-- Login Modal -->
+    <div id="dlIndicator">
+        <div class="spinner-border spinner-border-sm"></div>
+        <span id="dlMsg">正在處理相簿打包...</span>
+    </div>
+
+    <!-- Modals (登入/設定) 保持原樣 -->
     <div class="modal fade" id="loginModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content border-0" style="background: var(--bg-secondary); border-radius: 28px;">
                 <div class="modal-body p-4 text-center">
-                    <h5 class="mb-4 fw-bold">管理者驗證</h5>
-                    <input type="password" class="form-control mb-4 py-3 border-0" id="adminPassword" placeholder="輸入密碼" style="background: var(--bg-tertiary); color: white; border-radius: 12px;">
-                    <button class="btn btn-google btn-google-primary w-100 py-3" onclick="verifyAdmin()">登入</button>
+                    <h5 class="mb-4 fw-bold">身分驗證</h5>
+                    <input type="password" class="form-control mb-4 py-3 border-0 text-center" id="adminPwd" placeholder="密碼" style="background: var(--bg-tertiary); color: white; border-radius: 12px;">
+                    <button class="btn btn-google btn-google-primary w-100 py-3" onclick="doLogin()">確認登入</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Settings Modal -->
     <div class="modal fade" id="settingsModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0" style="background: var(--bg-secondary); border-radius: 28px;">
                 <div class="modal-header border-0 px-4 pt-4">
-                    <h5 class="modal-title fw-bold">系統設定</h5>
+                    <h5 class="modal-title fw-bold">系統參數設定</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="mb-4">
-                        <label class="form-label small text-muted">API 網址 (GAS URL)</label>
-                        <input type="url" class="form-control bg-dark border-0 text-white py-3" id="settingGasUrl" style="border-radius: 12px;">
+                        <label class="form-label small text-muted">GAS API 網址</label>
+                        <input type="url" class="form-control bg-dark border-0 text-white py-3" id="cfgUrl" placeholder="https://script.google.com/macros/s/..." style="border-radius: 12px;">
                     </div>
                     <div class="mb-4">
-                        <label class="form-label small text-muted">網頁標題</label>
-                        <input type="text" class="form-control bg-dark border-0 text-white py-3" id="settingPageTitle" style="border-radius: 12px;">
+                        <label class="form-label small text-muted">站點名稱</label>
+                        <input type="text" class="form-control bg-dark border-0 text-white py-3" id="cfgTitle" style="border-radius: 12px;">
                     </div>
-                    
-                    <div id="shareSectionWrapper" class="hidden">
-                        <div class="p-3 rounded-4" style="background: rgba(66, 133, 244, 0.1); border: 1px dashed var(--brand-primary);">
-                            <label class="form-label small fw-bold mb-3"><i class="bi bi-share-fill me-2"></i>家長分享連結</label>
+                    <div id="shareInfo" class="hidden">
+                        <div class="p-3 rounded-4" style="background: rgba(138, 180, 248, 0.1); border: 1px dashed var(--brand-primary);">
+                            <label class="form-label small fw-bold mb-3"><i class="bi bi-share me-2"></i>訪客連結 (已加密)</label>
                             <div id="qrcode" class="mb-3 d-flex justify-content-center"></div>
-                            <div class="input-group">
-                                <input type="text" class="form-control form-control-sm bg-dark border-0 text-white" id="shareUrlInput" readonly>
-                                <button class="btn btn-primary" onclick="copyShareUrl()"><i class="bi bi-clipboard"></i></button>
-                            </div>
+                            <input type="text" class="form-control form-control-sm bg-dark border-0 text-white text-center" id="shareUrl" readonly>
                         </div>
                     </div>
-
-                    <button class="btn btn-google btn-google-primary w-100 mt-4 py-3" onclick="saveSettings()">儲存變更</button>
+                    <button class="btn btn-google btn-google-primary w-100 mt-4 py-3" onclick="saveConfig()">儲存並重新整理</button>
                 </div>
             </div>
         </div>
@@ -272,87 +285,127 @@
         let SCRIPT_URL = localStorage.getItem('gas_api_url') || "";
         let PAGE_TITLE = localStorage.getItem('page_title') || "雲端相簿";
         let isAdmin = localStorage.getItem('is_admin') === 'true';
-        let isGuestSession = sessionStorage.getItem('is_guest_session') === 'true';
+        let isGuest = sessionStorage.getItem('is_guest') === 'true';
         
         let currentPhotos = [];
         let currentIndex = 0;
+        let activeAlbum = null;
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const encodedUrl = urlParams.get('api');
-            
-            if (encodedUrl) {
-                sessionStorage.setItem('is_guest_session', 'true');
-                localStorage.setItem('gas_api_url', atob(encodedUrl));
-                localStorage.removeItem('is_admin');
-                window.history.replaceState({}, document.title, window.location.pathname);
-                location.reload();
-                return;
+        // 手勢支援變數
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('api')) {
+                sessionStorage.setItem('is_guest', 'true');
+                localStorage.setItem('gas_api_url', atob(params.get('api')));
+                window.history.replaceState({}, "", window.location.pathname);
+                location.reload(); return;
             }
 
             document.getElementById('navbarTitle').innerText = PAGE_TITLE;
-            updateAdminUi();
+            updateAuthUi();
 
             if (!SCRIPT_URL) {
-                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('loading').classList.add('hidden');
                 document.getElementById('setupState').classList.remove('hidden');
             } else {
-                fetchAlbums();
+                loadData();
             }
-        });
 
-        async function fetchAlbums() {
-            try {
-                const res = await fetch(`${SCRIPT_URL}?action=getAlbums`);
-                const result = await res.json();
-                if (result.status === "success") {
-                    renderAlbums(result.data);
+            initEventListeners();
+        };
+
+        function initEventListeners() {
+            // 鍵盤監聽
+            document.addEventListener('keydown', (e) => {
+                const lb = document.getElementById('lightbox');
+                if (lb.style.display === 'flex') {
+                    if (e.key === 'ArrowLeft') prevPhoto();
+                    if (e.key === 'ArrowRight') nextPhoto();
+                    if (e.key === 'Escape') closeLightbox();
                 }
-            } catch (e) {
-                console.error(e);
-                Swal.fire('連線失敗', '無法連接到 API，請檢查設定。', 'error');
+            });
+
+            // 滑動監聽
+            const lb = document.getElementById('lightbox');
+            lb.addEventListener('touchstart', (e) => touchStartX = e.changedTouches[0].screenX);
+            lb.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+        }
+
+        function handleSwipe() {
+            const diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) nextPhoto();
+                else prevPhoto();
             }
         }
 
-        function renderAlbums(albums) {
-            const container = document.getElementById('albumView');
-            container.innerHTML = '';
-            
-            albums.forEach(album => {
-                const div = document.createElement('div');
-                div.className = 'album-item';
-                div.onclick = () => openAlbum(album);
-                div.innerHTML = `
-                    <div class="album-cover-wrapper">
-                        <img src="${album.cover || 'https://via.placeholder.com/300?text=No+Photo'}" class="album-cover" loading="lazy">
-                    </div>
+        function updateAuthUi() {
+            if (isAdmin) { 
+                document.getElementById('adminBadge').classList.remove('d-none');
+                document.getElementById('adminControls').classList.remove('d-none');
+            } else if (isGuest) {
+                document.getElementById('guestBadge').classList.remove('d-none');
+            } else {
+                document.getElementById('loginBtn').classList.remove('d-none');
+            }
+        }
+
+        async function loadData() {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=getAlbums`);
+                const json = await res.json();
+                if (json.status === "success") {
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('albumView').classList.remove('hidden');
+                    renderAlbums(json.data);
+                }
+            } catch (e) {
+                document.getElementById('loading').innerHTML = `<p class="text-danger">API 連線失敗，請檢查網址是否正確。</p>`;
+            }
+        }
+
+        function renderAlbums(data) {
+            const grid = document.getElementById('albumView');
+            grid.innerHTML = '';
+            data.forEach(album => {
+                const item = document.createElement('div');
+                item.className = 'album-item';
+                item.onclick = () => openAlbum(album);
+                item.innerHTML = `
+                    <img src="${album.cover}" class="album-cover" loading="lazy">
                     <div class="album-meta">
-                        <div class="album-title">${album.name}</div>
+                        <div class="album-title text-truncate">${album.name}</div>
                         <div class="album-count">${album.photos.length} 張相片</div>
                     </div>
                 `;
-                container.appendChild(div);
+                grid.appendChild(item);
             });
         }
 
         function openAlbum(album) {
+            activeAlbum = album;
             currentPhotos = album.photos;
             document.getElementById('albumView').classList.add('hidden');
             document.getElementById('photoView').classList.remove('hidden');
             document.getElementById('navHeader').classList.remove('hidden');
             document.getElementById('currentAlbumName').innerText = album.name;
 
-            const container = document.getElementById('photoView');
-            container.innerHTML = '';
-            
-            album.photos.forEach((photo, index) => {
+            const grid = document.getElementById('photoView');
+            grid.innerHTML = '';
+            album.photos.forEach((p, i) => {
                 const div = document.createElement('div');
                 div.className = 'photo-item';
-                div.onclick = () => openLightbox(index);
-                div.innerHTML = `<img src="${photo.url}" class="photo-img" loading="lazy">`;
-                container.appendChild(div);
+                div.innerHTML = `<img src="${p.url}" class="photo-img" loading="lazy">`;
+                div.onclick = (e) => openLightbox(i, e.currentTarget);
+                grid.appendChild(div);
             });
-            window.scrollTo(0, 0);
+            window.scrollTo(0,0);
         }
 
         function showAlbumList() {
@@ -361,52 +414,124 @@
             document.getElementById('navHeader').classList.add('hidden');
         }
 
-        // --- Lightbox 邏輯 ---
-        function openLightbox(index) {
+        // --- 燈箱邏輯 ---
+        function openLightbox(index, el) {
             currentIndex = index;
-            const photo = currentPhotos[currentIndex];
-            document.getElementById('lightboxImg').src = photo.url;
-            document.getElementById('downloadBtn').onclick = () => window.open(photo.url, '_blank');
-            document.getElementById('lightbox').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            const photo = currentPhotos[index];
+            const imgEl = el.querySelector('img');
+            const rect = imgEl.getBoundingClientRect();
+            const lightbox = document.getElementById('lightbox');
+            const lImg = document.getElementById('lightboxImg');
 
-            // 支援手勢滑動 (簡單版)
-            let startX = 0;
-            const content = document.getElementById('lightboxContent');
-            content.ontouchstart = e => startX = e.touches[0].clientX;
-            content.ontouchend = e => {
-                const endX = e.changedTouches[0].clientX;
-                if (startX - endX > 50) nextPhoto(e);
-                else if (endX - startX > 50) prevPhoto(e);
+            lImg.src = photo.url;
+            lImg.style.transition = 'none';
+            
+            const scale = rect.width / window.innerWidth;
+            const translateX = rect.left + rect.width/2 - window.innerWidth/2;
+            const translateY = rect.top + rect.height/2 - window.innerHeight/2;
+
+            lImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            lImg.style.opacity = '1';
+            lightbox.style.display = 'flex';
+            
+            setTimeout(() => {
+                lightbox.classList.add('active');
+                lImg.style.transition = `transform var(--duration-google) var(--ease-google), opacity 0.2s`;
+                lImg.style.transform = `translate(0, 0) scale(1)`;
+            }, 10);
+
+            updateLightboxActions();
+            document.body.style.overflow = 'hidden';
+        }
+
+        function updateLightboxActions() {
+            const photo = currentPhotos[currentIndex];
+            document.getElementById('dlSingle').onclick = (e) => {
+                e.stopPropagation();
+                saveAs(photo.url, `photo_${currentIndex}.jpg`);
             };
         }
 
-        function closeLightbox() {
-            document.getElementById('lightbox').style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-
         function nextPhoto(e) {
-            e.stopPropagation();
+            if (e) e.stopPropagation();
             if (currentIndex < currentPhotos.length - 1) {
-                openLightbox(currentIndex + 1);
+                currentIndex++;
+                switchPhoto();
             }
         }
 
         function prevPhoto(e) {
-            e.stopPropagation();
+            if (e) e.stopPropagation();
             if (currentIndex > 0) {
-                openLightbox(currentIndex - 1);
+                currentIndex--;
+                switchPhoto();
             }
         }
 
-        // --- 管理者邏輯 ---
-        async function verifyAdmin() {
-            const pwd = document.getElementById('adminPassword').value;
+        function switchPhoto() {
+            const lImg = document.getElementById('lightboxImg');
+            lImg.style.opacity = '0';
+            setTimeout(() => {
+                lImg.src = currentPhotos[currentIndex].url;
+                lImg.onload = () => lImg.style.opacity = '1';
+                updateLightboxActions();
+            }, 150);
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            const lImg = document.getElementById('lightboxImg');
+            const items = document.querySelectorAll('.photo-item');
+            const targetEl = items[currentIndex]?.querySelector('img');
+            
+            if (!targetEl) {
+                lightbox.style.display = 'none';
+                return;
+            }
+
+            const rect = targetEl.getBoundingClientRect();
+            const scale = rect.width / window.innerWidth;
+            const translateX = rect.left + rect.width/2 - window.innerWidth/2;
+            const translateY = rect.top + rect.height/2 - window.innerHeight/2;
+
+            lightbox.classList.remove('active');
+            lImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+            setTimeout(() => {
+                lightbox.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }, 350);
+        }
+
+        async function downloadZip() {
+            const indicator = document.getElementById('dlIndicator');
+            const msg = document.getElementById('dlMsg');
+            indicator.style.display = 'flex';
+            const zip = new JSZip();
+            const folder = zip.folder(activeAlbum.name);
+
+            try {
+                for (let i = 0; i < currentPhotos.length; i++) {
+                    msg.innerText = `下載中 (${i+1}/${currentPhotos.length})`;
+                    const blob = await fetch(currentPhotos[i].url).then(r => r.blob());
+                    folder.file(`img_${i+1}.jpg`, blob);
+                }
+                msg.innerText = "正在打包壓縮...";
+                const content = await zip.generateAsync({type: "blob"});
+                saveAs(content, `${activeAlbum.name}.zip`);
+            } catch (e) {
+                Swal.fire('失敗', '下載過程中發生問題', 'error');
+            } finally {
+                indicator.style.display = 'none';
+            }
+        }
+
+        // 管理員與設定邏輯 (保持原樣)
+        async function doLogin() {
+            const pwd = document.getElementById('adminPwd').value;
             const res = await fetch(`${SCRIPT_URL}?action=verifyAdmin&password=${pwd}`);
-            const result = await res.json();
-            if (result.status === "success") {
-                isAdmin = true;
+            const json = await res.json();
+            if (json.status === "success") {
                 localStorage.setItem('is_admin', 'true');
                 location.reload();
             } else {
@@ -414,68 +539,32 @@
             }
         }
 
-        function logoutAdmin() {
-            localStorage.removeItem('is_admin');
-            location.reload();
-        }
+        function logoutAdmin() { localStorage.removeItem('is_admin'); location.reload(); }
 
-        function updateAdminUi() {
-            if (isAdmin) {
-                document.getElementById('adminBadge').classList.remove('d-none');
-                document.getElementById('adminControls').classList.remove('d-none');
-            } else if (isGuestSession) {
-                document.getElementById('guestBadge').classList.remove('d-none');
-            } else {
-                document.getElementById('loginBtn').classList.remove('d-none');
-            }
-        }
-
-        function saveSettings() {
-            const url = document.getElementById('settingGasUrl').value.trim();
-            const title = document.getElementById('settingPageTitle').value.trim();
-            if(!url) return;
+        function saveConfig() {
+            const url = document.getElementById('cfgUrl').value.trim();
+            const title = document.getElementById('cfgTitle').value.trim();
+            if(!url) { Swal.fire('提示', '請輸入 API 網址', 'warning'); return; }
             localStorage.setItem('gas_api_url', url);
             localStorage.setItem('page_title', title || "雲端相簿");
-            sessionStorage.removeItem('is_guest_session');
+            sessionStorage.removeItem('is_guest');
             location.reload();
         }
 
-        function initShareInfo() {
-            if (!SCRIPT_URL || isGuestSession) return;
-            document.getElementById('shareSectionWrapper').classList.remove('hidden');
-            const baseUrl = window.location.href.split('?')[0];
-            const shareUrl = `${baseUrl}?api=${btoa(SCRIPT_URL)}`;
-            document.getElementById('shareUrlInput').value = shareUrl;
-            
-            const qrContainer = document.getElementById("qrcode");
-            qrContainer.innerHTML = "";
-            new QRCode(qrContainer, { text: shareUrl, width: 140, height: 140 });
-        }
-
-        function copyShareUrl() {
-            const input = document.getElementById('shareUrlInput');
-            navigator.clipboard.writeText(input.value);
-            Swal.fire({ title: '已複製', timer: 1000, showConfirmButton: false, position: 'bottom' });
+        function openSettingsModal() {
+            document.getElementById('cfgUrl').value = SCRIPT_URL;
+            document.getElementById('cfgTitle').value = PAGE_TITLE;
+            if (isAdmin) {
+                document.getElementById('shareInfo').classList.remove('hidden');
+                const url = `${window.location.href.split('?')[0]}?api=${btoa(SCRIPT_URL)}`;
+                document.getElementById('shareUrl').value = url;
+                document.getElementById('qrcode').innerHTML = "";
+                new QRCode(document.getElementById('qrcode'), { text: url, width: 140, height: 140, colorDark: "#ffffff", colorLight: "#000000" });
+            }
+            new bootstrap.Modal(document.getElementById('settingsModal')).show();
         }
 
         function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
-        function openSettingsModal() { 
-            document.getElementById('settingGasUrl').value = SCRIPT_URL;
-            document.getElementById('settingPageTitle').value = PAGE_TITLE;
-            initShareInfo();
-            new bootstrap.Modal(document.getElementById('settingsModal')).show(); 
-        }
-
-        function shareCurrentPhoto() {
-            if (navigator.share) {
-                navigator.share({
-                    title: PAGE_TITLE,
-                    url: currentPhotos[currentIndex].url
-                });
-            } else {
-                copyShareUrl();
-            }
-        }
     </script>
 </body>
 </html>
