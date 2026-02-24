@@ -11,8 +11,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     
     <!-- 核心功能套件 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -26,22 +24,19 @@
             --text-secondary: #E8EAED;
             --text-muted: #BDC1C6;
             --brand-primary: #8AB4F8;
-            --brand-accent: #FBBC04;
             --border-subtle: rgba(255, 255, 255, 0.12);
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+            --radius-google: 24px;
         }
 
         body {
             background-color: var(--bg-primary);
             color: var(--text-primary);
             font-family: 'Noto Sans TC', 'Inter', sans-serif;
-            margin: 0; padding: 0; overflow-x: hidden;
+            margin: 0; padding: 0;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 導覽列 */
+        /* 導覽列樣式 */
         .navbar-custom {
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(20px);
@@ -49,9 +44,8 @@
             padding: 0.75rem 1rem;
             position: sticky; top: 0; z-index: 1050;
         }
-        .navbar-brand { font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
 
-        /* 相簿列表網格 */
+        /* 相簿清單網格 */
         .album-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -63,19 +57,19 @@
 
         .album-card {
             background: var(--bg-secondary);
-            border-radius: var(--radius-lg);
+            border-radius: var(--radius-google);
             overflow: hidden;
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             border: 1px solid var(--border-subtle);
         }
-        .album-card:active { transform: scale(0.97); }
+        .album-card:active { transform: scale(0.96); }
         .album-cover { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #111; }
         .album-info { padding: 14px; }
-        .album-name { font-weight: 500; font-size: 1rem; color: var(--text-primary); margin-bottom: 2px; }
-        .album-meta { font-size: 0.8rem; color: var(--text-muted); }
+        .album-name { font-weight: 500; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .album-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
 
-        /* 相片網格 */
+        /* 照片顯示網格 */
         .photo-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -85,9 +79,9 @@
             .photo-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; padding: 8px; }
         }
         .photo-item { aspect-ratio: 1/1; background: #111; cursor: pointer; overflow: hidden; }
-        .photo-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.3s; }
+        .photo-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        /* 控制列 */
+        /* 相簿內部導覽 */
         #navHeader { 
             padding: 12px 16px; background: var(--bg-primary); 
             display: flex; align-items: center; justify-content: space-between;
@@ -95,28 +89,26 @@
             border-bottom: 1px solid var(--border-subtle);
         }
 
-        /* 下載進度指示器 */
+        /* 下載進度浮窗 */
         #downloadProgressContainer {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             background: #1e1e1e; border: 1px solid var(--brand-primary); color: #fff;
             padding: 16px 24px; border-radius: 20px; z-index: 3000; display: none;
-            flex-direction: column; min-width: 300px; box-shadow: 0 12px 48px rgba(0,0,0,0.7);
+            flex-direction: column; min-width: 300px; box-shadow: 0 12px 48px rgba(0,0,0,0.8);
         }
         .progress-bar-bg { width: 100%; height: 6px; background: #333; border-radius: 10px; margin-top: 12px; overflow: hidden; }
-        #progressBar { width: 0%; height: 100%; background: var(--brand-primary); transition: width 0.3s var(--ease-standard); }
+        #progressBar { width: 0%; height: 100%; background: var(--brand-primary); transition: width 0.4s ease; }
 
-        /* 按鈕與元件 */
+        /* 通用按鈕 */
         .circle-btn {
             background: rgba(255,255,255,0.1); border: none; color: white;
             width: 42px; height: 42px; border-radius: 50%; display: flex;
-            align-items: center; justify-content: center; transition: background 0.2s;
+            align-items: center; justify-content: center;
         }
-        .circle-btn:active { background: rgba(255,255,255,0.2); }
-        .btn-google {
-            border-radius: 50px; padding: 8px 20px; font-weight: 600; border: none;
-            transition: all 0.2s;
+        .btn-google-primary {
+            background: var(--brand-primary); color: #000; border-radius: 50px;
+            font-weight: 600; border: none; padding: 8px 24px;
         }
-        .btn-primary-google { background: var(--brand-primary); color: #000; }
 
         /* 燈箱 */
         .lightbox {
@@ -124,7 +116,7 @@
             background: #000; z-index: 2000; display: none; flex-direction: column;
         }
         .lightbox-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
-        .lightbox-content { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .lightbox-content { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
         .lightbox-img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
         .hidden { display: none !important; }
@@ -132,54 +124,51 @@
 </head>
 <body>
 
-    <!-- 主導覽列 -->
+    <!-- 頂部導覽列 -->
     <nav class="navbar navbar-custom">
         <div class="container-fluid">
-            <div class="navbar-brand text-white" onclick="showAlbumList()">
-                <i class="bi bi-grid-1x2-fill text-primary"></i>
-                <span id="navTitle">雲端相簿</span>
+            <div class="navbar-brand text-white m-0" onclick="showAlbumList()" style="cursor:pointer">
+                <i class="bi bi-images text-primary me-2"></i><span id="navTitle">雲端相簿</span>
             </div>
             <div class="d-flex gap-2">
-                <div id="adminBadge" class="d-none badge rounded-pill bg-dark border border-warning text-warning px-3 py-2">管理者</div>
-                <button id="loginBtn" class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="openLoginModal()">登入</button>
+                <button id="loginBtn" class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="openLoginModal()">管理登入</button>
                 <button id="settingsBtn" class="circle-btn d-none" onclick="openSettingsModal()"><i class="bi bi-gear"></i></button>
             </div>
         </div>
     </nav>
 
-    <!-- 相簿內部導覽列 -->
+    <!-- 相簿切換控制列 -->
     <div id="navHeader" class="hidden">
         <div class="d-flex align-items-center gap-3">
             <button class="circle-btn" onclick="showAlbumList()"><i class="bi bi-arrow-left"></i></button>
-            <span id="currentAlbumName" class="fw-bold">相簿名稱</span>
+            <span id="currentAlbumName" class="fw-bold"></span>
         </div>
-        <button class="btn btn-google btn-primary-google" onclick="startDownload()">
+        <button class="btn btn-google-primary" onclick="requestServerDownload()">
             <i class="bi bi-cloud-arrow-down-fill me-1"></i> 打包下載
         </button>
     </div>
 
-    <!-- 內容區 -->
-    <main class="container-fluid p-0">
+    <!-- 內容區域 -->
+    <main>
         <div id="loading" class="text-center py-5">
             <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-3 text-white-50">連線至雲端中...</p>
+            <p class="mt-3 text-muted">連線至 Google Drive...</p>
         </div>
 
         <div id="setupView" class="hidden text-center p-5">
             <i class="bi bi-cloud-slash display-1 text-muted mb-4"></i>
             <h4 class="fw-bold">尚未設定 API</h4>
-            <p class="text-muted">請點選下方按鈕輸入您的 Google Apps Script 網址</p>
-            <button class="btn btn-google btn-primary-google mt-3" onclick="openSettingsModal()">開始設定</button>
+            <button class="btn btn-google-primary mt-3" onclick="openSettingsModal()">開始設定</button>
         </div>
 
         <div id="albumView" class="album-grid hidden"></div>
         <div id="photoView" class="photo-grid hidden"></div>
     </main>
 
-    <!-- 下載進度浮窗 -->
+    <!-- 下載進度條 (針對 V9.0 優化) -->
     <div id="downloadProgressContainer">
         <div class="d-flex justify-content-between align-items-center">
-            <span id="statusText" style="font-size: 0.9rem;">正在準備下載...</span>
+            <span id="statusText">正在請求雲端打包...</span>
             <span id="percentText" class="fw-bold text-primary">0%</span>
         </div>
         <div class="progress-bar-bg">
@@ -187,102 +176,71 @@
         </div>
     </div>
 
-    <!-- 燈箱 (Lightbox) -->
+    <!-- 照片燈箱 -->
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
         <div class="lightbox-header">
             <button class="circle-btn"><i class="bi bi-x-lg"></i></button>
-            <div class="d-flex gap-2">
-                <button class="circle-btn" id="lbDownload"><i class="bi bi-download"></i></button>
-                <button class="circle-btn" id="lbShare"><i class="bi bi-share"></i></button>
-            </div>
+            <button class="circle-btn" id="lbDownload"><i class="bi bi-download"></i></button>
         </div>
         <div class="lightbox-content">
-            <img src="" id="lightboxImg" class="lightbox-img" onclick="event.stopPropagation()">
+            <img src="" id="lightboxImg" class="lightbox-img">
         </div>
     </div>
 
-    <!-- 設定 Modal -->
-    <div class="modal fade" id="settingsModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content bg-dark border-secondary" style="border-radius: 28px;">
-                <div class="modal-body p-4">
-                    <h5 class="fw-bold mb-4">系統設定</h5>
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">GAS API 網址</label>
-                        <input type="text" class="form-control bg-black text-white border-secondary py-3" id="cfgUrl" placeholder="https://script.google.com/...">
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small text-muted">網頁標題</label>
-                        <input type="text" class="form-control bg-black text-white border-secondary py-3" id="cfgTitle" value="我的雲端相簿">
-                    </div>
-                    <button class="btn btn-google btn-primary-google w-100 py-3" onclick="saveConfig()">儲存並重新整理</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 登入 Modal -->
+    <!-- 管理登入 Modal -->
     <div class="modal fade" id="loginModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content bg-dark border-secondary" style="border-radius: 28px;">
+            <div class="modal-content bg-dark border-secondary" style="border-radius: 24px;">
                 <div class="modal-body p-4 text-center">
-                    <h5 class="fw-bold mb-4">管理員登入</h5>
-                    <input type="password" class="form-control bg-black text-white border-secondary py-3 mb-4 text-center" id="adminPwd" placeholder="請輸入密碼">
-                    <button class="btn btn-google btn-primary-google w-100 py-3" onclick="doLogin()">登入</button>
+                    <h5 class="fw-bold mb-4">管理者驗證</h5>
+                    <input type="password" class="form-control bg-black text-white border-secondary mb-4 text-center" id="adminPwd" placeholder="請輸入密碼">
+                    <button class="btn btn-google-primary w-100" onclick="doLogin()">登入</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 核心狀態管理
         let SCRIPT_URL = localStorage.getItem('gas_api_url') || "";
-        let PAGE_TITLE = localStorage.getItem('page_title') || "雲端相簿";
         let isAdmin = localStorage.getItem('is_admin') === 'true';
         let activeAlbum = null;
 
         window.onload = () => {
-            document.title = PAGE_TITLE;
-            document.getElementById('navTitle').innerText = PAGE_TITLE;
-            
             if (isAdmin) {
-                document.getElementById('adminBadge').classList.remove('d-none');
                 document.getElementById('settingsBtn').classList.remove('d-none');
                 document.getElementById('loginBtn').classList.add('d-none');
             }
-
             if (!SCRIPT_URL) {
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('setupView').classList.remove('hidden');
             } else {
-                fetchData();
+                fetchAlbums();
             }
         };
 
-        async function fetchData() {
+        async function fetchAlbums() {
             try {
-                const response = await fetch(`${SCRIPT_URL}?action=getAlbums`);
-                const result = await response.json();
-                
-                if (result.status === "success") {
-                    renderAlbums(result.data);
+                const res = await fetch(`${SCRIPT_URL}?action=getAlbums`);
+                const json = await res.json();
+                document.getElementById('loading').classList.add('hidden');
+                if (json.status === "success") {
+                    renderAlbums(json.data);
                 } else {
-                    throw new Error(result.message);
+                    Swal.fire('錯誤', json.message, 'error');
                 }
             } catch (e) {
-                document.getElementById('loading').innerHTML = `<div class="p-5 text-danger">連線失敗：${e.message}</div>`;
+                document.getElementById('loading').innerHTML = "API URL 可能有誤或未授權。";
             }
         }
 
         function renderAlbums(albums) {
-            document.getElementById('loading').classList.add('hidden');
             const view = document.getElementById('albumView');
             view.classList.remove('hidden');
             view.innerHTML = albums.map(album => `
                 <div class="album-card" onclick='openAlbum(${JSON.stringify(album)})'>
                     <img src="${album.cover}" class="album-cover" loading="lazy">
                     <div class="album-info">
-                        <div class="album-name text-truncate">${album.name}</div>
+                        <div class="album-name">${album.name}</div>
                         <div class="album-meta">${album.photos.length} 張照片</div>
                     </div>
                 </div>
@@ -293,12 +251,11 @@
             activeAlbum = album;
             document.getElementById('albumView').classList.add('hidden');
             document.getElementById('navHeader').classList.remove('hidden');
+            document.getElementById('currentAlbumName').innerText = album.name;
             const photoView = document.getElementById('photoView');
             photoView.classList.remove('hidden');
-            document.getElementById('currentAlbumName').innerText = album.name;
-            
             photoView.innerHTML = album.photos.map((p, i) => `
-                <div class="photo-item" onclick="openLightbox(${i})">
+                <div class="photo-item" onclick="openLightbox('${p.url}')">
                     <img src="${p.url}" class="photo-img" loading="lazy">
                 </div>
             `).join('');
@@ -311,27 +268,14 @@
             document.getElementById('navHeader').classList.add('hidden');
         }
 
-        // 燈箱邏輯
-        function openLightbox(index) {
-            const photo = activeAlbum.photos[index];
-            const lb = document.getElementById('lightbox');
-            const lbImg = document.getElementById('lightboxImg');
-            lbImg.src = photo.url;
-            lb.style.display = 'flex';
-            
+        function openLightbox(url) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightbox').style.display = 'flex';
+            // 燈箱內單張下載按鈕 (從 url 提取 id)
+            const id = url.match(/id=([^&]+)/)[1];
             document.getElementById('lbDownload').onclick = (e) => {
                 e.stopPropagation();
-                window.open(photo.downloadUrl, '_blank');
-            };
-            
-            document.getElementById('lbShare').onclick = (e) => {
-                e.stopPropagation();
-                if (navigator.share) {
-                    navigator.share({ title: activeAlbum.name, url: photo.url });
-                } else {
-                    navigator.clipboard.writeText(photo.url);
-                    Swal.fire({ toast: true, position: 'top', icon: 'success', title: '連結已複製', showConfirmButton: false, timer: 1500 });
-                }
+                window.open(`https://drive.google.com/uc?export=download&id=${id}`, '_blank');
             };
         }
 
@@ -339,61 +283,68 @@
             document.getElementById('lightbox').style.display = 'none';
         }
 
-        // 帶有進度的下載打包邏輯
-        async function startDownload() {
+        // --- 核心：針對 V9.0 的伺服器下載百分比顯示 ---
+        async function requestServerDownload() {
             if (!activeAlbum) return;
             
-            const photos = activeAlbum.photos;
-            const total = photos.length;
-            const zip = new JSZip();
             const container = document.getElementById('downloadProgressContainer');
             const progressBar = document.getElementById('progressBar');
             const percentText = document.getElementById('percentText');
             const statusText = document.getElementById('statusText');
             
             container.style.display = 'flex';
+            statusText.innerText = "雲端正在處理壓縮檔...";
             
-            try {
-                for (let i = 0; i < total; i++) {
-                    const p = photos[i];
-                    statusText.innerText = `正在下載圖片 (${i + 1}/${total})`;
-                    
-                    // 下載圖片資料
-                    const res = await fetch(p.downloadUrl);
-                    const blob = await res.blob();
-                    
-                    // 根據檔案類型加入副檔名
-                    const fileName = p.name.includes('.') ? p.name : `${p.name}.jpg`;
-                    zip.file(fileName, blob);
-                    
-                    // 更新進度
-                    const percent = Math.round(((i + 1) / total) * 100);
-                    progressBar.style.width = `${percent}%`;
-                    percentText.innerText = `${percent}%`;
+            // 模擬進度條：因為後端 Utilities.zip 無法回傳進度，我們模擬一個流暢的增長
+            let currentPercent = 0;
+            const progressTimer = setInterval(() => {
+                if (currentPercent < 95) {
+                    // 前段快，後段慢，營造真實感
+                    const increment = (100 - currentPercent) / 30;
+                    currentPercent += increment;
+                    const displayPercent = Math.floor(currentPercent);
+                    progressBar.style.width = displayPercent + "%";
+                    percentText.innerText = displayPercent + "%";
                 }
+            }, 500);
+
+            try {
+                // 請求 V9.0 的 downloadAlbum 動作
+                const res = await fetch(`${SCRIPT_URL}?action=downloadAlbum&albumId=${activeAlbum.id}`);
+                const json = await res.json();
                 
-                statusText.innerText = "正在封裝 ZIP 壓縮檔...";
-                const content = await zip.generateAsync({ type: "blob" });
+                clearInterval(progressTimer);
                 
-                saveAs(content, `${activeAlbum.name}.zip`);
-                
-                statusText.innerText = "完成！";
-                setTimeout(() => { container.style.display = 'none'; }, 2000);
-                
+                if (json.status === "success") {
+                    // 下載成功，直接衝到 100%
+                    progressBar.style.width = "100%";
+                    percentText.innerText = "100%";
+                    statusText.innerText = "打包成功，開始存檔...";
+
+                    // 將 Base64 轉為 Blob
+                    const binary = atob(json.data);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    const blob = new Blob([bytes], { type: "application/zip" });
+                    
+                    // 使用 FileSaver 存檔
+                    saveAs(blob, json.fileName);
+
+                    setTimeout(() => { 
+                        container.style.display = 'none'; 
+                        progressBar.style.width = "0%";
+                    }, 2000);
+                } else {
+                    throw new Error(json.message);
+                }
             } catch (e) {
-                console.error(e);
+                clearInterval(progressTimer);
                 container.style.display = 'none';
-                Swal.fire('下載失敗', '請確認相簿權限是否已開啟「知道連結的人即可檢視」', 'error');
+                Swal.fire('下載失敗', e.message || '連線逾時或後端錯誤', 'error');
             }
         }
-
-        // 設定與登入
-        function openSettingsModal() { 
-            document.getElementById('cfgUrl').value = SCRIPT_URL;
-            document.getElementById('cfgTitle').value = PAGE_TITLE;
-            new bootstrap.Modal(document.getElementById('settingsModal')).show(); 
-        }
-        function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
 
         async function doLogin() {
             const pwd = document.getElementById('adminPwd').value;
@@ -407,18 +358,19 @@
             }
         }
 
-        function saveConfig() {
-            const url = document.getElementById('cfgUrl').value.trim();
-            const title = document.getElementById('cfgTitle').value.trim();
-            if (!url) return;
-            localStorage.setItem('gas_api_url', url);
-            localStorage.setItem('page_title', title || "雲端相簿");
-            location.reload();
-        }
-
-        function logoutAdmin() {
-            localStorage.removeItem('is_admin');
-            location.reload();
+        function openSettingsModal() {
+            Swal.fire({
+                title: '設定 API 網址',
+                input: 'text',
+                inputValue: SCRIPT_URL,
+                showCancelButton: true,
+                confirmButtonText: '更新'
+            }).then(res => {
+                if (res.isConfirmed && res.value) {
+                    localStorage.setItem('gas_api_url', res.value.trim());
+                    location.reload();
+                }
+            });
         }
     </script>
 </body>
