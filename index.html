@@ -222,7 +222,13 @@
             <i class="bi bi-cloud-slash display-1 text-muted mb-4"></i>
             <h4 class="fw-bold">尚未設定 API</h4>
             <p class="text-muted small mb-4">如果您是家長，請掃描老師提供的分享 QR Code</p>
-            <button id="setupAdminBtn" class="btn btn-google-primary mt-3 d-none" onclick="openSettingsModal()">管理者設定</button>
+            
+            <div id="adminEntry" class="mt-5 pt-5 border-top border-secondary">
+                <p class="text-muted x-small mb-1">管理者模式</p>
+                <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="openSettingsModal()">
+                    <i class="bi bi-gear-fill me-1"></i> 設定 API 網址
+                </button>
+            </div>
         </div>
 
         <div id="albumView" class="album-grid hidden"></div>
@@ -300,7 +306,6 @@
     <script>
         // --- 初始化參數與權限控制 ---
         const urlParams = new URLSearchParams(window.location.search);
-        // 如果是家長透過連結點入，設定 API
         if (urlParams.has('api')) {
             localStorage.setItem('gas_api_url', decodeURIComponent(urlParams.get('api')));
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -316,12 +321,13 @@
             if (!SCRIPT_URL) {
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('setupView').classList.remove('hidden');
-                // 未設定 API 時，如果是透過一般路徑進來，可以顯示一個低調的設定鈕 (僅限除錯用)
-                if(window.location.hash === "#admin") document.getElementById('setupAdminBtn').classList.remove('d-none');
             } else {
                 fetchAlbums();
             }
         };
+
+        // 監聽網址 Hash 變化 (例如輸入 #login 或 #admin 立即生效)
+        window.addEventListener('hashchange', updateUIState);
 
         function updateUIState() {
             const adminBadge = document.getElementById('adminBadge');
@@ -330,28 +336,40 @@
             const shareSystemBtn = document.getElementById('shareSystemBtn');
             const loginBtn = document.getElementById('loginBtn');
             const logoutBtn = document.getElementById('logoutBtn');
+            const adminEntry = document.getElementById('adminEntry');
+
+            // 檢查 Hash
+            const isLoginHash = window.location.hash === "#login";
+            const isAdminHash = window.location.hash === "#admin";
 
             if (isAdmin) {
-                // 管理者模式
                 adminBadge.classList.remove('d-none');
-                viewModeBadge.classList.add('d-none'); // 管理者不顯示瀏覽模式
+                viewModeBadge.classList.add('d-none');
                 settingsBtn.classList.remove('d-none');
                 shareSystemBtn.classList.remove('d-none');
                 logoutBtn.classList.remove('d-none');
                 loginBtn.classList.add('d-none');
+                if(adminEntry) adminEntry.classList.remove('d-none');
             } else {
-                // 瀏覽模式 (家長端)
                 adminBadge.classList.add('d-none');
-                viewModeBadge.classList.remove('d-none'); // 顯示顯眼的瀏覽標籤
+                // 只有在有 API 且不是管理員時才顯示瀏覽標籤
+                if (SCRIPT_URL) {
+                    viewModeBadge.classList.remove('d-none');
+                } else {
+                    viewModeBadge.classList.add('d-none');
+                }
+                
                 settingsBtn.classList.add('d-none');
                 shareSystemBtn.classList.add('d-none');
                 logoutBtn.classList.add('d-none');
                 
-                // 家長端不顯示登入入口，除非網址輸入隱藏指令 #login
-                if (window.location.hash === "#login") {
+                // 只有在特定的 Hash 下才顯示登入按鈕，確保家長端看不見
+                if (isLoginHash || isAdminHash) {
                     loginBtn.classList.remove('d-none');
+                    if(adminEntry) adminEntry.classList.remove('d-none');
                 } else {
                     loginBtn.classList.add('d-none');
+                    if(adminEntry) adminEntry.classList.add('d-none');
                 }
             }
         }
@@ -359,6 +377,10 @@
         // --- 登入與登出邏輯 ---
         async function doLogin() {
             const pwd = document.getElementById('adminPwd').value;
+            if (!SCRIPT_URL) {
+                Swal.fire('請先設定 API 網址', '', 'warning').then(() => openSettingsModal());
+                return;
+            }
             Swal.fire({ title: '驗證中...', didOpen: () => Swal.showLoading() });
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`);
@@ -380,13 +402,11 @@
                 title: '確定要登出管理員嗎？',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: '確定',
-                cancelButtonText: '取消'
+                confirmButtonText: '確定'
             }).then((result) => {
                 if (result.isConfirmed) {
                     isAdmin = false;
                     localStorage.setItem('is_admin', 'false');
-                    // 清除 API 連結若需要家長端完全重設，可加 localStorage.removeItem('gas_api_url');
                     location.reload();
                 }
             });
@@ -395,23 +415,19 @@
         // --- 其他功能函數 ---
         function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
 
-        function openShareSystemModal() {
-            const modal = new bootstrap.Modal(document.getElementById('shareSystemModal'));
-            const shareUrl = window.location.origin + window.location.pathname + "?api=" + encodeURIComponent(SCRIPT_URL);
-            document.getElementById('shareLinkInput').value = shareUrl;
-            setTimeout(() => {
-                const qrContainer = document.getElementById('qrcode');
-                qrContainer.innerHTML = "";
-                new QRCode(qrContainer, { text: shareUrl, width: 200, height: 200 });
-            }, 200);
-            modal.show();
-        }
-
-        function copyShareLink() {
-            const input = document.getElementById('shareLinkInput');
-            input.select();
-            document.execCommand('copy');
-            Swal.fire({ toast: true, position: 'top', icon: 'success', title: '連結已複製', showConfirmButton: false, timer: 1500 });
+        function openSettingsModal() {
+            Swal.fire({ 
+                title: 'API 設定', 
+                input: 'text', 
+                inputPlaceholder: '請貼上 Google Script API 網址',
+                inputValue: SCRIPT_URL, 
+                showCancelButton: true 
+            }).then(res => {
+                if (res.isConfirmed && res.value) {
+                    localStorage.setItem('gas_api_url', res.value.trim());
+                    location.reload();
+                }
+            });
         }
 
         async function fetchAlbums() {
@@ -421,7 +437,8 @@
                 document.getElementById('loading').classList.add('hidden');
                 if (json.status === "success") renderAlbums(json.data);
             } catch (e) {
-                document.getElementById('loading').innerHTML = `<div class='p-4 text-danger'>無法連線 API</div>`;
+                document.getElementById('loading').innerHTML = `<div class='p-4 text-danger'>連線 API 失敗，請檢查網址是否正確。</div>`;
+                document.getElementById('setupView').classList.remove('hidden');
             }
         }
 
@@ -528,13 +545,23 @@
             } finally { container.style.display = 'none'; }
         }
 
-        function openSettingsModal() {
-            Swal.fire({ title: 'API 設定', input: 'text', inputValue: SCRIPT_URL, showCancelButton: true }).then(res => {
-                if (res.isConfirmed && res.value) {
-                    localStorage.setItem('gas_api_url', res.value.trim());
-                    location.reload();
-                }
-            });
+        function openShareSystemModal() {
+            const modal = new bootstrap.Modal(document.getElementById('shareSystemModal'));
+            const shareUrl = window.location.origin + window.location.pathname + "?api=" + encodeURIComponent(SCRIPT_URL);
+            document.getElementById('shareLinkInput').value = shareUrl;
+            setTimeout(() => {
+                const qrContainer = document.getElementById('qrcode');
+                qrContainer.innerHTML = "";
+                new QRCode(qrContainer, { text: shareUrl, width: 200, height: 200 });
+            }, 200);
+            modal.show();
+        }
+
+        function copyShareLink() {
+            const input = document.getElementById('shareLinkInput');
+            input.select();
+            document.execCommand('copy');
+            Swal.fire({ toast: true, position: 'top', icon: 'success', title: '連結已複製', showConfirmButton: false, timer: 1500 });
         }
     </script>
 </body>
