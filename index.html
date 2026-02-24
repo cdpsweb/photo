@@ -124,18 +124,19 @@
             background: rgba(0,0,0,0); z-index: 2000; 
             display: none; flex-direction: column;
             transition: background-color var(--anim-speed) var(--ease-google);
+            user-select: none;
         }
         .lightbox.active { display: flex; background-color: rgba(0,0,0,1); }
         
         .lightbox-header { 
             padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
-            opacity: 0; transition: opacity 0.2s; z-index: 2002;
+            opacity: 0; transition: opacity 0.2s; z-index: 2010;
         }
         .lightbox.active .lightbox-header { opacity: 1; }
 
         .lightbox-content { 
             flex-grow: 1; display: flex; align-items: center; justify-content: center; 
-            position: relative; z-index: 2001;
+            position: relative; z-index: 2001; overflow: hidden;
         }
         
         .lightbox-img { 
@@ -144,6 +145,22 @@
             transition: transform var(--anim-speed) var(--ease-google), opacity var(--anim-speed) var(--ease-google);
         }
         .lightbox.active .lightbox-img { transform: scale(1); opacity: 1; }
+
+        /* 電腦版前後切換按鈕 */
+        .lb-nav-area {
+            position: absolute; top: 0; bottom: 0; width: 15%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 2005; transition: opacity 0.3s;
+            opacity: 0;
+        }
+        .lb-nav-area:hover { opacity: 1; }
+        .lb-nav-area.left { left: 0; }
+        .lb-nav-area.right { right: 0; }
+        .lb-nav-btn {
+            background: rgba(0,0,0,0.4); color: white; border-radius: 50%;
+            width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; border: 1px solid rgba(255,255,255,0.2);
+        }
 
         /* QR Code Modal 樣式 */
         #qrcode {
@@ -163,10 +180,12 @@
                 <i class="bi bi-images text-primary me-2"></i><span id="navTitle">雲端相簿</span>
             </div>
             <div class="d-flex gap-2 align-items-center">
+                <!-- 瀏覽模式與管理者標章 -->
+                <div id="viewModeBadge" class="d-none badge rounded-pill bg-dark border border-secondary text-muted px-2 py-1 small me-2">瀏覽模式</div>
                 <div id="adminBadge" class="d-none badge rounded-pill bg-dark border border-primary text-primary px-2 py-1 small me-2">管理者</div>
+                
                 <button id="loginBtn" class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="openLoginModal()">管理登入</button>
                 <button id="settingsBtn" class="circle-btn d-none" onclick="openSettingsModal()"><i class="bi bi-gear"></i></button>
-                <!-- 管理者專屬分享按鈕 -->
                 <button id="shareSystemBtn" class="circle-btn d-none text-info" onclick="openShareSystemModal()"><i class="bi bi-share-fill"></i></button>
             </div>
         </div>
@@ -212,7 +231,7 @@
         </div>
     </div>
 
-    <!-- 照片燈箱 (平滑動畫版) -->
+    <!-- 照片燈箱 -->
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
         <div class="lightbox-header">
             <button class="circle-btn"><i class="bi bi-x-lg"></i></button>
@@ -221,8 +240,18 @@
                 <button class="circle-btn" id="lbShare"><i class="bi bi-share"></i></button>
             </div>
         </div>
+        
         <div class="lightbox-content">
+            <!-- 電腦版導航按鈕 -->
+            <div class="lb-nav-area left" onclick="prevPhoto(event)">
+                <div class="lb-nav-btn"><i class="bi bi-chevron-left"></i></div>
+            </div>
+            
             <img src="" id="lightboxImg" class="lightbox-img" onclick="event.stopPropagation()">
+            
+            <div class="lb-nav-area right" onclick="nextPhoto(event)">
+                <div class="lb-nav-btn"><i class="bi bi-chevron-right"></i></div>
+            </div>
         </div>
     </div>
 
@@ -246,11 +275,9 @@
                 <div class="modal-body p-4 text-center">
                     <h5 class="fw-bold mb-1 text-white">分享相簿系統</h5>
                     <p class="text-muted small mb-4">家長掃描後可自動設定 API 並瀏覽</p>
-                    
                     <div id="qrcode-container" class="d-flex justify-content-center">
                         <div id="qrcode"></div>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label small text-muted d-block text-start">分享連結</label>
                         <div class="input-group">
@@ -258,7 +285,6 @@
                             <button class="btn btn-outline-primary" onclick="copyShareLink()">複製</button>
                         </div>
                     </div>
-                    
                     <button class="btn btn-secondary rounded-pill w-100 mt-2" data-bs-dismiss="modal">關閉</button>
                 </div>
             </div>
@@ -268,18 +294,16 @@
     <script>
         // --- 核心變數與初始化 ---
         const urlParams = new URLSearchParams(window.location.search);
-        // 如果網址帶有 api 參數，自動存入 localStorage (家長分享模式)
         if (urlParams.has('api')) {
             const encodedApi = urlParams.get('api');
             localStorage.setItem('gas_api_url', decodeURIComponent(encodedApi));
-            // 移除網址參數以免干擾後續操作
             window.history.replaceState({}, document.title, window.location.pathname);
         }
 
         let SCRIPT_URL = localStorage.getItem('gas_api_url') || "";
         let isAdmin = localStorage.getItem('is_admin') === 'true';
         let activeAlbum = null;
-        let qrCodeInstance = null;
+        let currentPhotoIndex = -1;
 
         window.onload = () => {
             updateAdminUI();
@@ -293,51 +317,37 @@
 
         function updateAdminUI() {
             const adminBadge = document.getElementById('adminBadge');
+            const viewModeBadge = document.getElementById('viewModeBadge');
             const settingsBtn = document.getElementById('settingsBtn');
             const loginBtn = document.getElementById('loginBtn');
             const shareSystemBtn = document.getElementById('shareSystemBtn');
 
             if (isAdmin) {
                 adminBadge.classList.remove('d-none');
+                viewModeBadge.classList.add('d-none');
                 settingsBtn.classList.remove('d-none');
                 shareSystemBtn.classList.remove('d-none');
                 loginBtn.classList.add('d-none');
             } else {
                 adminBadge.classList.add('d-none');
+                viewModeBadge.classList.remove('d-none');
                 settingsBtn.classList.add('d-none');
                 shareSystemBtn.classList.add('d-none');
                 loginBtn.classList.remove('d-none');
             }
         }
 
-        // --- 分享系統邏輯 ---
+        // --- 分享與 QR Code ---
         function openShareSystemModal() {
             const modal = new bootstrap.Modal(document.getElementById('shareSystemModal'));
-            const shareUrl = generateShareUrl();
-            
+            const shareUrl = window.location.origin + window.location.pathname + "?api=" + encodeURIComponent(SCRIPT_URL);
             document.getElementById('shareLinkInput').value = shareUrl;
-            
-            // 延遲渲染 QR Code 以確保容器已渲染
             setTimeout(() => {
                 const qrContainer = document.getElementById('qrcode');
                 qrContainer.innerHTML = "";
-                qrCodeInstance = new QRCode(qrContainer, {
-                    text: shareUrl,
-                    width: 200,
-                    height: 200,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
+                new QRCode(qrContainer, { text: shareUrl, width: 200, height: 200 });
             }, 200);
-            
             modal.show();
-        }
-
-        function generateShareUrl() {
-            const baseUrl = window.location.origin + window.location.pathname;
-            const encodedApi = encodeURIComponent(SCRIPT_URL);
-            return `${baseUrl}?api=${encodedApi}`;
         }
 
         function copyShareLink() {
@@ -347,7 +357,7 @@
             Swal.fire({ toast: true, position: 'top', icon: 'success', title: '連結已複製', showConfirmButton: false, timer: 1500 });
         }
 
-        // --- 原有系統邏輯 ---
+        // --- 資料抓取與渲染 ---
         async function fetchAlbums() {
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=getAlbums`);
@@ -355,11 +365,9 @@
                 document.getElementById('loading').classList.add('hidden');
                 if (json.status === "success") {
                     renderAlbums(json.data);
-                } else {
-                    Swal.fire('API 錯誤', json.message, 'error');
                 }
             } catch (e) {
-                document.getElementById('loading').innerHTML = `<div class='p-4 text-danger'>無法連線至 API。請確認網址是否正確且已發佈為「所有人」。</div>`;
+                document.getElementById('loading').innerHTML = `<div class='p-4 text-danger'>無法連線 API</div>`;
             }
         }
 
@@ -385,7 +393,7 @@
             const photoView = document.getElementById('photoView');
             photoView.classList.remove('hidden');
             photoView.innerHTML = album.photos.map((p, i) => `
-                <div class="photo-item" onclick="openLightbox('${p.url}')">
+                <div class="photo-item" onclick="openLightbox(${i})">
                     <img src="${p.url}" class="photo-img" loading="lazy">
                 </div>
             `).join('');
@@ -398,23 +406,35 @@
             document.getElementById('navHeader').classList.add('hidden');
         }
 
-        function openLightbox(url) {
+        // --- 燈箱邏輯與鍵盤支援 ---
+        function openLightbox(index) {
+            currentPhotoIndex = index;
+            const photo = activeAlbum.photos[index];
             const lb = document.getElementById('lightbox');
             const img = document.getElementById('lightboxImg');
-            img.src = url;
+            
+            img.style.opacity = '0';
+            img.src = photo.url;
             lb.style.display = 'flex';
-            setTimeout(() => { lb.classList.add('active'); }, 10);
-            const id = url.match(/id=([^&]+)/)[1];
+            
+            setTimeout(() => { 
+                lb.classList.add('active'); 
+                img.style.opacity = '1';
+            }, 10);
+
+            // 更新下載按鈕
+            const idMatch = photo.url.match(/id=([^&]+)/);
+            const id = idMatch ? idMatch[1] : "";
             document.getElementById('lbDownload').onclick = (e) => {
                 e.stopPropagation();
-                window.open(`https://drive.google.com/uc?export=download&id=${id}`, '_blank');
+                downloadSingleImage(photo.url, `photo_${id}.jpg`);
             };
+            
             document.getElementById('lbShare').onclick = (e) => {
                 e.stopPropagation();
-                if (navigator.share) {
-                    navigator.share({ title: '分享照片', url: url });
-                } else {
-                    navigator.clipboard.writeText(url);
+                if (navigator.share) navigator.share({ url: photo.url });
+                else {
+                    navigator.clipboard.writeText(photo.url);
                     Swal.fire({ toast: true, position: 'top', icon: 'success', title: '連結已複製', showConfirmButton: false, timer: 1500 });
                 }
             };
@@ -423,79 +443,86 @@
         function closeLightbox() {
             const lb = document.getElementById('lightbox');
             lb.classList.remove('active');
-            setTimeout(() => {
-                lb.style.display = 'none';
-                document.getElementById('lightboxImg').src = "";
-            }, 300);
+            setTimeout(() => { lb.style.display = 'none'; }, 300);
         }
 
+        function nextPhoto(e) {
+            if(e) e.stopPropagation();
+            if (!activeAlbum || currentPhotoIndex >= activeAlbum.photos.length - 1) return;
+            openLightbox(currentPhotoIndex + 1);
+        }
+
+        function prevPhoto(e) {
+            if(e) e.stopPropagation();
+            if (!activeAlbum || currentPhotoIndex <= 0) return;
+            openLightbox(currentPhotoIndex - 1);
+        }
+
+        // 鍵盤支援
+        window.addEventListener('keydown', (e) => {
+            const lb = document.getElementById('lightbox');
+            if (lb.style.display === 'flex') {
+                if (e.key === 'ArrowRight') nextPhoto();
+                if (e.key === 'ArrowLeft') prevPhoto();
+                if (e.key === 'Escape') closeLightbox();
+            }
+        });
+
+        // --- 無跳轉下載邏輯 ---
+        async function downloadSingleImage(url, filename) {
+            Swal.fire({ title: '準備下載...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                saveAs(blob, filename);
+                Swal.close();
+            } catch (error) {
+                Swal.fire('下載失敗', '請嘗試右鍵另存圖片', 'error');
+            }
+        }
+
+        // --- 打包下載 (GAS 端處理) ---
         async function requestServerDownload() {
             if (!activeAlbum) return;
             const container = document.getElementById('downloadProgressContainer');
             const progressBar = document.getElementById('progressBar');
-            const percentText = document.getElementById('percentText');
-            const statusText = document.getElementById('statusText');
             container.style.display = 'flex';
-            statusText.innerText = "雲端處理中...";
-            let currentPercent = 0;
-            const timer = setInterval(() => {
-                if (currentPercent < 95) {
-                    currentPercent += (100 - currentPercent) / 40;
-                    const p = Math.floor(currentPercent);
-                    progressBar.style.width = p + "%";
-                    percentText.innerText = p + "%";
-                }
-            }, 400);
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=downloadAlbum&albumId=${activeAlbum.id}`);
                 const json = await res.json();
-                clearInterval(timer);
                 if (json.status === "success") {
-                    progressBar.style.width = "100%";
-                    percentText.innerText = "100%";
-                    statusText.innerText = "完成！";
                     const binary = atob(json.data);
                     const bytes = new Uint8Array(binary.length);
                     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
                     saveAs(new Blob([bytes], { type: "application/zip" }), json.fileName);
-                    setTimeout(() => { container.style.display = 'none'; }, 2000);
-                } else { throw new Error(json.message); }
+                }
             } catch (e) {
-                clearInterval(timer);
+                Swal.fire('打包失敗', '檔案可能過大', 'error');
+            } finally {
                 container.style.display = 'none';
-                Swal.fire('錯誤', '打包失敗。', 'error');
             }
         }
 
+        // --- 登入 ---
         async function doLogin() {
             const pwd = document.getElementById('adminPwd').value;
-            if (!pwd) return;
-            Swal.showLoading();
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`);
                 const json = await res.json();
-                Swal.close();
                 if (json.status === "success") {
                     isAdmin = true;
                     localStorage.setItem('is_admin', 'true');
                     updateAdminUI();
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
                 } else {
-                    Swal.fire('驗證失敗', '密碼不正確', 'error');
+                    Swal.fire('密碼錯誤', '', 'error');
                 }
-            } catch (e) { Swal.fire('錯誤', '連線失敗。', 'error'); }
+            } catch (e) { Swal.fire('錯誤', '連線失敗', 'error'); }
         }
 
         function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
-
         function openSettingsModal() {
-            Swal.fire({
-                title: '管理者 API 設定',
-                input: 'text',
-                inputValue: SCRIPT_URL,
-                showCancelButton: true,
-                confirmButtonText: '更新'
-            }).then(res => {
+            Swal.fire({ title: 'API 設定', input: 'text', inputValue: SCRIPT_URL, showCancelButton: true }).then(res => {
                 if (res.isConfirmed && res.value) {
                     localStorage.setItem('gas_api_url', res.value.trim());
                     location.reload();
