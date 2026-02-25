@@ -134,7 +134,6 @@
             box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39) !important;
         }
 
-        /* 吐司訊息樣式 */
         #toast {
             position: fixed;
             bottom: 30px;
@@ -179,7 +178,7 @@
                 <i class="fas fa-home text-xs"></i> 所有相簿
             </button>
             <span id="album-divider" class="hidden text-gray-300">/</span>
-            <span id="current-album-name" class="font-bold text-gray-900 truncate"></span>
+            <span id="current-album-name" class="font-bold text-gray-900 break-words"></span>
         </div>
 
         <div id="gallery-container" class="fade-in">
@@ -227,17 +226,15 @@
         </div>
     </div>
 
-    <!-- 分享彈窗 (調整字體大小) -->
+    <!-- 分享彈窗 -->
     <div id="share-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl max-w-[360px] w-full p-8 shadow-2xl text-center">
             <h3 class="text-xl font-bold mb-6">分享您的相簿</h3>
             <div id="qrcode" class="mb-6 flex justify-center p-4 bg-white border border-gray-100 rounded-2xl shadow-inner inline-block mx-auto"></div>
             
             <div class="flex items-center gap-2 p-1.5 bg-gray-50 rounded-xl border border-gray-100 mb-6">
-                <!-- 調大字體: text-sm (14px) -->
                 <input type="text" id="share-link-input" readonly 
                        class="flex-1 bg-transparent border-0 px-3 py-2 text-sm text-gray-700 outline-none font-medium truncate">
-                <!-- 調大按鈕文字: text-xs (12px) 並增加間距 -->
                 <button id="btn-copy-link" onclick="copyShareLink()" 
                         class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-sm shrink-0">
                     複製
@@ -254,7 +251,7 @@
             <div class="flex items-center gap-3">
                 <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition"><i class="fas fa-arrow-left"></i></button>
                 <div class="flex flex-col">
-                    <span id="lightbox-title" class="text-sm font-medium leading-tight truncate max-w-[150px] md:max-w-md"></span>
+                    <span id="lightbox-title" class="text-sm font-medium leading-tight break-words max-w-[150px] md:max-w-md"></span>
                     <span id="lightbox-counter" class="text-[10px] text-gray-400"></span>
                 </div>
             </div>
@@ -310,18 +307,11 @@
             document.getElementById('display-site-title').innerText = SITE_TITLE;
         }
 
-        // --- 設定相簿封面 (手動挑選) ---
         function setAsCover(photoUrl, event) {
             if (event) event.stopPropagation();
             if (!currentViewedAlbumId) return;
-            
-            // 儲存至本地
             localStorage.setItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`, photoUrl);
-            
-            // UI 反饋
             showToast("已成功將此照片設為封面");
-            
-            // 更新目前頁面 UI 選中狀態
             const items = document.querySelectorAll('.photo-item');
             items.forEach(item => {
                 const img = item.querySelector('img');
@@ -340,7 +330,6 @@
             setTimeout(() => { toast.style.display = 'none'; }, 2000);
         }
 
-        // --- 核心系統設定 ---
         function openConfigModal() {
             document.getElementById('config-api-url').value = SCRIPT_URL;
             document.getElementById('config-site-title').value = SITE_TITLE;
@@ -387,11 +376,9 @@
             }
         }
 
-        // --- 資料載入與算繪 ---
         async function loadAlbums() {
             if (!SCRIPT_URL) return;
             currentViewedAlbumId = null;
-            
             if (allAlbums && allAlbums.length > 0) {
                 renderAlbums();
                 return;
@@ -423,7 +410,6 @@
 
             let html = `<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-8">`;
             allAlbums.forEach((album, index) => {
-                // 檢查是否有手動設定的封面
                 const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
                 let coverUrl = customCover || (album.photos.length > 0 ? album.photos[0].url : album.cover);
 
@@ -432,9 +418,9 @@
                         <div class="aspect-square rounded-[2rem] overflow-hidden bg-gray-100 mb-4 relative shadow-sm group-hover:shadow-xl transition-all duration-300">
                             <img src="${coverUrl}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" loading="lazy">
                         </div>
-                        <div class="px-2">
-                            <h3 class="font-bold text-gray-900 truncate text-sm md:text-base">${album.name}</h3>
-                            <p class="text-xs text-gray-400 mt-0.5">${album.photos.length} 張</p>
+                        <div class="px-2 text-center md:text-left">
+                            <h3 class="font-bold text-gray-900 text-sm md:text-base leading-snug break-words">${album.name}</h3>
+                            <p class="text-xs text-gray-400 mt-1">${album.photos.length} 張</p>
                         </div>
                     </div>`;
             });
@@ -446,8 +432,6 @@
             const album = allAlbums[index];
             currentPhotos = album.photos; 
             currentViewedAlbumId = album.id;
-            
-            // 取得目前的封面 URL 用於標記
             const currentCoverUrl = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
 
             document.getElementById('album-divider').classList.remove('hidden');
@@ -472,7 +456,6 @@
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        // --- UI Helper ---
         function openShareModal() {
             const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             const shareUrl = SCRIPT_URL ? `${baseUrl}?api=${encodeURIComponent(SCRIPT_URL)}` : baseUrl;
