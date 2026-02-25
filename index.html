@@ -2,551 +2,1306 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>雲端相簿系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雲端相簿 OLED</title>
     
-    <!-- 外部資源載入 -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     
-    <!-- 核心功能套件 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
+        /* --- S92 OLED Style Tokens --- */
         :root {
             --bg-primary: #000000;
-            --bg-secondary: #121212;
-            --bg-tertiary: #1e1e1e;
-            --text-primary: #FFFFFF; 
-            --text-secondary: #F8F9FA;
-            --border-subtle: rgba(255, 255, 255, 0.2);
-            --radius-google: 24px;
-            --anim-speed: 0.2s; 
-            --ease-google: cubic-bezier(0.4, 0, 0.2, 1);
+            --bg-secondary: #0A0A0A;
+            --bg-tertiary: #111111;
+            --text-primary: #FFFFFF;
+            --text-secondary: #E0E0E0;
+            --text-muted: #888888;
+            --brand-primary: #2979FF;
+            --brand-accent: #FF4081;
+            --brand-success: #00E676;
+            --brand-danger: #FF1744;
+            --brand-warning: #FFAB00;
+            --border-subtle: rgba(41, 121, 255, 0.2);
+            --glow-blue: 0 0 30px rgba(41, 121, 255, 0.3);
+            --glow-pink: 0 0 30px rgba(255, 64, 129, 0.3);
+            --glow-text: 0 0 10px rgba(255, 255, 255, 0.5);
             
-            --status-admin: #FF4D4D;
-            --status-view: #00E676;
+            /* Typography */
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius-md: 12px;
         }
 
         body {
             background-color: var(--bg-primary);
             color: var(--text-primary);
-            font-family: 'Noto Sans TC', 'Inter', sans-serif;
-            margin: 0; padding: 0;
-            -webkit-tap-highlight-color: transparent;
-            overflow-x: hidden;
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            background-image: radial-gradient(rgba(41, 121, 255, 0.15) 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
+        /* Navbar */
         .navbar-custom {
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(20px);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-subtle);
-            padding: 0.75rem 1rem;
-            position: sticky; top: 0; z-index: 1050;
+            padding: 1rem 0;
+            position: sticky; top: 0; z-index: 1020;
+        }
+        .navbar-brand { font-weight: 700; color: var(--text-primary) !important; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        .brand-dot { width: 8px; height: 8px; background-color: var(--brand-primary); border-radius: 50%; box-shadow: 0 0 10px var(--brand-primary); }
+
+        /* Buttons */
+        .btn-oled {
+            background: transparent; border: 1px solid var(--border-subtle); color: var(--text-secondary);
+            font-family: var(--font-mono); font-size: 0.85rem; border-radius: var(--radius-md);
+            padding: 0.5rem 1rem; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .btn-oled:hover { border-color: var(--brand-primary); color: var(--text-primary); box-shadow: var(--glow-blue); background: rgba(41, 121, 255, 0.05); text-decoration: none; }
+        
+        .btn-oled-accent { border-color: rgba(255, 64, 129, 0.3); color: var(--brand-accent); }
+        .btn-oled-accent:hover { 
+            border-color: var(--brand-accent); background: rgba(255, 64, 129, 0.05); 
+            color: #fff; box-shadow: var(--glow-pink); text-decoration: none;
         }
         
-        .navbar-brand, #navTitle {
-            color: #FFFFFF !important;
-            font-weight: 500;
-        }
+        .btn-oled-danger { border-color: var(--brand-danger); color: var(--brand-danger); }
+        .btn-oled-danger:hover { background: rgba(255, 23, 68, 0.1); box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); text-decoration: none; color: #fff; }
+        .btn-icon { width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; }
 
-        .badge-view-mode {
-            background: rgba(0, 230, 118, 0.1);
-            color: var(--status-view);
-            font-weight: 500;
-            border: 1px solid rgba(0, 230, 118, 0.3);
-        }
-
-        .badge-admin-mode {
-            background: rgba(255, 77, 77, 0.1);
-            color: var(--status-admin);
-            font-weight: 500;
-            border: 1px solid rgba(255, 77, 77, 0.3);
-        }
-
-        .album-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 16px; padding: 16px;
-        }
-        @media (min-width: 768px) {
-            .album-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; padding: 24px; }
-        }
-
+        /* Cards */
         .album-card {
-            background: var(--bg-secondary);
-            border-radius: var(--radius-google);
-            overflow: hidden;
-            transition: transform 0.2s var(--ease-google);
-            cursor: pointer;
-            border: 1px solid var(--border-subtle);
+            background-color: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+            overflow: hidden; transition: all 0.3s; height: 100%; display: flex; flex-direction: column; position: relative;
         }
-        .album-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.4); }
-        .album-card:active { transform: scale(0.96); }
-        .album-cover { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #111; }
-        .album-info { padding: 14px; }
-        .album-name { font-weight: 500; font-size: 1rem; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .album-meta { font-size: 0.8rem; color: #DDDDDD; margin-top: 4px; }
-
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2px;
-        }
-        @media (min-width: 768px) {
-            .photo-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; padding: 8px; }
-        }
-        .photo-item { aspect-ratio: 1/1; background: #111; cursor: pointer; overflow: hidden; position: relative; }
-        .photo-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.3s; }
-        .photo-item:active .photo-img { opacity: 0.7; }
-
-        #navHeader { 
-            padding: 12px 16px; background: var(--bg-primary); 
-            display: flex; align-items: center; justify-content: space-between;
-            position: sticky; top: 58px; z-index: 1000;
-            border-bottom: 1px solid var(--border-subtle);
-        }
-        #currentAlbumName { color: #FFFFFF; font-weight: 500; }
-
-        .circle-btn {
-            background: rgba(255,255,255,0.1); border: none; color: #FFFFFF;
-            width: 40px; height: 40px; border-radius: 50%; display: flex;
-            align-items: center; justify-content: center; transition: background 0.2s;
-            cursor: pointer;
-        }
-        .circle-btn:hover { background: rgba(255,255,255,0.2); }
+        .album-card:hover { transform: translateY(-4px); border-color: var(--brand-primary); box-shadow: var(--glow-blue); }
+        .album-cover { height: 220px; width: 100%; object-fit: cover; border-bottom: 1px solid var(--border-subtle); }
+        .album-info { padding: 1.2rem; flex-grow: 1; }
+        .album-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.4; }
+        .album-meta { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); }
         
-        .btn-logout {
-            background: rgba(255, 77, 77, 0.1);
-            color: var(--status-admin);
-            border: 1px solid rgba(255, 77, 77, 0.3);
-        }
+        .admin-album-controls { padding: 10px; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2); display: flex; gap: 5px; justify-content: space-between; }
+        .btn-card-action { flex: 1; font-size: 0.8rem; padding: 4px; }
 
-        .btn-google-primary {
-            background: #FFFFFF; color: #000000; border-radius: 50px;
-            font-weight: 600; border: none; padding: 8px 24px; transition: all 0.2s;
-        }
-        .btn-google-primary:hover { background: #F0F0F0; transform: scale(1.02); }
+        /* Photo Grid */
+        .photo-item { position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1/1; border: 1px solid transparent; cursor: pointer; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s; }
+        .photo-item.draggable { cursor: grab; }
+        .photo-item.draggable:active { cursor: grabbing; }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
+        .photo-item:hover { border-color: var(--brand-primary); z-index: 10; box-shadow: var(--glow-blue); }
+        .photo-item:hover img { transform: scale(1.08); }
+        .photo-item:active { transform: scale(0.96); } /* 行動裝置點擊回饋 */
+        .sortable-ghost { opacity: 0.4; background-color: var(--brand-primary); border: 2px dashed var(--brand-primary); }
 
-        /* 燈箱優化 */
-        .lightbox {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0); z-index: 2000; 
-            display: none; flex-direction: column;
-            transition: background-color var(--anim-speed) ease;
-            touch-action: none;
-        }
-        .lightbox.active { display: flex; background-color: rgba(0,0,0,1); }
+        /* Multi-select & Cover Actions */
+        .photo-item.selected { border: 2px solid var(--brand-danger); box-shadow: 0 0 15px rgba(255, 23, 68, 0.4); }
+        .photo-item.selected img { opacity: 0.6; }
+        .photo-checkbox { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: 0.2s; }
+        .photo-item.selected .photo-checkbox { background: var(--brand-danger); border-color: var(--brand-danger); }
+        .photo-item.selected .photo-checkbox::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
         
-        .lightbox-header { 
-            padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
-            opacity: 0; transition: opacity 0.2s; z-index: 2010;
+        /* Set Cover Button (Top Right Star) */
+        .btn-set-cover {
+            position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
+            background: rgba(0,0,0,0.6); border: 1px solid var(--brand-warning); color: var(--brand-warning);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            z-index: 20; cursor: pointer; transition: 0.2s; opacity: 0; font-size: 14px;
         }
-        .lightbox.active .lightbox-header { opacity: 1; }
+        .photo-item:hover .btn-set-cover { opacity: 1; }
+        .btn-set-cover:hover { background: var(--brand-warning); color: black; box-shadow: 0 0 10px var(--brand-warning); }
+        .btn-set-cover i { pointer-events: none; }
 
-        .lightbox-content { 
-            flex-grow: 1; display: flex; align-items: center; justify-content: center; 
-            position: relative; z-index: 2001; overflow: hidden;
-        }
-        
-        .lightbox-img { 
-            max-width: 100%; max-height: 100%; object-fit: contain; 
-            transform: scale(0.98); opacity: 0;
-            /* 僅針對必要屬性過渡，減少 CPU 負擔 */
-            transition: opacity var(--anim-speed) ease, transform var(--anim-speed) var(--ease-google);
-            user-select: none;
-        }
-        .lightbox.active .lightbox-img { transform: scale(1); opacity: 1; }
+        /* Header Breadcrumb */
+        #navHeader { border-bottom: 1px solid var(--border-subtle); padding-bottom: 2rem; margin-bottom: 2rem; background: radial-gradient(circle at top right, rgba(41, 121, 255, 0.1), transparent 40%); }
+        .breadcrumb-item-custom { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-muted); letter-spacing: 0.05em; cursor: pointer !important; transition: color 0.2s; text-decoration: none; }
+        .breadcrumb-item-custom:hover { color: var(--brand-primary); text-shadow: 0 0 8px rgba(41, 121, 255, 0.5); text-decoration: underline; }
+        .breadcrumb-active { color: var(--brand-primary); text-shadow: 0 0 8px rgba(41, 121, 255, 0.5); }
+        .breadcrumb-separator { color: var(--text-muted); margin: 0 0.5rem; }
 
-        .lb-nav {
-            position: absolute; top: 0; height: 100%; width: 20%;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 2005; color: rgba(255,255,255,0.3);
-            font-size: 2rem; transition: color 0.2s;
-        }
-        .lb-nav:hover { color: #FFF; background: rgba(255,255,255,0.05); }
-        .lb-prev { left: 0; }
-        .lb-next { right: 0; }
-        @media (max-width: 768px) {
-            .lb-nav { display: none; }
-        }
+        /* Inputs & Modals */
+        .modal-content { background-color: var(--bg-secondary); border: 1px solid var(--border-subtle); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .modal-header, .modal-footer { border-color: var(--border-subtle); }
+        .modal-title { color: var(--text-primary); font-weight: bold; }
+        .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+        .form-control, .form-select { background-color: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 0.6rem; font-size: 0.9rem; }
+        .form-control:focus, .form-select:focus { background-color: var(--bg-tertiary); border-color: var(--brand-primary); color: var(--text-primary); box-shadow: none; }
+        .form-label { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.3rem; }
+        .form-control::placeholder { color: #AAAAAA; opacity: 1; }
 
+        /* Footer */
+        .footer-custom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding: 2rem 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; }
+        .footer-text { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; }
+
+        /* Admin Panel Styles */
+        .admin-section-title { font-family: var(--font-mono); font-size: 0.8rem; color: var(--brand-accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; }
+        .admin-section-title::after { content: ''; flex-grow: 1; height: 1px; background: rgba(255,64,129,0.2); margin-left: 10px; }
+
+        /* Progress Modal Styles */
+        .progress-container { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin-top: 1rem; }
+        .progress-bar { height: 100%; background: var(--brand-accent); width: 0%; transition: width 0.3s; }
+        .progress-text { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; font-family: var(--font-mono); font-size: 0.9rem; }
+        .log-area { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin-top: 1rem; background: #000; padding: 10px; border: 1px solid var(--border-subtle); }
+        .upload-text-high-contrast { color: white !important; font-weight: bold; text-shadow: 0 1px 2px black; }
+
+        /* Directory List */
+        .directory-list { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; }
+        .directory-item { padding: 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .directory-item:hover { background: rgba(41, 121, 255, 0.1); padding-left: 1.5rem; color: var(--brand-primary); }
+        .directory-item:last-child { border-bottom: none; }
+        .dir-index { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem; }
+        .dir-count { font-family: var(--font-mono); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+
+        /* Utils */
         .hidden { display: none !important; }
+        .d-none { display: none !important; }
         
-        .form-control {
-            background-color: #000000 !important;
-            border-color: #444 !important;
-            color: #FFFFFF !important;
-        }
+        /* Lightbox (全螢幕沈浸式體驗) */
+        #imageModal .modal-content { background: #000000; border: none; border-radius: 0; }
+        #imageModal .modal-body { overflow: hidden; }
+        #previewImage { max-height: 100vh; max-width: 100vw; object-fit: contain; transition: opacity 0.3s ease; }
+        .lightbox-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 60px; height: 60px; border-radius: 50%; border: none; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; font-size: 2rem; background: rgba(0,0,0,0.2); z-index: 1060; transition: all 0.3s; backdrop-filter: blur(5px); cursor: pointer; }
+        .lightbox-nav-btn:hover, .lightbox-nav-btn:active { background: rgba(0,0,0,0.8); color: white; transform: translateY(-50%) scale(1.1); box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .lightbox-prev { left: 20px; } .lightbox-next { right: 20px; }
+        .thumbnail-strip-container { position: absolute; bottom: 0; left: 0; right: 0; height: 120px; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%); display: flex; align-items: flex-end; padding: 0 20px 20px 20px; overflow-x: auto; z-index: 1050; opacity: 0; transition: opacity 0.4s ease; scroll-behavior: smooth; }
+        #imageModal:hover .thumbnail-strip-container, .thumbnail-strip-container:active { opacity: 1; }
+        .thumb-item { width: 64px; height: 64px; margin-right: 12px; opacity: 0.4; cursor: pointer; flex-shrink: 0; border-radius: 8px; overflow: hidden; transition: all 0.2s; border: 2px solid transparent; }
+        .thumb-item.active { opacity: 1; border-color: var(--brand-primary); transform: translateY(-5px); box-shadow: var(--glow-blue); }
+        .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
         
-        .swal2-popup {
-            background: #111111 !important;
-            color: #FFFFFF !important;
-            border: 1px solid #333;
+        /* Top Elements in Lightbox */
+        .btn-close-white, #downloadLink { z-index: 1060 !important; opacity: 0.6; transition: 0.3s; }
+        .btn-close-white:hover { opacity: 1; transform: scale(1.1); }
+        #downloadLink:hover { opacity: 1; }
+
+        /* --- SweetAlert2 OLED Theme Overrides --- */
+        div:where(.swal2-container) div:where(.swal2-popup) {
+            background: rgba(10, 10, 15, 0.95) !important;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(10px);
         }
+        div:where(.swal2-container) h2:where(.swal2-title) {
+            color: var(--text-primary) !important;
+            font-family: var(--font-sans);
+        }
+        div:where(.swal2-container) div:where(.swal2-html-container) {
+            color: var(--text-secondary) !important;
+            font-family: var(--font-mono);
+        }
+        /* Buttons */
+        div:where(.swal2-container) button.swal2-confirm {
+            background-color: transparent !important;
+            border: 1px solid var(--brand-primary) !important;
+            color: var(--brand-primary) !important;
+            border-radius: var(--radius-md) !important;
+            padding: 0.6rem 1.5rem !important;
+            font-family: var(--font-mono) !important;
+            box-shadow: none !important;
+            transition: all 0.3s !important;
+        }
+        div:where(.swal2-container) button.swal2-confirm:hover {
+            background-color: rgba(41, 121, 255, 0.1) !important;
+            box-shadow: var(--glow-blue) !important;
+            color: #fff !important;
+        }
+        div:where(.swal2-container) button.swal2-cancel {
+            background-color: transparent !important;
+            border: 1px solid var(--brand-danger) !important;
+            color: var(--brand-danger) !important;
+            border-radius: var(--radius-md) !important;
+            padding: 0.6rem 1.5rem !important;
+            font-family: var(--font-mono) !important;
+            transition: all 0.3s !important;
+        }
+        div:where(.swal2-container) button.swal2-cancel:hover {
+            background-color: rgba(255, 23, 68, 0.1) !important;
+            box-shadow: 0 0 15px rgba(255, 23, 68, 0.3) !important;
+            color: #fff !important;
+        }
+        /* Icons */
+        div:where(.swal2-icon).swal2-warning { border-color: var(--brand-warning) !important; color: var(--brand-warning) !important; }
+        div:where(.swal2-icon).swal2-error { border-color: var(--brand-danger) !important; color: var(--brand-danger) !important; }
+        div:where(.swal2-icon).swal2-success { border-color: var(--brand-success) !important; color: var(--brand-success) !important; }
+        div:where(.swal2-icon).swal2-info { border-color: var(--brand-primary) !important; color: var(--brand-primary) !important; }
     </style>
 </head>
 <body>
 
-    <!-- 頂部導覽列 -->
+    <!-- Navbar -->
     <nav class="navbar navbar-custom">
-        <div class="container-fluid">
-            <div class="navbar-brand m-0" onclick="showAlbumList()" style="cursor:pointer">
-                <i class="bi bi-images me-2"></i><span id="navTitle">雲端相簿</span>
-            </div>
-            <div class="d-flex gap-2 align-items-center">
-                <div id="viewModeBadge" class="d-none badge rounded-pill badge-view-mode px-3 py-1-5 small me-1">瀏覽模式</div>
-                <div id="adminBadge" class="d-none badge rounded-pill badge-admin-mode px-3 py-1-5 small me-1">管理者模式</div>
+        <div class="container-fluid px-lg-5">
+            <a class="navbar-brand" href="#" onclick="showAlbumList()">
+                <span class="brand-dot"></span>
+                <span id="navbarTitle">雲端相簿</span>
+            </a>
+            <div>
+                <!-- Viewer Mode Label -->
+                <span id="viewerModeLabel" class="d-none user-select-none me-2" style="color: var(--brand-success); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-success); padding: 6px 12px; border-radius: 20px;">
+                    <i class="bi bi-eye-fill me-1"></i> 瀏覽模式
+                </span>
                 
-                <button id="logoutBtn" class="circle-btn btn-logout d-none" title="登出" onclick="doLogout()"><i class="bi bi-box-arrow-right"></i></button>
-                <button id="loginBtn" class="btn btn-outline-light btn-sm rounded-pill px-3 d-none" onclick="openLoginModal()">管理登入</button>
-                <button id="settingsBtn" class="circle-btn d-none" onclick="openSettingsModal()"><i class="bi bi-gear"></i></button>
-                <button id="shareSystemBtn" class="circle-btn d-none" onclick="openShareSystemModal()"><i class="bi bi-share"></i></button>
+                <!-- Admin Controls Container -->
+                <div id="adminControls" class="d-none d-inline-flex align-items-center gap-2">
+                    <span style="color: var(--brand-accent); font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--brand-accent); padding: 6px 12px; border-radius: 20px;">
+                        <i class="bi bi-shield-check me-1"></i> 管理者模式
+                    </span>
+                    
+                    <!-- Create Album Button -->
+                    <button class="btn-oled btn-sm" onclick="openCreateAlbumModal()">
+                        <i class="bi bi-folder-plus me-1"></i> 建立相簿
+                    </button>
+
+                    <!-- Settings Button -->
+                    <button class="btn-oled btn-sm" onclick="openAdminModal()">
+                        <i class="bi bi-gear-fill me-1"></i> 系統設定
+                    </button>
+                    
+                    <button class="btn-oled btn-sm btn-oled-danger" onclick="logoutAdmin()">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+                
+                <!-- Login Button -->
+                <button id="loginBtn" class="btn-oled btn-icon btn-settings" onclick="openLoginModal()" title="管理者登入">
+                    <i class="bi bi-key-fill"></i>
+                </button>
             </div>
         </div>
     </nav>
 
-    <!-- 相簿內部導覽 -->
-    <div id="navHeader" class="hidden">
-        <div class="d-flex align-items-center gap-3">
-            <button class="circle-btn" onclick="showAlbumList()"><i class="bi bi-arrow-left"></i></button>
-            <span id="currentAlbumName"></span>
-        </div>
-        <button class="btn btn-google-primary btn-sm" onclick="requestServerDownload()">
-            <i class="bi bi-cloud-arrow-down-fill me-1"></i> 打包下載
-        </button>
-    </div>
-
-    <!-- 內容區域 -->
-    <main class="container py-4">
-        <div id="loading" class="text-center py-5">
-            <div class="spinner-border text-white" role="status"></div>
-            <p class="mt-3 text-white">正在連線...</p>
-        </div>
-
-        <div id="setupView" class="hidden text-center py-5">
-            <div class="p-4 bg-dark rounded-4 border border-secondary mx-auto" style="max-width: 500px">
-                <h5 class="mb-3 text-white">初始化系統</h5>
-                <input type="text" id="initApiUrl" class="form-control mb-3" placeholder="https://script.google.com/...">
-                <button class="btn btn-google-primary w-100" onclick="saveInitialSettings()">儲存並開啟</button>
+    <!-- Main Content -->
+    <div class="container-fluid px-lg-5 py-5">
+        <div id="navHeader" class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div>
+                <span id="homeLink" class="breadcrumb-item-custom" onclick="showAlbumList()">相簿首頁</span>
+                <span id="separator" class="breadcrumb-separator hidden">//</span>
+                <span id="currentAlbumName" class="breadcrumb-item-custom breadcrumb-active hidden"></span>
             </div>
-        </div>
-
-        <div id="albumView" class="album-grid hidden"></div>
-        <div id="photoView" class="photo-grid hidden"></div>
-    </main>
-
-    <!-- 照片燈箱 -->
-    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
-        <div class="lightbox-header">
-            <button class="circle-btn" onclick="closeLightbox()"><i class="bi bi-x-lg"></i></button>
             <div class="d-flex gap-2">
-                <button class="circle-btn" id="lbShare"><i class="bi bi-share"></i></button>
+                <button id="directoryBtn" class="btn-oled" onclick="openDirectoryModal()"><i class="bi bi-list-ul me-2"></i> 目錄檢索</button>
+                <button id="batchDeleteBtn" class="btn-oled btn-oled-danger hidden" onclick="executeBatchDelete()">
+                    <i class="bi bi-trash3 me-1"></i> 刪除選取 (<span id="deleteCount">0</span>)
+                </button>
+                <!-- Uniform Button Style -->
+                <button id="downloadAllBtn" class="btn-oled hidden" onclick="downloadAllCurrentPhotos()"><i class="bi bi-download me-2"></i> 相簿下載</button>
+                <button id="uploadToAlbumBtn" class="btn-oled hidden" onclick="openUploadModal()">
+                    <i class="bi bi-cloud-upload me-2"></i> 上傳相片
+                </button>
+                <button id="refreshBtn" class="btn-oled" onclick="fetchAlbums(true)"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
         </div>
-        
-        <div class="lb-nav lb-prev" onclick="navLightbox(-1); event.stopPropagation();">
-            <i class="bi bi-chevron-left"></i>
-        </div>
-        <div class="lb-nav lb-next" onclick="navLightbox(1); event.stopPropagation();">
-            <i class="bi bi-chevron-right"></i>
-        </div>
 
-        <div class="lightbox-content" id="lbTouchArea">
-            <img src="" id="lightboxImg" class="lightbox-img" onclick="event.stopPropagation()">
+        <div id="albumView" class="row g-4"></div>
+        <div id="photoView" class="row g-3 hidden"></div>
+        <div id="emptyState" class="text-center py-5 hidden"><h2 class="text-muted font-monospace">查無資料 (NO_DATA)</h2></div>
+        
+        <div id="setupState" class="text-center py-5 hidden">
+            <h1 class="display-4 mb-3">系統初始化</h1>
+            <p class="text-muted">尚未設定服務端點。</p>
+            <button class="btn-oled btn-oled-accent px-5" onclick="openAdminModal(true)">開始設定</button>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="footer-custom">
+        <div class="container">
+            <span class="footer-text">© 新北市崇德國小 | All Rights Reserved.</span>
+        </div>
+    </footer>
 
     <!-- Modals -->
+
+    <!-- Login Modal -->
     <div class="modal fade" id="loginModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content bg-dark border-secondary rounded-4">
-                <div class="modal-body p-4 text-center">
-                    <h6 class="mb-4 text-white">管理者驗證</h6>
-                    <input type="password" class="form-control mb-4 text-center" id="adminPwd" placeholder="密碼">
-                    <button class="btn btn-google-primary w-100" onclick="doLogin()">登入</button>
+            <div class="modal-content">
+                <div class="modal-header border-0 d-flex justify-content-center position-relative">
+                    <h5 class="modal-title w-100 text-center">相簿管理系統</h5>
+                    <button class="btn-close position-absolute end-0 me-3" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="password" class="form-control text-center mb-3" id="adminPassword" placeholder="請輸入密碼" autocomplete="off">
+                    <button class="btn-oled w-100" onclick="verifyAdmin()">登入</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="shareSystemModal" tabindex="-1">
+    <!-- Create Album Modal -->
+    <div class="modal fade" id="createAlbumModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">建立新相簿</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control mb-3" id="createAlbumName" placeholder="例如:20260507_運動會">
+                    <p class="small text-white-50 text-center mb-3">* 建立後請在相簿卡片上點擊「上傳」新增照片。</p>
+                    <button class="btn-oled w-100" onclick="createAlbum()">確認建立</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Settings Modal -->
+    <div class="modal fade" id="adminControlModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content bg-dark border-secondary rounded-4">
-                <div class="modal-body p-4 text-center">
-                    <h6 class="text-white">分享連結</h6>
-                    <div id="qrcode" class="my-3 bg-white p-2 d-inline-block rounded-3"></div>
-                    <input type="text" id="shareLinkInput" class="form-control mb-3 small" readonly>
-                    <button class="btn btn-google-primary w-100" onclick="copyShareLink()">複製連結</button>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-gear-wide-connected me-2"></i>系統設定</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small">API服務端點 (GAS URL)</label>
+                        <input type="url" class="form-control form-control-sm" id="settingGasUrl" placeholder="https://script.google.com/...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">網頁標題</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" id="settingPageTitle" placeholder="我的雲端相簿">
+                            <button class="btn-oled btn-sm" onclick="saveSettings()">儲存</button>
+                        </div>
+                    </div>
+                    <hr style="border-color: var(--border-subtle);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button class="btn-oled btn-sm" onclick="initShareUi(); new bootstrap.Modal(document.getElementById('shareModal')).show()">
+                            <i class="bi bi-share me-1"></i> 取得分享連結
+                        </button>
+                        <button class="btn-oled btn-sm btn-oled-danger" onclick="clearSettings()">清除本機設定</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">上傳相片</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2 text-white-50">上傳至: <span id="uploadTargetName" class="text-white fw-bold"></span></p>
+                    <input type="file" class="form-control mb-3" id="uploadFiles" multiple accept="image/*">
+                    <div id="uploadStatus" class="hidden">
+                        <div class="progress-container"><div id="uploadProgressBar" class="progress-bar"></div></div>
+                        <div class="d-flex justify-content-between mt-1 font-monospace small">
+                            <span id="uploadProgressText" class="upload-text-high-contrast">準備中...</span>
+                            <span id="uploadCount" class="upload-text-high-contrast"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="doUploadBtn" class="btn-oled w-100" onclick="startBatchUpload()">開始上傳</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div class="modal fade" id="renameModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">更名相簿</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="text" class="form-control mb-3" id="renameInput">
+                    <input type="hidden" id="renameTargetId">
+                    <button class="btn-oled w-100" onclick="confirmRename()">確認更名</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal (Generic) -->
+    <div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="progressModalTitle">處理中</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="progress-container"><div id="genericProgressBar" class="progress-bar"></div></div>
+                    <div class="d-flex justify-content-between mt-2 font-monospace">
+                        <span id="progressText" class="progress-text">初始化...</span>
+                        <span id="progressCount" class="progress-text">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Link Modal -->
+    <div class="modal fade" id="shareModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">分享連結</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center">
+                    <div id="qrcode" class="d-flex justify-content-center mb-3 bg-white p-2 rounded w-auto d-inline-block"></div>
+                    <div class="input-group input-group-sm mb-3">
+                        <input type="text" class="form-control text-center" id="shareLinkInput" readonly>
+                        <button class="btn btn-outline-secondary" onclick="copyShareLink()">複製</button>
+                    </div>
+                    <p class="small text-muted">* 此連結包含設定參數，訪客掃描後可直接瀏覽。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Directory Modal -->
+    <div class="modal fade" id="directoryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">相簿目錄索引</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-0"><ul id="directoryList" class="directory-list"></ul></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="modal fade" id="imageModal" tabindex="-1">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-body p-0 d-flex flex-column justify-content-center align-items-center position-relative">
+                    <button class="btn-close btn-close-white position-absolute top-0 end-0 m-4 z-3" data-bs-dismiss="modal"></button>
+                    <a id="downloadLink" href="#" target="_blank" class="btn-oled position-absolute top-0 start-0 m-4 z-3">照片下載</a>
+                    <button class="lightbox-nav-btn lightbox-prev" onclick="navigateLightbox(-1)"><i class="bi bi-chevron-left"></i></button>
+                    <button class="lightbox-nav-btn lightbox-next" onclick="navigateLightbox(1)"><i class="bi bi-chevron-right"></i></button>
+                    <img id="previewImage" src="" class="img-fluid">
+                    <div class="thumbnail-strip-container" id="thumbnailStrip"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loadingOverlay" class="hidden">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 text-muted font-monospace">系統載入中...</p>
+        <button class="btn-oled btn-oled-danger btn-sm mt-3" onclick="forceStopLoading()">終止程序</button>
+    </div>
+
+    <input type="file" id="hiddenUploadInput" multiple accept="image/*" class="d-none">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        let SCRIPT_URL = localStorage.getItem('gas_api_url') || "";
-        let isAdmin = localStorage.getItem('is_admin') === 'true';
-        let activeAlbum = null;
-        let currentPhotoIndex = -1;
+        let SCRIPT_URL = "";
+        let PAGE_TITLE = "雲端相簿";
+        let allData = [];
+        let currentAlbumPhotos = [];
+        let currentAlbumNameStr = "";
+        let currentAlbumIdStr = "";
+        let currentPhotoIndex = 0;
+        let adminToken = ""; 
+        let selectedPhotoIds = new Set();
+        let uploadTargetAlbumName = "";
 
-        window.onload = () => {
+        const STORAGE_KEY_URL = "gas_album_url_v5";
+        const STORAGE_KEY_TITLE = "gas_album_title_v5";
+        const SESSION_KEY_VIEWER = "is_viewer_mode";
+        const SESSION_KEY_ADMIN = "gas_album_admin_token";
+        const SESSION_KEY_CURRENT_ALBUM = "gas_album_active_id";
+        
+        // SweetAlert2 Mixins
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#111111',
+            color: '#ffffff',
+        });
+
+        // Fast UI Toggle
+        (function() {
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('api')) {
-                SCRIPT_URL = decodeURIComponent(urlParams.get('api'));
-                localStorage.setItem('gas_api_url', SCRIPT_URL);
-                localStorage.setItem('is_admin', 'false');
-                isAdmin = false;
-                window.history.replaceState({}, document.title, window.location.pathname);
+            const ref = urlParams.get('ref');
+            if(ref) {
+                try {
+                    localStorage.setItem(STORAGE_KEY_URL, atob(ref));
+                    sessionStorage.setItem(SESSION_KEY_VIEWER, "true");
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } catch(e){}
             }
+            if (sessionStorage.getItem(SESSION_KEY_VIEWER) === "true") {
+                const style = document.createElement('style');
+                style.innerHTML = '#loginBtn { display: none !important; } #viewerModeLabel { display: inline-block !important; }';
+                document.head.appendChild(style);
+            }
+        })();
 
-            updateUIState();
-            setupTouchNavigation();
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+
+            const storedAdmin = sessionStorage.getItem(SESSION_KEY_ADMIN);
+            if(storedAdmin) {
+                adminToken = storedAdmin;
+                toggleAdminUI(true);
+            }
             
+            // 鍵盤支援：電腦端使用左右方向鍵切換相片
+            document.addEventListener('keydown', (e) => {
+                if(document.getElementById('imageModal').classList.contains('show')) {
+                    if(e.key === "ArrowLeft") navigateLightbox(-1);
+                    if(e.key === "ArrowRight") navigateLightbox(1);
+                }
+            });
+
+            // 手勢操作支援：行動裝置左右滑動 (Swipe) 切換相片
+            let touchStartX = 0;
+            let touchEndX = 0;
+            const imageModalEl = document.getElementById('imageModal');
+            
+            imageModalEl.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, {passive: true});
+            
+            imageModalEl.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                const threshold = 50; // 最小滑動距離
+                if (touchEndX < touchStartX - threshold) navigateLightbox(1);  // 左滑 -> 下一張
+                if (touchEndX > touchStartX + threshold) navigateLightbox(-1); // 右滑 -> 上一張
+            }, {passive: true});
+
             if (!SCRIPT_URL) {
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('setupView').classList.remove('hidden');
+                showSetupState();
             } else {
                 fetchAlbums();
             }
 
-            document.addEventListener('keydown', (e) => {
-                if (document.getElementById('lightbox').classList.contains('active')) {
-                    if (e.key === 'ArrowLeft') navLightbox(-1);
-                    if (e.key === 'ArrowRight') navLightbox(1);
-                    if (e.key === 'Escape') closeLightbox();
-                }
+            document.getElementById('hiddenUploadInput').addEventListener('change', function() {
+                if(this.files.length > 0) performBatchUpload(this.files, uploadTargetAlbumName);
             });
-        };
+        });
 
-        function updateUIState() {
-            const isLoginHash = window.location.hash === "#login";
-            document.getElementById('adminBadge').classList.toggle('d-none', !isAdmin);
-            document.getElementById('viewModeBadge').classList.toggle('d-none', isAdmin || !SCRIPT_URL);
-            document.getElementById('settingsBtn').classList.toggle('d-none', !isAdmin);
-            document.getElementById('shareSystemBtn').classList.toggle('d-none', !isAdmin);
-            document.getElementById('logoutBtn').classList.toggle('d-none', !isAdmin);
-            document.getElementById('loginBtn').classList.toggle('d-none', isAdmin || !isLoginHash);
-        }
-
-        async function fetchAlbums() {
-            try {
-                const res = await fetch(`${SCRIPT_URL}?action=getAlbums`);
-                const json = await res.json();
-                document.getElementById('loading').classList.add('hidden');
-                if (json.status === "success") renderAlbums(json.data);
-                else throw new Error();
-            } catch (e) {
-                document.getElementById('loading').innerHTML = `<div class='p-4 text-white'>無法連線至 API。</div>`;
-                document.getElementById('setupView').classList.remove('hidden');
+        function toggleAdminUI(isAdmin) {
+            const loginBtn = document.getElementById('loginBtn');
+            const adminControls = document.getElementById('adminControls');
+            
+            if(isAdmin) {
+                loginBtn.classList.add('d-none');
+                adminControls.classList.remove('d-none');
+                adminControls.classList.add('d-flex');
+            } else {
+                loginBtn.classList.remove('d-none');
+                adminControls.classList.add('d-none');
+                adminControls.classList.remove('d-flex');
             }
         }
 
-        function renderAlbums(albums) {
-            const view = document.getElementById('albumView');
-            view.classList.remove('hidden');
-            view.innerHTML = albums.map(album => `
-                <div class="album-card" onclick='openAlbum(${JSON.stringify(album)})'>
-                    <img src="${album.cover}" class="album-cover" loading="lazy">
-                    <div class="album-info">
-                        <div class="album-name">${album.name}</div>
-                        <div class="album-meta">${album.photos.length} 張照片</div>
-                    </div>
-                </div>
-            `).join('');
+        // --- Core Functions ---
+
+        async function safeFetchJson(url, options = {}) {
+            try {
+                const res = await fetch(url, options);
+                const text = await res.text();
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    if (text.trim().startsWith("<")) {
+                        throw new Error("權限錯誤：GAS 回傳了登入頁面而非資料。\n請檢查部署設定：「誰可以存取」必須設為「所有人」。");
+                    }
+                    throw new Error("資料格式錯誤 (非JSON)");
+                }
+            } catch (err) {
+                throw err;
+            }
         }
 
-        function openAlbum(album) {
-            activeAlbum = album;
-            document.getElementById('albumView').classList.add('hidden');
-            document.getElementById('navHeader').classList.remove('hidden');
-            document.getElementById('currentAlbumName').innerText = album.name;
-            const photoView = document.getElementById('photoView');
-            photoView.classList.remove('hidden');
-            photoView.innerHTML = album.photos.map((p, i) => `
-                <div class="photo-item" onclick="openLightbox(${i})">
-                    <img src="${p.url}" class="photo-img" loading="lazy">
-                </div>
-            `).join('');
-            window.scrollTo(0,0);
+        async function fetchAlbums(forceRefresh = false) {
+            if (!SCRIPT_URL) return;
+            showLoading(true);
+            try {
+                let url = `${SCRIPT_URL}?action=getAlbums`;
+                if (forceRefresh) url += "&refresh=true";
+                const json = await safeFetchJson(url);
+                if (json.status === "success") {
+                    allData = json.data;
+                    allData.sort((a, b) => {
+                        const getDigits = s => {
+                            const d = s.replace(/\D/g, '');
+                            return d.length > 0 ? parseInt(d.substring(0, 8), 10) : 0;
+                        };
+                        const dA = getDigits(a.name||""), dB = getDigits(b.name||"");
+                        if(dB !== dA) return dB - dA;
+                        return (b.name||"").localeCompare((a.name||""), 'zh-TW');
+                    });
+                    
+                    const savedAlbumId = sessionStorage.getItem(SESSION_KEY_CURRENT_ALBUM);
+                    showAlbumList();
+                    
+                    if (savedAlbumId) {
+                        const savedAlbum = allData.find(a => a.id === savedAlbumId);
+                        if (savedAlbum) showPhotos(savedAlbum.id);
+                        else sessionStorage.removeItem(SESSION_KEY_CURRENT_ALBUM);
+                    }
+                } else { throw new Error(json.message); }
+            } catch (err) {
+                console.error(err);
+                if(err.message.includes("權限錯誤")) Swal.fire("錯誤", err.message, "error");
+                showLoading(false);
+            } finally { showLoading(false); }
         }
 
         function showAlbumList() {
+            sessionStorage.removeItem(SESSION_KEY_CURRENT_ALBUM);
+
             document.getElementById('albumView').classList.remove('hidden');
             document.getElementById('photoView').classList.add('hidden');
-            document.getElementById('navHeader').classList.add('hidden');
-            activeAlbum = null;
-        }
-
-        function openLightbox(index) {
-            if (!activeAlbum || !activeAlbum.photos[index]) return;
-            currentPhotoIndex = index;
-            const lb = document.getElementById('lightbox');
-            const img = document.getElementById('lightboxImg');
+            document.getElementById('separator').classList.add('hidden');
+            document.getElementById('currentAlbumName').classList.add('hidden');
             
-            img.style.opacity = '0';
-            img.style.transform = 'scale(0.98)';
-            img.src = activeAlbum.photos[index].url;
+            // Hide Desktop Buttons
+            document.getElementById('downloadAllBtn').classList.add('hidden');
+            document.getElementById('uploadToAlbumBtn').classList.add('hidden');
+            document.getElementById('batchDeleteBtn').classList.add('hidden');
             
-            lb.style.display = 'flex';
-            // 使用更短的延遲觸發進入動畫
-            requestAnimationFrame(() => {
-                lb.classList.add('active');
-            });
-
-            document.getElementById('lbShare').onclick = (e) => {
-                e.stopPropagation();
-                copyToClipboard(activeAlbum.photos[currentPhotoIndex].url, '照片連結已複製');
-            };
-        }
-
-        function navLightbox(step) {
-            if (!activeAlbum) return;
-            let nextIndex = currentPhotoIndex + step;
-            if (nextIndex < 0) nextIndex = activeAlbum.photos.length - 1;
-            if (nextIndex >= activeAlbum.photos.length) nextIndex = 0;
+            // Show Directory
+            document.getElementById('directoryBtn').classList.remove('hidden');
             
-            currentPhotoIndex = nextIndex;
-            const img = document.getElementById('lightboxImg');
-            img.style.opacity = '0';
-            setTimeout(() => {
-                img.src = activeAlbum.photos[currentPhotoIndex].url;
-            }, 100);
-        }
-
-        function closeLightbox() {
-            const lb = document.getElementById('lightbox');
-            const img = document.getElementById('lightboxImg');
+            document.getElementById('setupState').classList.add('hidden');
             
-            // 立即執行視覺關閉
-            lb.classList.remove('active');
-            img.style.opacity = '0';
+            const view = document.getElementById('albumView');
+            view.innerHTML = '';
             
-            // 等待動畫結束後徹底隱藏並清空
-            setTimeout(() => {
-                if(!lb.classList.contains('active')) {
-                    lb.style.display = 'none';
-                    img.src = ""; 
-                }
-            }, 200);
-        }
+            if(allData.length === 0 && !adminToken) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+            }
 
-        function setupTouchNavigation() {
-            const touchArea = document.getElementById('lbTouchArea');
-            let startX = 0;
-            touchArea.addEventListener('touchstart', (e) => startX = e.touches[0].clientX, { passive: true });
-            touchArea.addEventListener('touchend', (e) => {
-                const diff = startX - e.changedTouches[0].clientX;
-                if (Math.abs(diff) > 50) navLightbox(diff > 0 ? 1 : -1);
-            }, { passive: true });
-        }
-
-        // --- 強化後的打包下載 ---
-        async function requestServerDownload() {
-            if (!activeAlbum) return;
-            
-            Swal.fire({ 
-                title: '正在打包相簿', 
-                text: '這可能需要 30-60 秒，請勿關閉視窗...',
-                background: '#111', color: '#fff',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading() 
-            });
-
-            try {
-                // 使用 fetch 並設定較長的超時處理邏輯
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 120000); // 2分鐘超時
-
-                const response = await fetch(`${SCRIPT_URL}?action=downloadAlbum&albumId=${encodeURIComponent(activeAlbum.id)}`, {
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
+            allData.forEach(album => {
+                const col = document.createElement('div');
+                col.className = 'col-12 col-md-4 col-lg-3';
                 
-                const result = await response.json();
+                // Check if custom cover exists in local storage
+                let coverImg = album.cover || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PC9zdmc+';
+                const customCover = localStorage.getItem('album_cover_' + album.id);
+                if(customCover) coverImg = customCover;
 
-                if (result.status === "success" && result.downloadUrl) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '打包成功',
-                        text: '即將開始下載檔案',
-                        background: '#111', color: '#fff',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    
-                    // 改用直接開啟視窗或隱藏連結下載，避免部分瀏覽器阻擋
-                    const downloadWindow = window.open(result.downloadUrl, '_blank');
-                    if (!downloadWindow) {
-                        // 如果彈窗被阻擋，改用傳統 a 標籤
-                        const link = document.createElement('a');
-                        link.href = result.downloadUrl;
-                        link.target = "_blank";
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                let adminBtns = "";
+                if(adminToken) {
+                    adminBtns = `
+                        <div class="admin-album-controls">
+                            <button class="btn btn-sm btn-dark btn-card-action" onclick="event.stopPropagation(); prepareRename('${album.id}', '${album.name}')">更名</button>
+                            <button class="btn btn-sm btn-dark btn-card-action" onclick="event.stopPropagation(); openUploadModal('${album.name}')">上傳</button>
+                            <button class="btn btn-sm btn-danger btn-card-action" onclick="event.stopPropagation(); deleteAlbum('${album.id}', '${album.name}')">刪除</button>
+                        </div>`;
+                }
+
+                col.innerHTML = `
+                    <div class="album-card" onclick="showPhotos('${album.id}')">
+                        <img src="${coverImg}" class="album-cover" loading="lazy">
+                        <div class="album-info">
+                            <h5 class="album-title">${album.name}</h5>
+                            <div class="album-meta"><i class="bi bi-images me-1"></i> ${album.photos.length} 項目</div>
+                        </div>
+                        ${adminBtns}
+                    </div>`;
+                view.appendChild(col);
+            });
+        }
+
+        function showPhotos(albumId) {
+            sessionStorage.setItem(SESSION_KEY_CURRENT_ALBUM, albumId);
+
+            const album = allData.find(a => a.id === albumId);
+            if (!album) return;
+            
+            // Sort Logic: Check LocalStorage for custom order
+            const storedOrder = localStorage.getItem('album_sort_' + albumId);
+            if (storedOrder) {
+                const sortOrder = JSON.parse(storedOrder); // Array of IDs
+                album.photos.sort((a, b) => {
+                    const idxA = sortOrder.indexOf(a.id);
+                    const idxB = sortOrder.indexOf(b.id);
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    if (idxA !== -1) return -1;
+                    if (idxB !== -1) return 1;
+                    return 0; 
+                });
+            }
+
+            currentAlbumPhotos = album.photos;
+            currentAlbumNameStr = album.name;
+            currentAlbumIdStr = album.id;
+            selectedPhotoIds.clear();
+
+            bootstrap.Modal.getInstance(document.getElementById('directoryModal'))?.hide();
+
+            document.getElementById('albumView').classList.add('hidden');
+            document.getElementById('photoView').classList.remove('hidden');
+            
+            document.getElementById('downloadAllBtn').classList.remove('hidden');
+            
+            document.getElementById('separator').classList.remove('hidden');
+            document.getElementById('currentAlbumName').innerText = album.name;
+            document.getElementById('currentAlbumName').classList.remove('hidden');
+            
+            if(adminToken) {
+                document.getElementById('uploadToAlbumBtn').classList.remove('hidden');
+                document.getElementById('uploadToAlbumBtn').onclick = () => openUploadModal(album.name);
+                
+                document.getElementById('batchDeleteBtn').classList.add('hidden');
+                
+                document.getElementById('deleteCount').innerText = '0';
+            }
+            
+            const photoGrid = document.getElementById('photoView');
+            if(photoGrid._sortable) photoGrid._sortable.destroy();
+            
+            if(adminToken) {
+                photoGrid._sortable = new Sortable(photoGrid, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    draggable: ".draggable", // Only items with draggable class
+                    onEnd: function (evt) {
+                        const newOrderIds = [];
+                        const itemEls = photoGrid.querySelectorAll('.photo-item');
+                        const newPhotosArr = [];
+                        
+                        itemEls.forEach(el => {
+                             const id = el.id.replace('p-item-', '');
+                             newOrderIds.push(id);
+                             const photoObj = currentAlbumPhotos.find(p => p.id === id);
+                             if(photoObj) newPhotosArr.push(photoObj);
+                        });
+                        
+                        currentAlbumPhotos = newPhotosArr; 
+                        localStorage.setItem('album_sort_' + currentAlbumIdStr, JSON.stringify(newOrderIds));
                     }
-                } else {
-                    throw new Error(result.message || '伺服器未回傳下載連結');
-                }
-            } catch (error) {
-                console.error('Download Error:', error);
-                let errorMsg = '無法連線至伺服器。';
-                if (error.name === 'AbortError') errorMsg = '打包時間過長（超過2分鐘），請縮減相簿大小後再試。';
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: '下載失敗',
-                    text: errorMsg + ' 請確認後端 GAS 權限已設為「任何人」。',
-                    background: '#111', color: '#fff'
                 });
+            }
+
+            const view = document.getElementById('photoView');
+            view.innerHTML = '';
+            
+            if(album.photos.length === 0) {
+                view.innerHTML = '<div class="col-12 text-center text-muted py-5">此相簿是空的</div>';
+            }
+
+            album.photos.forEach((photo, index) => {
+                const col = document.createElement('div');
+                col.className = 'col-6 col-md-3 col-lg-2';
+                
+                let selectionHtml = "";
+                let setCoverBtn = "";
+                let clickAction = `openLightbox(${index})`;
+                let dragClass = "";
+                let itemId = `p-item-${photo.id}`;
+                
+                if(adminToken) {
+                    selectionHtml = `<div class="photo-checkbox"></div>`;
+                    // Set Cover Button
+                    setCoverBtn = `<div class="btn-set-cover" onclick="event.stopPropagation(); setAlbumCover('${album.id}', '${photo.url}')" title="設為封面"><i class="bi bi-star-fill"></i></div>`;
+                    
+                    clickAction = `handlePhotoSelect(event, '${photo.id}', ${index})`;
+                    dragClass = "draggable";
+                }
+
+                col.innerHTML = `
+                    <div class="photo-item ${dragClass}" id="${itemId}" onclick="${clickAction}">
+                        ${selectionHtml}
+                        ${setCoverBtn}
+                        <img src="${photo.url.replace('=s800', '=s400')}" loading="lazy">
+                    </div>`;
+                view.appendChild(col);
+            });
+        }
+        
+        function setAlbumCover(albumId, url) {
+            localStorage.setItem('album_cover_' + albumId, url);
+            // SweetAlert2 Toast
+            Toast.fire({ icon: 'success', title: '已設為封面' });
+        }
+
+        function handlePhotoSelect(event, id, index) {
+            event.stopPropagation();
+            const el = document.getElementById(`p-item-${id}`);
+            if (selectedPhotoIds.has(id)) {
+                selectedPhotoIds.delete(id);
+                el.classList.remove('selected');
+            } else {
+                selectedPhotoIds.add(id);
+                el.classList.add('selected');
+            }
+            const count = selectedPhotoIds.size;
+            
+            const delBtn = document.getElementById('batchDeleteBtn');
+            const dlBtn = document.getElementById('downloadAllBtn');
+            
+            if (count > 0) {
+                delBtn.classList.remove('hidden');
+                document.getElementById('deleteCount').innerText = count;
+                dlBtn.classList.add('hidden'); 
+            } else {
+                delBtn.classList.add('hidden');
+                dlBtn.classList.remove('hidden');
             }
         }
 
-        // 工具函式
-        async function doLogin() {
-            const pwd = document.getElementById('adminPwd').value;
-            Swal.fire({ title: '驗證中', background: '#111', color: '#fff', didOpen: () => Swal.showLoading() });
-            try {
-                const res = await fetch(`${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`);
-                const json = await res.json();
-                if (json.status === "success") {
-                    isAdmin = true;
-                    localStorage.setItem('is_admin', 'true');
-                    location.reload();
-                } else throw new Error();
-            } catch (e) { Swal.fire({ icon: 'error', title: '密碼錯誤', background: '#111', color: '#fff' }); }
+        async function executeBatchDelete() {
+            const count = selectedPhotoIds.size;
+            if (count === 0) return;
+            
+            const confirmResult = await Swal.fire({
+                title: `確定要刪除選取的 ${count} 張照片嗎？`,
+                text: "此動作無法復原",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '確定刪除',
+                cancelButtonText: '取消',
+                reverseButtons: true
+            });
+
+            if (!confirmResult.isConfirmed) return;
+            
+            const ids = Array.from(selectedPhotoIds);
+            showProgressModal("刪除進度");
+            
+            const pBar = document.getElementById('genericProgressBar');
+            const pText = document.getElementById('progressText');
+            const pCount = document.getElementById('progressCount');
+            
+            let success = 0;
+            
+            for (let i=0; i<ids.length; i++) {
+                const id = ids[i];
+                pText.innerText = `刪除中: ${i+1}/${count}`;
+                const pct = Math.round(((i)/count)*100);
+                pCount.innerText = `${pct}%`;
+                pBar.style.width = `${pct}%`;
+                
+                try {
+                    const payload = { action: 'deletePhoto', id: id, password: adminToken };
+                    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    const json = await res.json();
+                    if(json.status === "success") success++;
+                } catch(e) { console.error(e); }
+            }
+            
+            pBar.style.width = "100%";
+            pCount.innerText = "100%";
+            pText.innerText = "完成";
+            await new Promise(r => setTimeout(r, 500));
+            
+            bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
+            Swal.fire('刪除完成', `成功 ${success} / ${count}`, 'success');
+            selectedPhotoIds.clear();
+            fetchAlbums(true); 
         }
 
-        function doLogout() { localStorage.setItem('is_admin', 'false'); location.reload(); }
-        function saveInitialSettings() {
-            const url = document.getElementById('initApiUrl').value.trim();
-            if (!url.startsWith('https://')) return;
-            localStorage.setItem('gas_api_url', url);
-            localStorage.setItem('is_admin', 'true');
-            location.reload();
+        // --- Admin Logic ---
+
+        function openAdminModal(isSetup = false) {
+            const modal = new bootstrap.Modal(document.getElementById('adminControlModal'));
+            modal.show();
+            // Load settings
+            document.getElementById('settingGasUrl').value = SCRIPT_URL;
+            document.getElementById('settingPageTitle').value = PAGE_TITLE;
+            initShareUi(); 
         }
-        function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
-        function openSettingsModal() {
-            Swal.fire({ title: '設定 API 網址', input: 'text', inputValue: SCRIPT_URL, showCancelButton: true, background: '#111', color: '#fff' }).then(r => {
-                if (r.isConfirmed && r.value) { localStorage.setItem('gas_api_url', r.value.trim()); location.reload(); }
+
+        function openCreateAlbumModal() {
+            document.getElementById('createAlbumName').value = "";
+            new bootstrap.Modal(document.getElementById('createAlbumModal')).show();
+        }
+
+        function openLoginModal() {
+            document.getElementById('adminPassword').value = "";
+            if(!SCRIPT_URL) { 
+                openAdminModal(true); 
+                return;
+            }
+            new bootstrap.Modal(document.getElementById('loginModal')).show();
+        }
+
+        async function verifyAdmin() {
+            const pwd = document.getElementById('adminPassword').value;
+            if(!pwd) return Toast.fire({ icon: 'warning', title: '請輸入密碼' });
+            
+            showLoading(true);
+            try {
+                const url = `${SCRIPT_URL}?action=verifyAdmin&password=${encodeURIComponent(pwd)}`;
+                const json = await safeFetchJson(url);
+                if(json.status === "success") {
+                    adminToken = pwd;
+                    sessionStorage.setItem(SESSION_KEY_ADMIN, pwd);
+                    document.getElementById('adminPassword').value = "";
+                    bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                    
+                    toggleAdminUI(true);
+                    openAdminModal(); 
+                    
+                    Toast.fire({ icon: 'success', title: '登入成功' });
+                    fetchAlbums(true); 
+                } else { Swal.fire('登入失敗', '密碼錯誤', 'error'); }
+            } catch(e) { Swal.fire('錯誤', e.message, 'error'); }
+            finally { showLoading(false); }
+        }
+
+        function logoutAdmin() {
+            adminToken = "";
+            sessionStorage.removeItem(SESSION_KEY_ADMIN);
+            
+            const adminModal = bootstrap.Modal.getInstance(document.getElementById('adminControlModal'));
+            if(adminModal) adminModal.hide();
+            
+            toggleAdminUI(false);
+            showAlbumList();
+            Toast.fire({ icon: 'success', title: '已登出' });
+        }
+
+        async function createAlbum() {
+            const name = document.getElementById('createAlbumName').value.trim();
+            if(!name) return Toast.fire({ icon: 'warning', title: '請輸入相簿名稱' });
+            
+            bootstrap.Modal.getInstance(document.getElementById('createAlbumModal')).hide();
+            
+            callApi({ action: 'createAlbum', albumName: name, password: adminToken }, "相簿建立成功！");
+        }
+
+        async function deleteAlbum(id, name) {
+            const result = await Swal.fire({
+                title: `確定要刪除相簿「${name}」？`,
+                text: "此動作無法復原，所有照片將一併刪除。",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '確定刪除',
+                cancelButtonText: '取消',
+                reverseButtons: true
             });
+            if(!result.isConfirmed) return;
+            
+            callApi({ action: 'deleteAlbum', id: id, password: adminToken });
         }
-        function openShareSystemModal() {
-            const modal = new bootstrap.Modal(document.getElementById('shareSystemModal'));
-            const shareUrl = window.location.origin + window.location.pathname + "?api=" + encodeURIComponent(SCRIPT_URL);
-            document.getElementById('shareLinkInput').value = shareUrl;
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById('qrcode'), { text: shareUrl, width: 200, height: 200 });
+
+        function prepareRename(id, oldName) {
+            document.getElementById('renameTargetId').value = id;
+            document.getElementById('renameInput').value = oldName;
+            new bootstrap.Modal(document.getElementById('renameModal')).show();
+        }
+
+        async function confirmRename() {
+            const id = document.getElementById('renameTargetId').value;
+            const newName = document.getElementById('renameInput').value.trim();
+            if(!newName) return Toast.fire({ icon: 'warning', title: '名稱不能為空' });
+            bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide();
+            callApi({ action: 'renameAlbum', id: id, newName: newName, password: adminToken });
+        }
+
+        async function callApi(payload, successMsg) {
+            showLoading(true);
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const json = await res.json();
+                if(json.status === "success") {
+                    if(successMsg) Swal.fire('成功', successMsg, 'success');
+                    fetchAlbums(true);
+                } else {
+                    Swal.fire('操作失敗', json.message, 'error');
+                }
+            } catch(e) { console.error(e); Swal.fire('錯誤', '連線錯誤', 'error'); }
+            finally { showLoading(false); }
+        }
+
+        // Upload Logic
+        function openUploadModal(preselectName = null) {
+            const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+            document.getElementById('uploadTargetName').innerText = preselectName || currentAlbumNameStr || "未選擇";
+            // Store target name in modal dataset or variable logic
+            document.getElementById('uploadModal').dataset.targetAlbum = preselectName || currentAlbumNameStr;
             modal.show();
         }
-        function copyShareLink() { copyToClipboard(document.getElementById('shareLinkInput').value, '連結已複製'); }
-        function copyToClipboard(text, msg) {
-            const i = document.createElement("input"); i.value = text; document.body.appendChild(i); i.select(); document.execCommand("copy"); document.body.removeChild(i);
-            Swal.fire({ toast: true, position: 'top', background: '#111', color: '#fff', title: msg, showConfirmButton: false, timer: 1000 });
+
+        async function startBatchUpload() {
+            const albumName = document.getElementById('uploadModal').dataset.targetAlbum;
+            if(!albumName) return Toast.fire({ icon: 'warning', title: '無法確認目標相簿' });
+            const files = document.getElementById('uploadFiles').files;
+            if(files.length === 0) return Toast.fire({ icon: 'warning', title: '請選擇檔案' });
+
+            document.getElementById('uploadStatus').classList.remove('hidden');
+            const pBar = document.getElementById('uploadProgressBar');
+            const pText = document.getElementById('uploadProgressText');
+            const pCount = document.getElementById('uploadCount');
+            const doBtn = document.getElementById('doUploadBtn');
+            
+            doBtn.disabled = true;
+            pBar.style.width = "0%";
+            pCount.innerText = "0%";
+            
+            let successCount = 0;
+            const total = files.length;
+
+            for(let i=0; i<total; i++) {
+                const file = files[i];
+                pText.innerText = `上傳中 (${i+1}/${total}): ${file.name}`;
+                try {
+                    const base64 = await toBase64(file);
+                    const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
+                    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    const json = await res.json();
+                    if(json.status === "success") successCount++;
+                } catch(e) { console.error(e); }
+                
+                const pct = Math.round(((i+1)/total)*100);
+                pBar.style.width = `${pct}%`;
+                pCount.innerText = `${pct}%`;
+            }
+            
+            pBar.style.width = "100%";
+            pCount.innerText = "100%";
+            pText.innerText = "處理完成";
+            await new Promise(r => setTimeout(r, 500)); 
+
+            document.getElementById('uploadFiles').value = "";
+            document.getElementById('uploadStatus').classList.add('hidden');
+            doBtn.disabled = false;
+            bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+            
+            Swal.fire('上傳完成', `成功 ${successCount} / ${total}`, 'success');
+            fetchAlbums(true);
         }
+
+        function performBatchUpload(files, albumName) {
+            if(!adminToken) return Toast.fire({ icon: 'warning', title: '請先登入' });
+            
+            showProgressModal("上傳進度");
+            const pBar = document.getElementById('genericProgressBar');
+            const pText = document.getElementById('progressText');
+            const pCount = document.getElementById('progressCount');
+            
+            pBar.style.width = "0%";
+            pCount.innerText = "0%";
+            
+            (async () => {
+                let successCount = 0;
+                const total = files.length;
+                for(let i=0; i<total; i++) {
+                    const file = files[i];
+                    pText.innerText = `上傳中: ${i+1}/${total}`;
+                    try {
+                        const base64 = await toBase64(file);
+                        const payload = { action: 'upload', password: adminToken, albumName: albumName, fileName: file.name, image: base64 };
+                        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                        const json = await res.json();
+                        if(json.status === "success") successCount++;
+                    } catch(e) {}
+                    const pct = Math.round(((i+1)/total)*100);
+                    pBar.style.width = `${pct}%`;
+                    pCount.innerText = `${pct}%`;
+                }
+                
+                pBar.style.width = "100%";
+                pCount.innerText = "100%";
+                pText.innerText = "完成";
+                await new Promise(r => setTimeout(r, 500));
+                
+                bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
+                document.getElementById('hiddenUploadInput').value = "";
+                Swal.fire('上傳完成', `成功 ${successCount} / ${total}`, 'success');
+                fetchAlbums(true);
+            })();
+        }
+        
+        function showProgressModal(title) {
+            document.getElementById('progressModalTitle').innerText = title;
+            document.getElementById('genericProgressBar').style.width = '0%';
+            document.getElementById('progressText').innerText = '準備中...';
+            document.getElementById('progressCount').innerText = '0%';
+            new bootstrap.Modal(document.getElementById('progressModal')).show();
+        }
+
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function openDirectoryModal() {
+            const list = document.getElementById('directoryList');
+            list.innerHTML = '';
+            allData.forEach((album, i) => {
+                const li = document.createElement('li');
+                li.className = 'directory-item';
+                const num = (i+1).toString().padStart(2,'0');
+                li.innerHTML = `<div><span class="dir-index">[${num}]</span> ${album.name}</div><span class="dir-count">${album.photos.length}</span>`;
+                li.onclick = () => { showPhotos(album.id); bootstrap.Modal.getInstance(document.getElementById('directoryModal')).hide(); };
+                list.appendChild(li);
+            });
+            new bootstrap.Modal(document.getElementById('directoryModal')).show();
+        }
+
+        function openLightbox(index) {
+            currentPhotoIndex = index;
+            updateLightbox();
+            renderThumbs();
+            new bootstrap.Modal(document.getElementById('imageModal')).show();
+        }
+
+        function updateLightbox() {
+            const p = currentAlbumPhotos[currentPhotoIndex];
+            const img = document.getElementById('previewImage');
+            img.style.opacity = '0.5';
+            const url = p.url.replace('=s800','=s1600').replace('&sz=w800','&sz=w1600');
+            const newI = new Image();
+            newI.onload = () => { img.src = url; img.style.opacity = '1'; };
+            newI.src = url;
+            document.getElementById('downloadLink').href = p.downloadUrl;
+            
+            document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+            const active = document.querySelector(`.thumb-item[data-idx="${currentPhotoIndex}"]`);
+            if(active) {
+                active.classList.add('active');
+                active.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            }
+        }
+
+        function renderThumbs() {
+            const c = document.getElementById('thumbnailStrip');
+            c.innerHTML = '';
+            currentAlbumPhotos.forEach((p, i) => {
+                const d = document.createElement('div');
+                d.className = 'thumb-item';
+                d.dataset.idx = i;
+                d.onclick = () => { currentPhotoIndex = i; updateLightbox(); };
+                const url = p.url.replace('=s800','=s200').replace('&sz=w800','&sz=w200');
+                d.innerHTML = `<img src="${url}">`;
+                c.appendChild(d);
+            });
+        }
+
+        function navigateLightbox(dir) {
+            currentPhotoIndex += dir;
+            if(currentPhotoIndex < 0) currentPhotoIndex = currentAlbumPhotos.length-1;
+            if(currentPhotoIndex >= currentAlbumPhotos.length) currentPhotoIndex = 0;
+            updateLightbox();
+        }
+
+        async function downloadAllCurrentPhotos() {
+            const result = await Swal.fire({
+                title: `下載 ${currentAlbumPhotos.length} 張照片 (ZIP)?`,
+                text: "這可能需要一點時間",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '下載',
+                cancelButtonText: '取消'
+            });
+
+            if(!result.isConfirmed) return;
+            const btn = document.getElementById('downloadAllBtn');
+            const txt = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = `<div class="spinner-border spinner-border-sm"></div> 打包中...`;
+            try {
+                const zip = new JSZip();
+                const folder = zip.folder(currentAlbumNameStr || "album");
+                let count = 0;
+                const promises = currentAlbumPhotos.map(async (p, i) => {
+                    try {
+                        const url = `https://lh3.googleusercontent.com/d/${p.id}=s2500`;
+                        const res = await fetch(url);
+                        if(!res.ok) throw new Error("err");
+                        const blob = await res.blob();
+                        let ext = 'jpg';
+                        if(blob.type.includes('png')) ext='png';
+                        folder.file(`${currentAlbumNameStr}_${(i+1).toString().padStart(3,'0')}.${ext}`, blob);
+                        count++;
+                    } catch(e) { }
+                });
+                await Promise.all(promises);
+                if(count===0) throw new Error("No images loaded");
+                const content = await zip.generateAsync({type:"blob"});
+                saveAs(content, `${currentAlbumNameStr}.zip`);
+            } catch(e) { Swal.fire('錯誤', '下載失敗', 'error'); } 
+            finally { btn.disabled = false; btn.innerHTML = txt; }
+        }
+
+        function loadSettings() {
+            SCRIPT_URL = localStorage.getItem(STORAGE_KEY_URL) || "";
+            PAGE_TITLE = localStorage.getItem(STORAGE_KEY_TITLE) || "雲端相簿";
+            document.title = PAGE_TITLE;
+            document.getElementById('navbarTitle').innerText = PAGE_TITLE;
+            document.getElementById('settingGasUrl').value = SCRIPT_URL;
+            document.getElementById('settingPageTitle').value = PAGE_TITLE;
+        }
+
+        function saveSettings() {
+            const url = document.getElementById('settingGasUrl').value.trim();
+            const title = document.getElementById('settingPageTitle').value.trim();
+            if(!url) return Toast.fire({ icon: 'warning', title: '請輸入 URL' });
+            localStorage.setItem(STORAGE_KEY_URL, url);
+            localStorage.setItem(STORAGE_KEY_TITLE, title);
+            SCRIPT_URL = url; initShareUi();
+            location.reload();
+        }
+
+        function clearSettings() {
+            Swal.fire({
+                title: '確定清除設定？',
+                text: "這將移除所有本地儲存的設定。",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '清除',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem(STORAGE_KEY_URL);
+                    localStorage.removeItem(STORAGE_KEY_TITLE);
+                    sessionStorage.removeItem(SESSION_KEY_VIEWER);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    location.reload();
+                }
+            });
+        }
+
+        function initShareUi() {
+            if(!SCRIPT_URL) return;
+            const base = window.location.href.split('?')[0];
+            const url = `${base}?ref=${btoa(SCRIPT_URL)}`;
+            document.getElementById('shareLinkInput').value = url;
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), { text: url, width: 128, height: 128 });
+        }
+
+        function copyShareLink() {
+            navigator.clipboard.writeText(document.getElementById('shareLinkInput').value).then(()=>Toast.fire({ icon: 'success', title: '已複製連結' }));
+        }
+
+        function showSetupState() {
+            document.getElementById('albumView').classList.add('hidden');
+            document.getElementById('setupState').classList.remove('hidden');
+        }
+        function openSettingsModal() { new bootstrap.Modal(document.getElementById('settingsModal')).show(); }
+        function showLoading(show) { 
+            const el = document.getElementById('loadingOverlay');
+            show ? el.classList.remove('hidden') : el.classList.add('hidden');
+        }
+        function forceStopLoading() { showLoading(false); }
     </script>
 </body>
 </html>
