@@ -67,6 +67,37 @@
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        .set-cover-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #1a73e8;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+
+        .photo-item:hover .set-cover-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .is-current-cover .set-cover-btn {
+            background: #1a73e8;
+            color: white;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         @media (hover: hover) {
             .photo-item:hover img {
                 transform: scale(1.08);
@@ -97,6 +128,27 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         main { flex: 1; }
+
+        .btn-success {
+            background-color: #10b981 !important;
+            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39) !important;
+        }
+
+        /* 吐司訊息樣式 */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #323232;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -110,7 +162,6 @@
             </div>
         </div>
         
-        <!-- 工具按鈕群組 -->
         <div id="toolbar-actions" class="flex items-center gap-1 md:gap-3">
             <button onclick="openShareModal()" id="btn-share" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="分享相簿">
                 <i class="fas fa-share-alt"></i>
@@ -132,6 +183,7 @@
         </div>
 
         <div id="gallery-container" class="fade-in">
+            <!-- 初始骨架 -->
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 <div class="aspect-square bg-gray-100 rounded-2xl animate-pulse"></div>
                 <div class="aspect-square bg-gray-100 rounded-2xl animate-pulse"></div>
@@ -141,7 +193,6 @@
         </div>
     </main>
 
-    <!-- 版權宣告 -->
     <footer class="py-10 text-center border-t border-gray-100 text-gray-400 text-sm tracking-wide">
         Copyright © 新北市汐止區崇德國民小學
     </footer>
@@ -167,23 +218,32 @@
                 </div>
                 
                 <div class="pt-6 flex flex-col gap-3">
-                    <button onclick="saveSystemConfig()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl hover:bg-blue-700 transition font-bold shadow-lg shadow-blue-200">儲存變更</button>
+                    <button id="btn-save-settings" onclick="saveSystemConfig()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl hover:bg-blue-700 transition font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
+                        <span>儲存變更</span>
+                    </button>
                     <button onclick="clearAllSettings()" class="w-full bg-transparent text-red-500 py-2 rounded-xl hover:bg-red-50 transition font-medium text-sm">清除所有本地設定</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 分享彈窗 (修正寬度) -->
+    <!-- 分享彈窗 (調整字體大小) -->
     <div id="share-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl max-w-[320px] w-full p-8 shadow-2xl text-center">
+        <div class="bg-white rounded-3xl max-w-[360px] w-full p-8 shadow-2xl text-center">
             <h3 class="text-xl font-bold mb-6">分享您的相簿</h3>
-            <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">連結已包含 API 設定<br>(傳送後會自動隱藏功能按鈕)</p>
             <div id="qrcode" class="mb-6 flex justify-center p-4 bg-white border border-gray-100 rounded-2xl shadow-inner inline-block mx-auto"></div>
-            <div class="flex gap-2 p-1 bg-gray-50 rounded-xl border border-gray-100 mb-6">
-                <input type="text" id="share-link-input" readonly class="flex-1 bg-transparent border-0 px-3 py-2 text-[10px] text-gray-500 outline-none">
-                <button onclick="copyShareLink()" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold hover:bg-blue-700 transition">複製</button>
+            
+            <div class="flex items-center gap-2 p-1.5 bg-gray-50 rounded-xl border border-gray-100 mb-6">
+                <!-- 調大字體: text-sm (14px) -->
+                <input type="text" id="share-link-input" readonly 
+                       class="flex-1 bg-transparent border-0 px-3 py-2 text-sm text-gray-700 outline-none font-medium truncate">
+                <!-- 調大按鈕文字: text-xs (12px) 並增加間距 -->
+                <button id="btn-copy-link" onclick="copyShareLink()" 
+                        class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-sm shrink-0">
+                    複製
+                </button>
             </div>
+            
             <button onclick="closeShareModal()" class="text-gray-400 text-sm hover:underline">關閉視窗</button>
         </div>
     </div>
@@ -198,52 +258,38 @@
                     <span id="lightbox-counter" class="text-[10px] text-gray-400"></span>
                 </div>
             </div>
-            <div class="flex gap-2">
-                <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition"><i class="fas fa-times"></i></button>
-            </div>
+            <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition"><i class="fas fa-times"></i></button>
         </div>
-
-        <button onclick="prevPhoto()" class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 transition z-[110]">
-            <i class="fas fa-chevron-left text-2xl"></i>
-        </button>
-
+        <button onclick="prevPhoto()" class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 transition z-[110]"><i class="fas fa-chevron-left text-2xl"></i></button>
         <div id="lightbox-content" class="flex-1 flex items-center justify-center relative p-2 md:p-6 overflow-hidden">
             <img id="lightbox-img" src="" class="max-h-full max-w-full object-contain shadow-2xl transition-all duration-300">
         </div>
-
-        <button onclick="nextPhoto()" class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 transition z-[110]">
-            <i class="fas fa-chevron-right text-2xl"></i>
-        </button>
-
-        <div class="md:hidden p-6 flex justify-center text-white/50 text-xs">
-            <i class="fas fa-arrows-alt-h mr-2"></i> 左右滑動切換照片
-        </div>
+        <button onclick="nextPhoto()" class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 transition z-[110]"><i class="fas fa-chevron-right text-2xl"></i></button>
+        <div class="md:hidden p-6 flex justify-center text-white/50 text-xs"><i class="fas fa-arrows-alt-h mr-2"></i> 左右滑動切換照片</div>
     </div>
 
+    <div id="toast">已更新相簿封面</div>
+
     <script>
-        // 全域變數
         let SCRIPT_URL = localStorage.getItem('GAS_SCRIPT_URL') || "";
         let SITE_TITLE = localStorage.getItem('GAS_SITE_TITLE') || "智慧雲端相簿";
         let allAlbums = [];
         let currentPhotos = []; 
         let currentIndex = 0;   
-        let qrcodeInstance = null;
-
-        let touchStartX = 0;
-        let touchEndX = 0;
+        let currentViewedAlbumId = null; 
+        let isGuestMode = false;
 
         window.onload = () => {
-            const isGuest = handleUrlParameters();
-            if (isGuest) {
-                const toolbar = document.getElementById('toolbar-actions');
-                if (toolbar) toolbar.classList.add('hidden');
+            isGuestMode = handleUrlParameters();
+            if (isGuestMode) {
+                document.getElementById('btn-config').classList.add('hidden');
             }
             applySiteTitle();
             setupTouchEvents();
             setupKeyboardEvents();
             if (!SCRIPT_URL) {
                 showConfigWarning();
-                if (!isGuest) openConfigModal();
+                if (!isGuestMode) openConfigModal();
             } else {
                 loadAlbums();
             }
@@ -262,12 +308,42 @@
         function applySiteTitle() {
             document.title = SITE_TITLE;
             document.getElementById('display-site-title').innerText = SITE_TITLE;
-            const configTitle = document.getElementById('config-site-title');
-            if (configTitle) configTitle.value = SITE_TITLE;
         }
 
+        // --- 設定相簿封面 (手動挑選) ---
+        function setAsCover(photoUrl, event) {
+            if (event) event.stopPropagation();
+            if (!currentViewedAlbumId) return;
+            
+            // 儲存至本地
+            localStorage.setItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`, photoUrl);
+            
+            // UI 反饋
+            showToast("已成功將此照片設為封面");
+            
+            // 更新目前頁面 UI 選中狀態
+            const items = document.querySelectorAll('.photo-item');
+            items.forEach(item => {
+                const img = item.querySelector('img');
+                if (img && img.src === photoUrl) {
+                    item.classList.add('is-current-cover');
+                } else {
+                    item.classList.remove('is-current-cover');
+                }
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+
+        // --- 核心系統設定 ---
         function openConfigModal() {
             document.getElementById('config-api-url').value = SCRIPT_URL;
+            document.getElementById('config-site-title').value = SITE_TITLE;
             document.getElementById('config-modal').classList.add('modal-active');
         }
 
@@ -278,58 +354,44 @@
         function saveSystemConfig() {
             const apiVal = document.getElementById('config-api-url').value.trim();
             const titleVal = document.getElementById('config-site-title').value.trim() || "智慧雲端相簿";
+            const btn = document.getElementById('btn-save-settings');
+
             if (apiVal && !apiVal.startsWith('https://script.google.com/')) {
-                showToast("⚠️ 無效的網址");
+                alert("無效的網址格式");
                 return;
             }
+
             SCRIPT_URL = apiVal;
             SITE_TITLE = titleVal;
             localStorage.setItem('GAS_SCRIPT_URL', apiVal);
             localStorage.setItem('GAS_SITE_TITLE', titleVal);
+            
             allAlbums = [];
             applySiteTitle();
-            closeConfigModal();
-            showToast("✅ 設定已更新");
-            loadAlbums();
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-check"></i> <span>儲存成功</span>`;
+            btn.classList.add('btn-success');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                closeConfigModal();
+                loadAlbums();
+            }, 1000);
         }
 
         function clearAllSettings() {
-            if (confirm("⚠️ 確定要清除所有設定嗎？")) {
+            if (confirm("⚠️ 確定要清除所有設定（包含手動設定的封面）嗎？")) {
                 localStorage.clear();
                 location.reload();
             }
         }
 
-        function openShareModal() {
-            const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            const shareUrl = SCRIPT_URL ? `${baseUrl}?api=${encodeURIComponent(SCRIPT_URL)}` : baseUrl;
-            document.getElementById('share-link-input').value = shareUrl;
-            const qrContainer = document.getElementById('qrcode');
-            qrContainer.innerHTML = "";
-            qrcodeInstance = new QRCode(qrContainer, {
-                text: shareUrl,
-                width: 160,
-                height: 160,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.M
-            });
-            document.getElementById('share-modal').classList.add('modal-active');
-        }
-
-        function closeShareModal() {
-            document.getElementById('share-modal').classList.remove('modal-active');
-        }
-
-        function copyShareLink() {
-            const input = document.getElementById('share-link-input');
-            input.select();
-            document.execCommand('copy');
-            showToast("📋 分享連結已複製");
-        }
-
+        // --- 資料載入與算繪 ---
         async function loadAlbums() {
             if (!SCRIPT_URL) return;
+            currentViewedAlbumId = null;
+            
             if (allAlbums && allAlbums.length > 0) {
                 renderAlbums();
                 return;
@@ -341,8 +403,6 @@
                 if (result.status === "success") {
                     allAlbums = result.data;
                     renderAlbums();
-                } else {
-                    showToast("❌ 讀取失敗");
                 }
             } catch (e) {
                 showConfigWarning();
@@ -360,12 +420,17 @@
                 container.innerHTML = `<div class="text-center py-20 text-gray-400"><i class="fas fa-folder-open text-4xl mb-4"></i><p>尚無相簿</p></div>`;
                 return;
             }
+
             let html = `<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-8">`;
             allAlbums.forEach((album, index) => {
+                // 檢查是否有手動設定的封面
+                const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
+                let coverUrl = customCover || (album.photos.length > 0 ? album.photos[0].url : album.cover);
+
                 html += `
                     <div onclick="viewAlbum(${index})" class="group cursor-pointer">
                         <div class="aspect-square rounded-[2rem] overflow-hidden bg-gray-100 mb-4 relative shadow-sm group-hover:shadow-xl transition-all duration-300">
-                            <img src="${album.cover}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" loading="lazy">
+                            <img src="${coverUrl}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" loading="lazy">
                         </div>
                         <div class="px-2">
                             <h3 class="font-bold text-gray-900 truncate text-sm md:text-base">${album.name}</h3>
@@ -380,15 +445,26 @@
         function viewAlbum(index) {
             const album = allAlbums[index];
             currentPhotos = album.photos; 
+            currentViewedAlbumId = album.id;
+            
+            // 取得目前的封面 URL 用於標記
+            const currentCoverUrl = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
+
             document.getElementById('album-divider').classList.remove('hidden');
             document.getElementById('current-album-name').innerText = album.name;
             const container = document.getElementById('gallery-container');
             
             let html = `<div class="photo-grid">`;
             album.photos.forEach((photo, pIdx) => {
+                const isCover = (currentCoverUrl === photo.url) || (!currentCoverUrl && pIdx === 0);
                 html += `
-                    <div class="photo-item" onclick="openLightbox(${pIdx})">
+                    <div class="photo-item ${isCover ? 'is-current-cover' : ''}" onclick="openLightbox(${pIdx})">
                         <img src="${photo.url}" loading="lazy">
+                        ${!isGuestMode ? `
+                            <button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn" title="設為封面">
+                                <i class="fas fa-bookmark"></i>
+                            </button>
+                        ` : ''}
                     </div>`;
             });
             html += `</div>`;
@@ -396,93 +472,48 @@
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        function openLightbox(index) {
-            currentIndex = index;
-            updateLightboxContent();
-            document.getElementById('lightbox').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+        // --- UI Helper ---
+        function openShareModal() {
+            const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            const shareUrl = SCRIPT_URL ? `${baseUrl}?api=${encodeURIComponent(SCRIPT_URL)}` : baseUrl;
+            document.getElementById('share-link-input').value = shareUrl;
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, { text: shareUrl, width: 160, height: 160 });
+            document.getElementById('share-modal').classList.add('modal-active');
         }
-
+        function closeShareModal() { document.getElementById('share-modal').classList.remove('modal-active'); }
+        function copyShareLink() {
+            const input = document.getElementById('share-link-input');
+            const btn = document.getElementById('btn-copy-link');
+            input.select();
+            document.execCommand('copy');
+            btn.innerText = "已複製";
+            setTimeout(() => btn.innerText = "複製", 2000);
+        }
+        function openLightbox(index) { currentIndex = index; updateLightboxContent(); document.getElementById('lightbox').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+        function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); document.body.style.overflow = 'auto'; }
         function updateLightboxContent() {
             const photo = currentPhotos[currentIndex];
             const img = document.getElementById('lightbox-img');
             img.style.opacity = "0";
-            img.style.transform = "scale(0.95)";
             setTimeout(() => {
                 img.src = photo.url;
                 document.getElementById('lightbox-title').innerText = photo.name;
                 document.getElementById('lightbox-counter').innerText = `${currentIndex + 1} / ${currentPhotos.length}`;
                 img.style.opacity = "1";
-                img.style.transform = "scale(1)";
             }, 150);
         }
-
-        function prevPhoto() {
-            if (currentIndex > 0) currentIndex--;
-            else currentIndex = currentPhotos.length - 1;
-            updateLightboxContent();
-        }
-
-        function nextPhoto() {
-            if (currentIndex < currentPhotos.length - 1) currentIndex++;
-            else currentIndex = 0;
-            updateLightboxContent();
-        }
-
-        function closeLightbox() {
-            document.getElementById('lightbox').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
+        function prevPhoto() { currentIndex = (currentIndex > 0) ? currentIndex - 1 : currentPhotos.length - 1; updateLightboxContent(); }
+        function nextPhoto() { currentIndex = (currentIndex < currentPhotos.length - 1) ? currentIndex + 1 : 0; updateLightboxContent(); }
         function setupTouchEvents() {
             const content = document.getElementById('lightbox-content');
             content.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
-            content.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, {passive: true});
+            content.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; if(touchEndX < touchStartX - 50) nextPhoto(); if(touchEndX > touchStartX + 50) prevPhoto(); }, {passive: true});
         }
-
-        function handleSwipe() {
-            const threshold = 50; 
-            if (touchEndX < touchStartX - threshold) nextPhoto();
-            else if (touchEndX > touchStartX + threshold) prevPhoto();
-        }
-
-        function setupKeyboardEvents() {
-            window.addEventListener('keydown', e => {
-                const lb = document.getElementById('lightbox');
-                if (lb.classList.contains('hidden')) return;
-                if (e.key === "ArrowLeft") prevPhoto();
-                if (e.key === "ArrowRight") nextPhoto();
-                if (e.key === "Escape") closeLightbox();
-            });
-        }
-
-        function toggleLoader(show) {
-            const container = document.getElementById('gallery-container');
-            if (show) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center py-32 text-gray-400"><i class="fas fa-circle-notch animate-spin text-4xl text-blue-500 mb-4"></i><p>載入中...</p></div>`;
-            }
-        }
-
-        function showConfigWarning() {
-            document.getElementById('gallery-container').innerHTML = `<div class="text-center py-20 bg-gray-50 rounded-3xl border border-gray-100"><i class="fas fa-plug text-4xl text-gray-300 mb-4"></i><p>未偵測到相簿設定。若您是管理者，請點擊右上角設定。</p></div>`;
-        }
-
-        // 修正 Toast 垂直置中
-        function showToast(msg) {
-            const div = document.createElement('div');
-            // 加入 flex items-center justify-center 確保圖示與文字垂直對齊
-            div.className = "fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900/95 backdrop-blur text-white px-6 py-3.5 rounded-2xl shadow-2xl z-[200] text-sm font-medium animate-bounce flex items-center justify-center gap-2 min-w-[160px]";
-            
-            // 如果訊息內有 emoji，確保它與文字對齊
-            div.innerText = msg;
-            
-            document.body.appendChild(div);
-            setTimeout(() => {
-                div.style.opacity = '0';
-                div.style.transition = 'opacity 0.5s';
-                setTimeout(() => div.remove(), 500);
-            }, 3000);
-        }
+        function setupKeyboardEvents() { window.addEventListener('keydown', e => { if(document.getElementById('lightbox').classList.contains('hidden')) return; if(e.key === "ArrowLeft") prevPhoto(); if(e.key === "ArrowRight") nextPhoto(); if(e.key === "Escape") closeLightbox(); }); }
+        function toggleLoader(show) { if(show) document.getElementById('gallery-container').innerHTML = `<div class="flex flex-col items-center justify-center py-32 text-gray-400"><i class="fas fa-circle-notch animate-spin text-4xl text-blue-500 mb-4"></i><p>載入中...</p></div>`; }
+        function showConfigWarning() { document.getElementById('gallery-container').innerHTML = `<div class="text-center py-20 bg-gray-50 rounded-3xl border border-gray-100"><i class="fas fa-plug text-4xl text-gray-300 mb-4"></i><p>未偵測到相簿設定。若您是管理者，請點擊右上角設定。</p></div>`; }
     </script>
 </body>
 </html>
