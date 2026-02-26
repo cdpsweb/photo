@@ -148,6 +148,14 @@
             display: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -155,13 +163,16 @@
     <!-- 頂部導覽列 -->
     <nav class="navbar sticky top-0 z-50 flex items-center justify-between px-4 py-3 md:px-8">
         <div class="flex items-center gap-2">
-            <div class="flex items-center gap-2 text-lg md:text-xl font-medium text-gray-800">
+            <div class="flex items-center gap-2 text-lg md:text-xl font-medium text-gray-800 cursor-pointer" onclick="goHome()">
                 <i class="fab fa-google-drive text-blue-500 text-2xl"></i>
                 <span id="display-site-title" class="truncate max-w-[180px] md:max-w-none">智慧雲端相簿</span>
             </div>
         </div>
         
         <div id="toolbar-actions" class="flex items-center gap-1 md:gap-3">
+            <button onclick="refreshData()" id="btn-refresh" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="強制更新資料">
+                <i class="fas fa-sync-alt" id="refresh-icon"></i>
+            </button>
             <button onclick="openShareModal()" id="btn-share" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="分享相簿">
                 <i class="fas fa-share-alt"></i>
             </button>
@@ -174,7 +185,7 @@
     <!-- 主內容區 -->
     <main class="max-w-[1600px] mx-auto p-4 md:p-8 w-full">
         <div id="breadcrumb" class="mb-6 text-sm flex items-center gap-2 text-gray-500 overflow-x-auto whitespace-nowrap pb-2 md:pb-0 no-scrollbar">
-            <button class="hover:text-blue-600 flex items-center gap-1" onclick="loadAlbums()">
+            <button class="hover:text-blue-600 flex items-center gap-1" onclick="goHome()">
                 <i class="fas fa-home text-xs"></i> 所有相簿
             </button>
             <span id="album-divider" class="hidden text-gray-300">/</span>
@@ -182,7 +193,7 @@
         </div>
 
         <div id="gallery-container" class="fade-in">
-            <!-- 初始骨架 -->
+            <!-- 骨架屏 -->
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 <div class="aspect-square bg-gray-100 rounded-2xl animate-pulse"></div>
                 <div class="aspect-square bg-gray-100 rounded-2xl animate-pulse"></div>
@@ -213,7 +224,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">API 連結 (GAS URL)</label>
-                    <input type="text" id="config-api-url" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition text-gray-700 text-sm">
+                    <input type="text" id="config-api-url" placeholder="請貼上您的 Google App Script 網址" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition text-gray-700 text-sm">
                 </div>
                 
                 <div class="pt-6 flex flex-col gap-3">
@@ -268,6 +279,7 @@
     <div id="toast">已更新相簿封面</div>
 
     <script>
+        // 移除預設 API，改由 LocalStorage 讀取
         let SCRIPT_URL = localStorage.getItem('GAS_SCRIPT_URL') || "";
         let SITE_TITLE = localStorage.getItem('GAS_SITE_TITLE') || "智慧雲端相簿";
         let allAlbums = [];
@@ -284,9 +296,13 @@
             applySiteTitle();
             setupTouchEvents();
             setupKeyboardEvents();
+            
+            window.addEventListener('hashchange', checkHashAndRender);
+
             if (!SCRIPT_URL) {
                 showConfigWarning();
-                if (!isGuestMode) openConfigModal();
+                // 非訪客模式且沒 API 時，自動開啟設定窗
+                if (!isGuestMode) setTimeout(openConfigModal, 500);
             } else {
                 loadAlbums();
             }
@@ -307,27 +323,22 @@
             document.getElementById('display-site-title').innerText = SITE_TITLE;
         }
 
-        function setAsCover(photoUrl, event) {
-            if (event) event.stopPropagation();
-            if (!currentViewedAlbumId) return;
-            localStorage.setItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`, photoUrl);
-            showToast("已成功將此照片設為封面");
-            const items = document.querySelectorAll('.photo-item');
-            items.forEach(item => {
-                const img = item.querySelector('img');
-                if (img && img.src === photoUrl) {
-                    item.classList.add('is-current-cover');
-                } else {
-                    item.classList.remove('is-current-cover');
-                }
+        function refreshData() {
+            if (!SCRIPT_URL) {
+                openConfigModal();
+                return;
+            }
+            sessionStorage.removeItem('ALBUM_DATA_CACHE');
+            const icon = document.getElementById('refresh-icon');
+            icon.classList.add('spin');
+            loadAlbums().finally(() => {
+                setTimeout(() => icon.classList.remove('spin'), 500);
             });
         }
 
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        function goHome() {
+            window.location.hash = "";
+            renderAlbums();
         }
 
         function openConfigModal() {
@@ -346,7 +357,7 @@
             const btn = document.getElementById('btn-save-settings');
 
             if (apiVal && !apiVal.startsWith('https://script.google.com/')) {
-                alert("無效的網址格式");
+                alert("無效的 Google App Script 網址格式");
                 return;
             }
 
@@ -354,6 +365,7 @@
             SITE_TITLE = titleVal;
             localStorage.setItem('GAS_SCRIPT_URL', apiVal);
             localStorage.setItem('GAS_SITE_TITLE', titleVal);
+            sessionStorage.removeItem('ALBUM_DATA_CACHE'); 
             
             allAlbums = [];
             applySiteTitle();
@@ -365,37 +377,60 @@
                 btn.innerHTML = originalText;
                 btn.classList.remove('btn-success');
                 closeConfigModal();
-                loadAlbums();
+                if (SCRIPT_URL) loadAlbums();
+                else showConfigWarning();
             }, 1000);
         }
 
         function clearAllSettings() {
-            if (confirm("⚠️ 確定要清除所有設定（包含手動設定的封面）嗎？")) {
+            if (confirm("⚠️ 確定要清除所有設定嗎？這會移除 API 連結與所有自訂封面。")) {
                 localStorage.clear();
+                sessionStorage.clear();
                 location.reload();
             }
         }
 
         async function loadAlbums() {
             if (!SCRIPT_URL) return;
-            currentViewedAlbumId = null;
-            if (allAlbums && allAlbums.length > 0) {
-                renderAlbums();
+            
+            const cachedData = sessionStorage.getItem('ALBUM_DATA_CACHE');
+            if (cachedData) {
+                allAlbums = JSON.parse(cachedData);
+                checkHashAndRender();
                 return;
             }
+
             toggleLoader(true);
             try {
-                const response = await fetch(`${SCRIPT_URL}?action=getAlbums`);
+                // 指向 GAS 的請求，加入 nocache 參數確保開發測試準確
+                const response = await fetch(`${SCRIPT_URL}?action=getAlbums&t=${Date.now()}`);
                 const result = await response.json();
                 if (result.status === "success") {
                     allAlbums = result.data;
-                    renderAlbums();
+                    sessionStorage.setItem('ALBUM_DATA_CACHE', JSON.stringify(allAlbums));
+                    checkHashAndRender();
+                } else {
+                    throw new Error(result.message);
                 }
             } catch (e) {
-                showConfigWarning();
+                console.error("API Error:", e);
+                showConfigWarning("無法讀取資料，請檢查 API 連結是否正確並已發佈為「所有人」。");
             } finally {
                 setTimeout(() => toggleLoader(false), 200);
             }
+        }
+
+        function checkHashAndRender() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#album_')) {
+                const albumId = hash.replace('#album_', '');
+                const albumIndex = allAlbums.findIndex(a => a.id === albumId);
+                if (albumIndex !== -1) {
+                    viewAlbum(albumIndex, false);
+                    return;
+                }
+            }
+            renderAlbums();
         }
 
         function renderAlbums() {
@@ -404,7 +439,11 @@
             document.getElementById('current-album-name').innerText = '';
             
             if (allAlbums.length === 0) {
-                container.innerHTML = `<div class="text-center py-20 text-gray-400"><i class="fas fa-folder-open text-4xl mb-4"></i><p>尚無相簿</p></div>`;
+                if (!SCRIPT_URL) {
+                    showConfigWarning();
+                } else {
+                    container.innerHTML = `<div class="text-center py-20 text-gray-400"><i class="fas fa-folder-open text-4xl mb-4"></i><p>API 回傳無資料，請確認 Google Drive 中是否有相簿資料夾。</p></div>`;
+                }
                 return;
             }
 
@@ -428,10 +467,17 @@
             container.innerHTML = html;
         }
 
-        function viewAlbum(index) {
+        function viewAlbum(index, updateHash = true) {
             const album = allAlbums[index];
+            if (!album) return;
+
             currentPhotos = album.photos; 
             currentViewedAlbumId = album.id;
+            
+            if (updateHash) {
+                window.location.hash = `album_${album.id}`;
+            }
+
             const currentCoverUrl = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
 
             document.getElementById('album-divider').classList.remove('hidden');
@@ -456,9 +502,41 @@
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
+        function setAsCover(photoUrl, event) {
+            if (event) event.stopPropagation();
+            if (!currentViewedAlbumId) return;
+            localStorage.setItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`, photoUrl);
+            showToast("已成功將此照片設為封面");
+            
+            const alb = allAlbums.find(a => a.id === currentViewedAlbumId);
+            if (alb) alb.cover = photoUrl;
+
+            const items = document.querySelectorAll('.photo-item');
+            items.forEach(item => {
+                const img = item.querySelector('img');
+                if (img && img.src === photoUrl) {
+                    item.classList.add('is-current-cover');
+                } else {
+                    item.classList.remove('is-current-cover');
+                }
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+
         function openShareModal() {
+            if (!SCRIPT_URL) {
+                alert("請先設定 API 連結後再分享");
+                openConfigModal();
+                return;
+            }
             const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            const shareUrl = SCRIPT_URL ? `${baseUrl}?api=${encodeURIComponent(SCRIPT_URL)}` : baseUrl;
+            const shareUrl = `${baseUrl}?api=${encodeURIComponent(SCRIPT_URL)}`;
             document.getElementById('share-link-input').value = shareUrl;
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = "";
@@ -489,6 +567,8 @@
         }
         function prevPhoto() { currentIndex = (currentIndex > 0) ? currentIndex - 1 : currentPhotos.length - 1; updateLightboxContent(); }
         function nextPhoto() { currentIndex = (currentIndex < currentPhotos.length - 1) ? currentIndex + 1 : 0; updateLightboxContent(); }
+        let touchStartX = 0;
+        let touchEndX = 0;
         function setupTouchEvents() {
             const content = document.getElementById('lightbox-content');
             content.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
@@ -496,7 +576,9 @@
         }
         function setupKeyboardEvents() { window.addEventListener('keydown', e => { if(document.getElementById('lightbox').classList.contains('hidden')) return; if(e.key === "ArrowLeft") prevPhoto(); if(e.key === "ArrowRight") nextPhoto(); if(e.key === "Escape") closeLightbox(); }); }
         function toggleLoader(show) { if(show) document.getElementById('gallery-container').innerHTML = `<div class="flex flex-col items-center justify-center py-32 text-gray-400"><i class="fas fa-circle-notch animate-spin text-4xl text-blue-500 mb-4"></i><p>載入中...</p></div>`; }
-        function showConfigWarning() { document.getElementById('gallery-container').innerHTML = `<div class="text-center py-20 bg-gray-50 rounded-3xl border border-gray-100"><i class="fas fa-plug text-4xl text-gray-300 mb-4"></i><p>未偵測到相簿設定。若您是管理者，請點擊右上角設定。</p></div>`; }
+        function showConfigWarning(msg = "未偵測到相簿設定。若您是管理者，請點擊右上角齒輪設定 API 連結。") { 
+            document.getElementById('gallery-container').innerHTML = `<div class="text-center py-20 bg-gray-50 rounded-3xl border border-gray-100 max-w-2xl mx-auto"><i class="fas fa-plug text-4xl text-gray-300 mb-4"></i><p class="text-gray-500 px-6">${msg}</p></div>`; 
+        }
     </script>
 </body>
 </html>
