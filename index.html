@@ -112,7 +112,6 @@
             </div>
         </div>
         
-        <!-- 管理介面容器 -->
         <div id="toolbar-actions" class="flex items-center gap-1 md:gap-3">
             <button onclick="openShareModal()" id="btn-share" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="分享相簿">
                 <i class="fas fa-share-alt"></i>
@@ -222,14 +221,14 @@
         let lastHomeScrollPos = 0;
 
         window.onload = () => {
-            // 優先處理 URL 參數
             const params = new URLSearchParams(window.location.search);
-            const hasSid = params.has('sid');
+            const sid = params.get('sid');
             
-            isGuestMode = handleUrlParameters();
+            // 處理參數但不立即 reload
+            handleUrlParameters();
             
-            // 只有在網址明確帶有 sid 時才隱藏工具列（代表是點分享連結進來的）
-            if (hasSid) {
+            // 只有在網址有 sid 時才隱藏工具列
+            if (sid) {
                 document.getElementById('toolbar-actions').classList.add('hidden');
             } else {
                 document.getElementById('toolbar-actions').classList.remove('hidden');
@@ -241,7 +240,7 @@
             
             if (!SCRIPT_URL) {
                 showConfigWarning();
-                if (!hasSid) openConfigModal();
+                if (!sid) openConfigModal();
             } else {
                 fetchAlbums(true); 
             }
@@ -249,18 +248,23 @@
 
         function handleUrlParameters() {
             const urlParams = new URLSearchParams(window.location.search);
-            let sid = urlParams.get('sid');
+            const sid = urlParams.get('sid');
+            
             if (sid) {
                 try {
                     const decodedUrl = atob(sid);
                     if (decodedUrl.startsWith('https://script.google.com/')) {
-                        SCRIPT_URL = decodedUrl;
-                        localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
+                        // 如果新的 API 網址跟舊的不同，才更新並清理網址
+                        if (decodedUrl !== SCRIPT_URL) {
+                            SCRIPT_URL = decodedUrl;
+                            localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
+                        }
+                        // 使用 replaceState 移除參數但不觸發重整
+                        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                        return true;
                     }
-                    const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                    window.history.replaceState({}, document.title, cleanUrl);
-                    return true;
-                } catch (e) { return false; }
+                } catch (e) { console.error("SID解碼失敗"); }
             }
             return false;
         }
@@ -355,7 +359,7 @@
                 item.onclick = () => openLightbox(pIdx);
                 item.innerHTML = `
                     <img src="${photo.url}" onload="this.classList.add('loaded')" loading="lazy">
-                    ${!isGuestMode ? `<button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn"><i class="fas fa-bookmark"></i></button>` : ''}
+                    <button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn"><i class="fas fa-bookmark"></i></button>
                 `;
                 fragment.appendChild(item);
             });
@@ -413,14 +417,27 @@
             document.getElementById('config-modal').classList.add('modal-active');
         }
         function closeConfigModal() { document.getElementById('config-modal').classList.remove('modal-active'); }
+        
         function saveSystemConfig() {
             const api = document.getElementById('config-api-url').value.trim();
             const title = document.getElementById('config-site-title').value.trim();
             if (api && !api.startsWith('https://script.google.com/')) return alert("無效 GAS 網址");
+            
+            // 存入本地
             localStorage.setItem('GAS_SCRIPT_URL', api);
             localStorage.setItem('GAS_SITE_TITLE', title);
-            location.reload();
+            
+            // 更新目前運行的變數
+            SCRIPT_URL = api;
+            SITE_TITLE = title;
+            
+            // 關閉視窗並套用標題，而不使用 location.reload() 避免無限重整
+            applySiteTitle();
+            closeConfigModal();
+            fetchAlbums(false); // 重新抓取資料即可
+            showToast("設定已儲存");
         }
+        
         function clearAllSettings() { if (confirm("確定清除所有設定與快取？")) { localStorage.clear(); sessionStorage.clear(); location.reload(); } }
 
         function openLightbox(index) { currentIndex = index; updateLightboxContent(); document.getElementById('lightbox').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
