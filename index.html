@@ -173,11 +173,9 @@
             <button onclick="refreshData()" id="btn-refresh" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="強制更新資料">
                 <i class="fas fa-sync-alt" id="refresh-icon"></i>
             </button>
-            <!-- 分享按鈕：訪客模式時會隱藏 -->
             <button onclick="openShareModal()" id="btn-share" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="分享相簿">
                 <i class="fas fa-share-alt"></i>
             </button>
-            <!-- 設定按鈕：訪客模式時會隱藏 -->
             <button onclick="openConfigModal()" id="btn-config" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="系統設定">
                 <i class="fas fa-cog"></i>
             </button>
@@ -281,19 +279,21 @@
     <div id="toast">已更新相簿封面</div>
 
     <script>
-        // 移除預設 API，改由 LocalStorage 讀取
-        let SCRIPT_URL = localStorage.getItem('GAS_SCRIPT_URL') || "";
+        // 初始化 API 來源順序：URL參數 -> SessionStorage(訪客) -> LocalStorage(管理員)
+        let SCRIPT_URL = "";
         let SITE_TITLE = localStorage.getItem('GAS_SITE_TITLE') || "智慧雲端相簿";
+        let isGuestMode = false;
+
+        // 相簿資料
         let allAlbums = [];
         let currentPhotos = []; 
         let currentIndex = 0;   
         let currentViewedAlbumId = null; 
-        let isGuestMode = false;
 
         window.onload = () => {
-            isGuestMode = handleUrlParameters();
+            handleUrlParameters();
             
-            // 如果是訪客模式（透過分享連結進入），隱藏設定與分享按鈕
+            // 如果是訪客模式，隱藏管理功能
             if (isGuestMode) {
                 document.getElementById('btn-config').classList.add('hidden');
                 document.getElementById('btn-share').classList.add('hidden');
@@ -307,21 +307,40 @@
 
             if (!SCRIPT_URL) {
                 showConfigWarning();
-                // 非訪客模式且沒 API 時，自動開啟設定窗
                 if (!isGuestMode) setTimeout(openConfigModal, 500);
             } else {
                 loadAlbums();
             }
         };
 
+        /**
+         * 處理 URL 參數：讀取 API 後存入 Session 並清除網址列資訊
+         */
         function handleUrlParameters() {
             const urlParams = new URLSearchParams(window.location.search);
             const apiParam = urlParams.get('api');
+            
+            // 1. 檢查 URL 是否帶有 API 參數
             if (apiParam) {
                 SCRIPT_URL = apiParam;
-                return true; 
+                isGuestMode = true;
+                // 存入 SessionStorage (僅限目前分頁)
+                sessionStorage.setItem('GUEST_API_URL', apiParam);
+                
+                // --- 重要：清除網址列參數 ---
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + window.location.hash;
+                window.history.replaceState({path: newUrl}, '', newUrl);
+            } 
+            // 2. 檢查 SessionStorage 是否有先前存過的訪客 API
+            else if (sessionStorage.getItem('GUEST_API_URL')) {
+                SCRIPT_URL = sessionStorage.getItem('GUEST_API_URL');
+                isGuestMode = true;
+            } 
+            // 3. 最後才讀取管理員存在 LocalStorage 的 API
+            else {
+                SCRIPT_URL = localStorage.getItem('GAS_SCRIPT_URL') || "";
+                isGuestMode = false;
             }
-            return false;
         }
 
         function applySiteTitle() {
@@ -348,7 +367,7 @@
         }
 
         function openConfigModal() {
-            document.getElementById('config-api-url').value = SCRIPT_URL;
+            document.getElementById('config-api-url').value = localStorage.getItem('GAS_SCRIPT_URL') || "";
             document.getElementById('config-site-title').value = SITE_TITLE;
             document.getElementById('config-modal').classList.add('modal-active');
         }
@@ -372,15 +391,15 @@
             localStorage.setItem('GAS_SCRIPT_URL', apiVal);
             localStorage.setItem('GAS_SITE_TITLE', titleVal);
             sessionStorage.removeItem('ALBUM_DATA_CACHE'); 
+            sessionStorage.removeItem('GUEST_API_URL'); // 清除訪客快取，改用管理者設定
             
             allAlbums = [];
             applySiteTitle();
             
-            const originalText = btn.innerHTML;
             btn.innerHTML = `<i class="fas fa-check"></i> <span>儲存成功</span>`;
             btn.classList.add('btn-success');
             setTimeout(() => {
-                btn.innerHTML = originalText;
+                btn.innerHTML = `<span>儲存變更</span>`;
                 btn.classList.remove('btn-success');
                 closeConfigModal();
                 if (SCRIPT_URL) loadAlbums();
@@ -389,7 +408,7 @@
         }
 
         function clearAllSettings() {
-            if (confirm("⚠️ 確定要清除所有設定嗎？這會移除 API 連結與所有自訂封面。")) {
+            if (confirm("⚠️ 確定要清除所有設定嗎？這會移除 API 連結。")) {
                 localStorage.clear();
                 sessionStorage.clear();
                 location.reload();
@@ -419,7 +438,7 @@
                 }
             } catch (e) {
                 console.error("API Error:", e);
-                showConfigWarning("無法讀取資料，請檢查 API 連結是否正確並已發佈為「所有人」。");
+                showConfigWarning("無法讀取資料，請確認 API 連結正確並已發佈為「所有人」。");
             } finally {
                 setTimeout(() => toggleLoader(false), 200);
             }
@@ -444,11 +463,7 @@
             document.getElementById('current-album-name').innerText = '';
             
             if (allAlbums.length === 0) {
-                if (!SCRIPT_URL) {
-                    showConfigWarning();
-                } else {
-                    container.innerHTML = `<div class="text-center py-20 text-gray-400"><i class="fas fa-folder-open text-4xl mb-4"></i><p>API 回傳無資料，請確認 Google Drive 中是否有相簿資料夾。</p></div>`;
-                }
+                container.innerHTML = `<div class="text-center py-20 text-gray-400"><i class="fas fa-folder-open text-4xl mb-4"></i><p>目前沒有可用的相簿</p></div>`;
                 return;
             }
 
@@ -484,7 +499,6 @@
             }
 
             const currentCoverUrl = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
-
             document.getElementById('album-divider').classList.remove('hidden');
             document.getElementById('current-album-name').innerText = album.name;
             const container = document.getElementById('gallery-container');
@@ -511,7 +525,7 @@
             if (event) event.stopPropagation();
             if (!currentViewedAlbumId) return;
             localStorage.setItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`, photoUrl);
-            showToast("已成功將此照片設為封面");
+            showToast("已更換相簿封面");
             
             const alb = allAlbums.find(a => a.id === currentViewedAlbumId);
             if (alb) alb.cover = photoUrl;
@@ -519,11 +533,8 @@
             const items = document.querySelectorAll('.photo-item');
             items.forEach(item => {
                 const img = item.querySelector('img');
-                if (img && img.src === photoUrl) {
-                    item.classList.add('is-current-cover');
-                } else {
-                    item.classList.remove('is-current-cover');
-                }
+                if (img && img.src === photoUrl) item.classList.add('is-current-cover');
+                else item.classList.remove('is-current-cover');
             });
         }
 
@@ -535,13 +546,14 @@
         }
 
         function openShareModal() {
-            if (!SCRIPT_URL) {
+            const managerApi = localStorage.getItem('GAS_SCRIPT_URL');
+            if (!managerApi) {
                 alert("請先設定 API 連結後再分享");
                 openConfigModal();
                 return;
             }
             const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            const shareUrl = `${baseUrl}?api=${encodeURIComponent(SCRIPT_URL)}`;
+            const shareUrl = `${baseUrl}?api=${encodeURIComponent(managerApi)}`;
             document.getElementById('share-link-input').value = shareUrl;
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = "";
@@ -581,8 +593,8 @@
         }
         function setupKeyboardEvents() { window.addEventListener('keydown', e => { if(document.getElementById('lightbox').classList.contains('hidden')) return; if(e.key === "ArrowLeft") prevPhoto(); if(e.key === "ArrowRight") nextPhoto(); if(e.key === "Escape") closeLightbox(); }); }
         function toggleLoader(show) { if(show) document.getElementById('gallery-container').innerHTML = `<div class="flex flex-col items-center justify-center py-32 text-gray-400"><i class="fas fa-circle-notch animate-spin text-4xl text-blue-500 mb-4"></i><p>載入中...</p></div>`; }
-        function showConfigWarning(msg = "未偵測到相簿設定。若您是管理者，請點擊右上角齒輪設定 API 連結。") { 
-            document.getElementById('gallery-container').innerHTML = `<div class="text-center py-20 bg-gray-50 rounded-3xl border border-gray-100 max-w-2xl mx-auto"><i class="fas fa-plug text-4xl text-gray-300 mb-4"></i><p class="text-gray-500 px-6">${msg}</p></div>`; 
+        function showConfigWarning(msg = "未偵測到設定。若您是管理者，請點擊右上角齒輪設定 API 連結。") { 
+            document.getElementById('gallery-container').innerHTML = `<div class="text-center py-20 bg-gray-50 rounded-3xl border border-gray-100 max-w-2xl mx-auto"><i class="fas fa-plug text-4xl text-gray-300 mb-4"></i><p class="text-gray-500 px-6 font-medium">${msg}</p></div>`; 
         }
     </script>
 </body>
