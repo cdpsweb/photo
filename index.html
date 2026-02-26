@@ -32,25 +32,20 @@
             border-bottom: 1px solid #dadce0;
         }
 
+        /* 優化網格效能 */
         .photo-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 2px;
-            content-visibility: auto;
+            content-visibility: auto; /* 僅渲染可見區域 */
         }
         
         @media (min-width: 768px) {
-            .photo-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 8px;
-            }
+            .photo-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
         }
         
         @media (min-width: 1024px) {
-            .photo-grid {
-                grid-template-columns: repeat(6, 1fr);
-                gap: 12px;
-            }
+            .photo-grid { grid-template-columns: repeat(6, 1fr); gap: 12px; }
         }
 
         .photo-item {
@@ -63,62 +58,35 @@
         }
 
         .photo-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            width: 100%; height: 100%; object-fit: cover;
+            opacity: 0; transition: opacity 0.3s ease;
         }
 
-        .photo-item img.loaded {
-            opacity: 1;
-        }
+        .photo-item img.loaded { opacity: 1; }
 
         .album-card {
-            opacity: 0;
-            transform: translateY(10px);
+            opacity: 0; transform: translateY(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .album-card.show {
-            animation: cardFadeIn 0.4s ease-out forwards;
-        }
+        .album-card.show { animation: cardFadeIn 0.3s ease-out forwards; }
 
-        @keyframes cardFadeIn {
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes cardFadeIn { to { opacity: 1; transform: translateY(0); } }
 
         .set-cover-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #1a73e8;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transform: translateY(-5px);
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            z-index: 10;
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(255, 255, 255, 0.9); color: #1a73e8;
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transform: translateY(-5px); transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10;
         }
 
-        .photo-item:hover .set-cover-btn {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .is-current-cover .set-cover-btn {
-            background: #1a73e8;
-            color: white;
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .photo-item:hover .set-cover-btn { opacity: 1; transform: translateY(0); }
+        .is-current-cover .set-cover-btn { background: #1a73e8; color: white; opacity: 1; transform: translateY(0); }
 
         .modal-active { display: flex !important; }
+        .hidden-view { display: none !important; }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -126,24 +94,12 @@
         main { flex: 1; }
 
         #toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #323232;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 14px;
-            z-index: 200;
-            display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #323232; color: white; padding: 12px 24px; border-radius: 50px;
+            font-size: 14px; z-index: 200; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .animate-pulse { animation: pulse 1.5s infinite; }
     </style>
 </head>
@@ -169,19 +125,26 @@
 
     <main class="max-w-[1600px] mx-auto p-4 md:p-8 w-full">
         <div id="breadcrumb" class="mb-6 text-sm flex items-center gap-2 text-gray-500 overflow-x-auto whitespace-nowrap pb-2 md:pb-0 no-scrollbar">
-            <button class="hover:text-blue-600 flex items-center gap-1 transition-colors" onclick="loadAlbums()">
+            <button class="hover:text-blue-600 flex items-center gap-1 transition-colors" onclick="backToHome()">
                 <i class="fas fa-home text-xs"></i> 所有相簿
             </button>
             <span id="album-divider" class="hidden text-gray-300">/</span>
             <span id="current-album-name" class="font-bold text-gray-900 break-words"></span>
         </div>
 
-        <div id="gallery-container">
-            <!-- 骨架屏 -->
-            <div id="skeleton-screen" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
-                <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
-                <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
+        <!-- 視圖切換容器 -->
+        <div id="main-view">
+            <!-- 所有相簿首頁容器 -->
+            <div id="albums-container">
+                <div id="skeleton-screen" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                    <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
+                    <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
+                </div>
+            </div>
+            
+            <!-- 單個相簿內容容器 (初始隱藏) -->
+            <div id="photos-view" class="hidden-view">
+                <div id="photos-grid-container"></div>
             </div>
         </div>
     </main>
@@ -209,9 +172,7 @@
                     <input type="text" id="config-api-url" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition text-gray-700 text-sm">
                 </div>
                 <div class="pt-6 flex flex-col gap-3">
-                    <button id="btn-save-settings" onclick="saveSystemConfig()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl hover:bg-blue-700 transition font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
-                        <span>儲存變更</span>
-                    </button>
+                    <button onclick="saveSystemConfig()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl hover:bg-blue-700 transition font-bold shadow-lg shadow-blue-200">儲存變更</button>
                     <button onclick="clearAllSettings()" class="w-full bg-transparent text-red-500 py-2 rounded-xl hover:bg-red-50 transition font-medium text-sm">清除所有本地設定</button>
                 </div>
             </div>
@@ -222,15 +183,12 @@
     <div id="share-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl max-w-[380px] w-full p-8 shadow-2xl text-center">
             <h3 class="text-xl font-bold mb-2">分享相簿連結</h3>
-            <p class="text-xs text-gray-400 mb-6">訪客進入後將自動隱藏 API 連結</p>
-            <div id="share-content">
-                <div id="qrcode" class="mb-6 flex justify-center p-4 bg-white border border-gray-100 rounded-2xl shadow-inner inline-block mx-auto"></div>
-                <div class="flex items-center gap-2 p-1.5 bg-gray-50 rounded-xl border border-gray-100 mb-6">
-                    <input type="text" id="share-link-input" readonly class="flex-1 bg-transparent border-0 px-3 py-2 text-sm text-gray-700 outline-none font-medium truncate">
-                    <button id="btn-copy-link" onclick="copyShareLink()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-sm shrink-0">複製</button>
-                </div>
+            <div id="qrcode" class="mb-6 flex justify-center p-4 bg-white border border-gray-100 rounded-2xl shadow-inner inline-block mx-auto"></div>
+            <div class="flex items-center gap-2 p-1.5 bg-gray-50 rounded-xl border border-gray-100 mb-6">
+                <input type="text" id="share-link-input" readonly class="flex-1 bg-transparent border-0 px-3 py-2 text-sm text-gray-700 outline-none truncate">
+                <button id="btn-copy-link" onclick="copyShareLink()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold">複製</button>
             </div>
-            <button onclick="closeShareModal()" class="text-gray-400 text-sm hover:underline">關閉視窗</button>
+            <button onclick="closeShareModal()" class="text-gray-400 text-sm">關閉視窗</button>
         </div>
     </div>
 
@@ -238,20 +196,20 @@
     <div id="lightbox" class="fixed inset-0 z-[100] hidden flex flex-col bg-black select-none">
         <div class="flex justify-between items-center p-4 text-white z-[110] bg-gradient-to-b from-black/80 to-transparent">
             <div class="flex items-center gap-3">
-                <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition"><i class="fas fa-arrow-left"></i></button>
+                <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20"><i class="fas fa-arrow-left"></i></button>
                 <div class="flex flex-col">
-                    <span id="lightbox-title" class="text-sm font-medium leading-tight break-words max-w-[150px] md:max-w-md"></span>
+                    <span id="lightbox-title" class="text-sm font-medium leading-tight truncate max-w-[200px]"></span>
                     <span id="lightbox-counter" class="text-[10px] text-gray-400"></span>
                 </div>
             </div>
-            <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition"><i class="fas fa-times"></i></button>
+            <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20"><i class="fas fa-times"></i></button>
         </div>
-        <button onclick="prevPhoto()" class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 transition z-[110]"><i class="fas fa-chevron-left text-2xl"></i></button>
-        <div id="lightbox-content" class="flex-1 flex items-center justify-center relative p-2 md:p-6 overflow-hidden">
-            <img id="lightbox-img" src="" class="max-h-full max-w-full object-contain shadow-2xl transition-all duration-300">
+        <button onclick="prevPhoto()" class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 z-[110]"><i class="fas fa-chevron-left text-2xl"></i></button>
+        <div id="lightbox-content" class="flex-1 flex items-center justify-center relative p-2 overflow-hidden">
+            <img id="lightbox-img" src="" class="max-h-full max-w-full object-contain shadow-2xl transition-opacity duration-300">
         </div>
-        <button onclick="nextPhoto()" class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 transition z-[110]"><i class="fas fa-chevron-right text-2xl"></i></button>
-        <div class="md:hidden p-6 flex justify-center text-white/50 text-xs"><i class="fas fa-arrows-alt-h mr-2"></i> 左右滑動切換照片</div>
+        <button onclick="nextPhoto()" class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 z-[110]"><i class="fas fa-chevron-right text-2xl"></i></button>
+        <div class="md:hidden p-4 text-center text-white/50 text-xs">左右滑動切換照片</div>
     </div>
 
     <div id="toast">已更新相簿封面</div>
@@ -264,6 +222,7 @@
         let currentIndex = 0;   
         let currentViewedAlbumId = null; 
         let isGuestMode = false;
+        let lastHomeScrollPos = 0;
 
         window.onload = () => {
             isGuestMode = handleUrlParameters();
@@ -276,7 +235,7 @@
                 showConfigWarning();
                 if (!isGuestMode) openConfigModal();
             } else {
-                loadAlbums(true); 
+                fetchAlbums(true); 
             }
         };
 
@@ -299,21 +258,13 @@
             document.getElementById('display-site-title').innerText = SITE_TITLE;
         }
 
-        async function loadAlbums(isFirstLoad = false) {
+        async function fetchAlbums(isFirstLoad = false) {
             if (!SCRIPT_URL) return;
-            
-            if (!isFirstLoad) {
-                sessionStorage.removeItem('CURRENT_ALBUM_INDEX');
-                currentViewedAlbumId = null;
-            }
-
             const localData = localStorage.getItem('LOCAL_ALBUM_CACHE');
             if (isFirstLoad && localData) {
                 allAlbums = JSON.parse(localData);
-                renderAlbums();
+                renderAlbumsGrid();
                 checkAndRestoreState();
-            } else {
-                toggleLoader(true);
             }
 
             try {
@@ -322,15 +273,13 @@
                 if (result.status === "success") {
                     allAlbums = result.data;
                     localStorage.setItem('LOCAL_ALBUM_CACHE', JSON.stringify(allAlbums));
+                    // 如果目前不在相簿內，就重新繪製列表
                     if (!currentViewedAlbumId) {
-                        renderAlbums();
-                        if (isFirstLoad) checkAndRestoreState();
+                        renderAlbumsGrid();
                     }
                 }
             } catch (e) {
                 if (!allAlbums.length) showConfigWarning();
-            } finally {
-                toggleLoader(false);
             }
         }
 
@@ -341,87 +290,63 @@
             }
         }
 
-        // 優化渲染邏輯：分段載入避免阻塞
-        function renderAlbums() {
-            const container = document.getElementById('gallery-container');
-            document.getElementById('album-divider').classList.add('hidden');
-            document.getElementById('current-album-name').innerText = '';
-            
-            if (allAlbums.length === 0) {
-                container.innerHTML = `<div class="text-center py-20 text-gray-400"><i class="fas fa-folder-open text-4xl mb-4"></i><p>尚無相簿</p></div>`;
-                return;
-            }
-
-            // 清空容器並建立 Grid
+        // 核心優化：渲染首頁列表並保存到固定容器
+        function renderAlbumsGrid() {
+            const container = document.getElementById('albums-container');
             container.innerHTML = '';
             const grid = document.createElement('div');
             grid.className = "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8";
+            
+            const fragment = document.createDocumentFragment();
+            allAlbums.forEach((album, i) => {
+                const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
+                let coverUrl = customCover || (album.photos.length > 0 ? album.photos[0].url : '');
+                const card = document.createElement('div');
+                card.className = "album-card group cursor-pointer";
+                card.onclick = () => viewAlbum(i);
+                card.innerHTML = `
+                    <div class="aspect-square rounded-[2rem] overflow-hidden bg-gray-50 mb-4 relative shadow-sm group-hover:shadow-xl transition-all duration-300">
+                        <img src="${coverUrl}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" onload="this.classList.add('loaded')" loading="lazy">
+                    </div>
+                    <div class="px-2 text-center md:text-left">
+                        <h3 class="font-bold text-gray-900 text-sm md:text-base leading-snug truncate">${album.name}</h3>
+                        <p class="text-xs text-gray-400 mt-1">${album.photos.length} 張相片</p>
+                    </div>`;
+                fragment.appendChild(card);
+                requestAnimationFrame(() => setTimeout(() => card.classList.add('show'), i * 30));
+            });
+            grid.appendChild(fragment);
             container.appendChild(grid);
-
-            // 分段渲染機制
-            const chunkSize = 12;
-            let currentOffset = 0;
-
-            function renderChunk() {
-                const end = Math.min(currentOffset + chunkSize, allAlbums.length);
-                const fragment = document.createDocumentFragment();
-
-                for (let i = currentOffset; i < end; i++) {
-                    const album = allAlbums[i];
-                    const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
-                    let coverUrl = customCover || (album.photos.length > 0 ? album.photos[0].url : '');
-                    
-                    const card = document.createElement('div');
-                    card.className = "album-card group cursor-pointer";
-                    card.onclick = () => viewAlbum(i);
-                    card.innerHTML = `
-                        <div class="aspect-square rounded-[2rem] overflow-hidden bg-gray-50 mb-4 relative shadow-sm group-hover:shadow-xl transition-all duration-300">
-                            <img src="${coverUrl}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" 
-                                 onload="this.classList.add('loaded')" loading="lazy">
-                        </div>
-                        <div class="px-2 text-center md:text-left">
-                            <h3 class="font-bold text-gray-900 text-sm md:text-base leading-snug truncate">${album.name}</h3>
-                            <p class="text-xs text-gray-400 mt-1">${album.photos.length} 張相片</p>
-                        </div>
-                    `;
-                    fragment.appendChild(card);
-                    
-                    // 異步觸發進場動畫
-                    requestAnimationFrame(() => {
-                        setTimeout(() => card.classList.add('show'), (i - currentOffset) * 50);
-                    });
-                }
-
-                grid.appendChild(fragment);
-                currentOffset = end;
-
-                if (currentOffset < allAlbums.length) {
-                    requestAnimationFrame(renderChunk);
-                }
-            }
-
-            renderChunk();
         }
 
+        // 切換到相簿視圖 (不刪除首頁節點)
         function viewAlbum(index, shouldScroll = true) {
             const album = allAlbums[index];
             if (!album) return;
 
+            // 記錄首頁滾動位置
+            if (currentViewedAlbumId === null) {
+                lastHomeScrollPos = window.scrollY;
+            }
+
             currentPhotos = album.photos; 
             currentViewedAlbumId = album.id;
             sessionStorage.setItem('CURRENT_ALBUM_INDEX', index);
-            const currentCoverUrl = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
-
+            
+            // UI 切換
+            document.getElementById('albums-container').classList.add('hidden-view');
+            document.getElementById('photos-view').classList.remove('hidden-view');
             document.getElementById('album-divider').classList.remove('hidden');
             document.getElementById('current-album-name').innerText = album.name;
-            const container = document.getElementById('gallery-container');
-            
-            // 相簿內照片也採用 DocumentFragment 渲染優化性能
-            container.innerHTML = '';
+
+            const gridContainer = document.getElementById('photos-grid-container');
+            gridContainer.innerHTML = ''; // 相簿內頁照片較多，點進去時才渲染
+
             const photoGrid = document.createElement('div');
             photoGrid.className = "photo-grid";
-            
             const fragment = document.createDocumentFragment();
+            const currentCoverUrl = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
+
             album.photos.forEach((photo, pIdx) => {
                 const isCover = (currentCoverUrl === photo.url) || (!currentCoverUrl && pIdx === 0);
                 const item = document.createElement('div');
@@ -429,19 +354,34 @@
                 item.onclick = () => openLightbox(pIdx);
                 item.innerHTML = `
                     <img src="${photo.url}" onload="this.classList.add('loaded')" loading="lazy">
-                    ${!isGuestMode ? `
-                        <button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn" title="設為封面">
-                            <i class="fas fa-bookmark"></i>
-                        </button>
-                    ` : ''}
+                    ${!isGuestMode ? `<button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn"><i class="fas fa-bookmark"></i></button>` : ''}
                 `;
                 fragment.appendChild(item);
             });
-            
             photoGrid.appendChild(fragment);
-            container.appendChild(photoGrid);
+            gridContainer.appendChild(photoGrid);
 
-            if (shouldScroll) window.scrollTo({top: 0, behavior: 'smooth'});
+            if (shouldScroll) window.scrollTo(0, 0);
+        }
+
+        // 核心優化：點擊「所有相簿」瞬間跳回
+        function backToHome() {
+            if (currentViewedAlbumId === null) return; // 本來就在首頁
+
+            currentViewedAlbumId = null;
+            sessionStorage.removeItem('CURRENT_ALBUM_INDEX');
+
+            // 僅做 CSS 隱藏/顯示切換，極速！
+            document.getElementById('photos-view').classList.add('hidden-view');
+            document.getElementById('albums-container').classList.remove('hidden-view');
+            document.getElementById('album-divider').classList.add('hidden');
+            document.getElementById('current-album-name').innerText = '';
+
+            // 釋放相簿內頁內存
+            document.getElementById('photos-grid-container').innerHTML = '';
+
+            // 恢復滾動位置
+            window.scrollTo(0, lastHomeScrollPos);
         }
 
         function setAsCover(photoUrl, event) {
@@ -452,6 +392,8 @@
                 if (item.querySelector('img').src === photoUrl) item.classList.add('is-current-cover');
                 else item.classList.remove('is-current-cover');
             });
+            // 同步首頁封面
+            renderAlbumsGrid();
         }
 
         function showToast(msg) {
@@ -472,8 +414,7 @@
         function copyShareLink() {
             const input = document.getElementById('share-link-input');
             input.select(); document.execCommand('copy');
-            const btn = document.getElementById('btn-copy-link');
-            btn.innerText = "已複製"; setTimeout(() => btn.innerText = "複製", 2000);
+            showToast("連結已複製");
         }
 
         function openConfigModal() {
@@ -484,15 +425,13 @@
         function closeConfigModal() { document.getElementById('config-modal').classList.remove('modal-active'); }
         function saveSystemConfig() {
             const api = document.getElementById('config-api-url').value.trim();
-            const title = document.getElementById('config-site-title').value.trim() || "智慧雲端相簿";
-            if (api && !api.startsWith('https://script.google.com/')) return alert("無效網址");
-            SCRIPT_URL = api; SITE_TITLE = title;
-            localStorage.setItem('GAS_SCRIPT_URL', api); localStorage.setItem('GAS_SITE_TITLE', title);
-            localStorage.removeItem('LOCAL_ALBUM_CACHE');
-            sessionStorage.clear();
+            const title = document.getElementById('config-site-title').value.trim();
+            if (api && !api.startsWith('https://script.google.com/')) return alert("無效 GAS 網址");
+            localStorage.setItem('GAS_SCRIPT_URL', api);
+            localStorage.setItem('GAS_SITE_TITLE', title);
             location.reload();
         }
-        function clearAllSettings() { if (confirm("確定清除？")) { localStorage.clear(); sessionStorage.clear(); location.reload(); } }
+        function clearAllSettings() { if (confirm("確定清除所有設定與快取？")) { localStorage.clear(); sessionStorage.clear(); location.reload(); } }
 
         function openLightbox(index) { currentIndex = index; updateLightboxContent(); document.getElementById('lightbox').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
         function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); document.body.style.overflow = 'auto'; }
@@ -500,12 +439,10 @@
             const photo = currentPhotos[currentIndex];
             const img = document.getElementById('lightbox-img');
             img.style.opacity = "0";
-            setTimeout(() => {
-                img.src = photo.url;
-                document.getElementById('lightbox-title').innerText = photo.name;
-                document.getElementById('lightbox-counter').innerText = `${currentIndex + 1} / ${currentPhotos.length}`;
-                img.onload = () => img.style.opacity = "1";
-            }, 50);
+            document.getElementById('lightbox-title').innerText = photo.name;
+            document.getElementById('lightbox-counter').innerText = `${currentIndex + 1} / ${currentPhotos.length}`;
+            img.src = photo.url;
+            img.onload = () => img.style.opacity = "1";
         }
         function prevPhoto() { currentIndex = (currentIndex > 0) ? currentIndex - 1 : currentPhotos.length - 1; updateLightboxContent(); }
         function nextPhoto() { currentIndex = (currentIndex < currentPhotos.length - 1) ? currentIndex + 1 : 0; updateLightboxContent(); }
@@ -521,13 +458,7 @@
             };
         }
         function setupKeyboardEvents() { window.onkeydown = e => { if(document.getElementById('lightbox').classList.contains('hidden')) return; if(e.key === "ArrowLeft") prevPhoto(); if(e.key === "ArrowRight") nextPhoto(); if(e.key === "Escape") closeLightbox(); }; }
-        function toggleLoader(show) { 
-            const container = document.getElementById('gallery-container');
-            if(show && !allAlbums.length) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center py-32 text-gray-400"><i class="fas fa-circle-notch animate-spin text-4xl text-blue-500 mb-4"></i><p>正在加速讀取相簿...</p></div>`;
-            }
-        }
-        function showConfigWarning() { document.getElementById('gallery-container').innerHTML = `<div class="text-center py-20 bg-gray-50 rounded-3xl"><p>未偵測到設定，請點擊右上角設定。</p></div>`; }
+        function showConfigWarning() { document.getElementById('albums-container').innerHTML = `<div class="text-center py-20 text-gray-400 bg-gray-50 rounded-3xl"><p>請點擊右上方齒輪圖案進行 API 設定</p></div>`; }
     </script>
 </body>
 </html>
