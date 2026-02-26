@@ -101,6 +101,24 @@
         .animate-pulse { animation: pulse 1.5s infinite; }
         
         .skeleton-card { border-radius: 2rem; background: #f1f3f4; aspect-ratio: 1/1; }
+
+        /* AI Feature Styles */
+        .ai-summary-box {
+            background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+            border: 1px solid #e0eaff;
+            border-radius: 1.5rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .ai-summary-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px; height: 100%;
+            background: #1a73e8;
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -133,15 +151,40 @@
         </div>
 
         <div id="main-view">
+            <!-- AI Summary Section -->
+            <div id="ai-section" class="hidden mb-8">
+                <div class="ai-summary-box shadow-sm">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-2 text-blue-700 font-bold">
+                            <i class="fas fa-sparkles"></i>
+                            <span>✨ AI 相簿隨筆</span>
+                        </div>
+                        <div id="ai-audio-controls" class="hidden flex items-center gap-2">
+                            <button onclick="playAiSpeech()" class="text-blue-600 hover:bg-blue-50 p-2 rounded-full transition" title="播放語音">
+                                <i id="speaker-icon" class="fas fa-volume-up"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p id="ai-summary-text" class="text-gray-700 italic leading-relaxed text-sm md:text-base">
+                        正在整理思緒中...
+                    </p>
+                </div>
+            </div>
+
             <div id="albums-container">
                 <div id="skeleton-screen" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">
                     <div class="animate-pulse"><div class="skeleton-card mb-4"></div><div class="h-4 bg-gray-100 rounded w-2/3 mx-auto"></div></div>
                     <div class="animate-pulse"><div class="skeleton-card mb-4"></div><div class="h-4 bg-gray-100 rounded w-2/3 mx-auto"></div></div>
-                    <div class="animate-pulse hidden md:block"><div class="skeleton-card mb-4"></div><div class="h-4 bg-gray-100 rounded w-2/3 mx-auto"></div></div>
                 </div>
             </div>
             
             <div id="photos-view" class="hidden-view">
+                <div class="mb-6 flex justify-end">
+                    <button onclick="generateAiSummary()" id="ai-btn" class="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 font-medium">
+                        <i class="fas fa-magic"></i>
+                        ✨ 生成回憶隨筆
+                    </button>
+                </div>
                 <div id="photos-grid-container"></div>
             </div>
         </div>
@@ -210,40 +253,32 @@
     <div id="toast"></div>
 
     <script>
-        /**
-         * 【全新設計模式：Hash 錨點參數法】
-         * 1. 使用 window.location.hash (#) 傳遞 sid，完全避免 replaceState 觸發重整。
-         * 2. 如果舊有的 ?sid= 存在，將其轉換為 hash 並「安靜」重導向（僅限第一次）。
-         */
-        
-        // --- 核心邏輯：參數處理 ---
+        const apiKey = ""; // 執行環境提供的金鑰
+
+        // 參數解析與存儲
         (function resolveUrlParameters() {
             const searchParams = new URLSearchParams(window.location.search);
             const querySid = searchParams.get('sid');
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
             const hashSid = hashParams.get('sid');
 
-            // 如果有傳統 query 參數，將其轉為 hash 模式並「乾淨」地重載網址
             if (querySid) {
                 const cleanPath = window.location.origin + window.location.pathname + '#sid=' + querySid;
                 window.location.replace(cleanPath); 
                 return;
             }
 
-            // 處理 Hash 中的 sid
             if (hashSid) {
                 try {
                     const decodedUrl = atob(hashSid);
                     if (decodedUrl.startsWith('https://script.google.com/')) {
                         localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
-                        // 清理 Hash：這步操作在任何瀏覽器中都不會觸發重整或閃爍
-                        window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+                        window.history.replaceState(null, document.title, window.location.pathname);
                     }
-                } catch (e) { console.error("SID Decode Error", e); }
+                } catch (e) { console.error("SID 解碼失敗", e); }
             }
         })();
 
-        // 全域變數
         let SCRIPT_URL = localStorage.getItem('GAS_SCRIPT_URL') || "";
         let SITE_TITLE = localStorage.getItem('GAS_SITE_TITLE') || "智慧雲端相簿";
         let allAlbums = [];
@@ -251,8 +286,8 @@
         let currentIndex = 0;   
         let currentViewedAlbumId = null; 
         let lastHomeScrollPos = 0;
+        let aiAudio = null;
 
-        // 初始化
         window.addEventListener('DOMContentLoaded', () => {
             applySiteTitle();
             setupTouchEvents();
@@ -260,131 +295,201 @@
 
             if (!SCRIPT_URL) {
                 showConfigWarning();
-                // 只有沒設定時才自動開設定
-                if (!window.location.hash.includes('sid=')) {
-                    openConfigModal();
-                }
+                openConfigModal();
             } else {
                 fetchAlbums(true); 
             }
         });
 
-        function applySiteTitle() {
-            document.title = SITE_TITLE;
-            const displayTitle = document.getElementById('display-site-title');
-            if (displayTitle) displayTitle.innerText = SITE_TITLE;
+        // Gemini AI 邏輯
+        async function geminiApiCall(userQuery, systemPrompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text;
+                } catch (e) {
+                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+                }
+            }
+            throw new Error("AI 無法回應");
         }
 
-        async function fetchAlbums(isFirstLoad = false) {
-            if (!SCRIPT_URL) return;
-            
-            // 讀取快取
-            const localData = localStorage.getItem('LOCAL_ALBUM_CACHE');
-            if (isFirstLoad && localData) {
-                try {
-                    allAlbums = JSON.parse(localData);
-                    renderAlbumsGrid();
-                    checkAndRestoreState();
-                } catch(e) { localStorage.removeItem('LOCAL_ALBUM_CACHE'); }
-            }
+        async function geminiTts(text) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: `Say warmly in Traditional Chinese: ${text}` }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } } }
+                }
+            };
 
             try {
-                const response = await fetch(`${SCRIPT_URL}?action=getAlbums`);
+                const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await response.json();
+                const pcmData = result.candidates[0].content.parts[0].inlineData.data;
+                return pcmToWav(pcmData, 24000);
+            } catch (e) {
+                console.error("TTS 失敗", e);
+                return null;
+            }
+        }
+
+        function pcmToWav(base64Pcm, sampleRate) {
+            const binaryString = atob(base64Pcm);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+            const buffer = bytes.buffer;
+            const wavHeader = new ArrayBuffer(44);
+            const view = new DataView(wavHeader);
+            const writeString = (offset, string) => { for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i)); };
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + buffer.byteLength, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, buffer.byteLength, true);
+            return URL.createObjectURL(new Blob([wavHeader, buffer], { type: 'audio/wav' }));
+        }
+
+        async function generateAiSummary() {
+            const albumName = document.getElementById('current-album-name').innerText;
+            const photoNames = currentPhotos.map(p => p.name).join(', ');
+            const aiBtn = document.getElementById('ai-btn');
+            const aiSection = document.getElementById('ai-section');
+            const summaryText = document.getElementById('ai-summary-text');
+            const audioControls = document.getElementById('ai-audio-controls');
+
+            aiBtn.disabled = true;
+            aiBtn.innerHTML = `<i class="fas fa-circle-notch animate-spin"></i> 生成中...`;
+            aiSection.classList.remove('hidden');
+            summaryText.innerText = "Gemini 正在瀏覽您的回憶...";
+            audioControls.classList.add('hidden');
+
+            try {
+                const systemPrompt = "你是一位回憶記錄員。請根據相簿名稱和相片檔名，寫一段 80 字內的繁體中文短評，語氣溫暖。";
+                const text = await geminiApiCall(`相簿：${albumName}。相片：${photoNames}`, systemPrompt);
+                summaryText.innerText = text;
+
+                const audioUrl = await geminiTts(text);
+                if (audioUrl) {
+                    aiAudio = new Audio(audioUrl);
+                    audioControls.classList.remove('hidden');
+                    aiAudio.onended = () => document.getElementById('speaker-icon').className = 'fas fa-volume-up';
+                }
+            } catch (e) {
+                summaryText.innerText = "目前 AI 無法連線。";
+            } finally {
+                aiBtn.disabled = false;
+                aiBtn.innerHTML = `<i class="fas fa-magic"></i> ✨ 生成回憶隨筆`;
+            }
+        }
+
+        function playAiSpeech() {
+            if (!aiAudio) return;
+            const icon = document.getElementById('speaker-icon');
+            if (aiAudio.paused) { aiAudio.play(); icon.className = 'fas fa-pause'; }
+            else { aiAudio.pause(); icon.className = 'fas fa-volume-up'; }
+        }
+
+        // 相簿核心功能
+        function applySiteTitle() {
+            document.title = SITE_TITLE;
+            const dt = document.getElementById('display-site-title');
+            if (dt) dt.innerText = SITE_TITLE;
+        }
+
+        async function fetchAlbums(isFirst = false) {
+            if (!SCRIPT_URL) return;
+            const local = localStorage.getItem('LOCAL_ALBUM_CACHE');
+            if (isFirst && local) {
+                try { allAlbums = JSON.parse(local); renderAlbumsGrid(); } catch(e) {}
+            }
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=getAlbums`);
+                const result = await res.json();
                 if (result.status === "success") {
                     allAlbums = result.data;
                     localStorage.setItem('LOCAL_ALBUM_CACHE', JSON.stringify(allAlbums));
                     if (currentViewedAlbumId === null) renderAlbumsGrid();
                 }
-            } catch (e) {
-                if (!allAlbums.length) showConfigWarning();
-            }
-        }
-
-        function checkAndRestoreState() {
-            const savedIndex = sessionStorage.getItem('CURRENT_ALBUM_INDEX');
-            if (savedIndex !== null && allAlbums[savedIndex]) {
-                viewAlbum(parseInt(savedIndex), false);
-            }
+            } catch (e) { if (!allAlbums.length) showConfigWarning(); }
         }
 
         function renderAlbumsGrid() {
             const container = document.getElementById('albums-container');
             if (!container) return;
-            
-            const gridHTML = generateAlbumsGridHTML();
-            if (container.innerHTML !== gridHTML) {
-                container.innerHTML = gridHTML;
-                const cards = container.querySelectorAll('.album-card');
-                cards.forEach((card, i) => {
-                    setTimeout(() => card.classList.add('show'), i * 30);
-                });
+            if (allAlbums.length === 0) {
+                container.innerHTML = `<div class="text-center py-20 text-gray-400">目前沒有相簿</div>`;
+                return;
             }
-        }
-
-        function generateAlbumsGridHTML() {
-            if (allAlbums.length === 0) return `<div class="text-center py-20 text-gray-400">目前沒有相簿</div>`;
             let html = '<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">';
             allAlbums.forEach((album, i) => {
                 const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
-                let coverUrl = customCover || (album.photos.length > 0 ? album.photos[0].url : '');
+                const coverUrl = customCover || (album.photos.length > 0 ? album.photos[0].url : '');
                 html += `
                     <div class="album-card group cursor-pointer" onclick="viewAlbum(${i})">
-                        <div class="aspect-square rounded-[2rem] overflow-hidden bg-gray-50 mb-4 relative shadow-sm group-hover:shadow-xl transition-all duration-300">
-                            <img src="${coverUrl}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" onload="this.classList.add('loaded')" loading="lazy">
+                        <div class="aspect-square rounded-[2rem] overflow-hidden bg-gray-50 mb-4 relative shadow-sm group-hover:shadow-xl transition-all">
+                            <img src="${coverUrl}" class="w-full h-full object-cover" onload="this.classList.add('loaded')" loading="lazy">
                         </div>
-                        <div class="px-2 text-center md:text-left">
-                            <h3 class="font-bold text-gray-900 text-sm md:text-base leading-tight">${album.name}</h3>
-                            <p class="text-[11px] text-gray-400 mt-1.5 uppercase font-medium">${album.photos.length} 張相片</p>
+                        <div class="px-2">
+                            <h3 class="font-bold text-gray-900 text-sm md:text-base truncate">${album.name}</h3>
+                            <p class="text-[11px] text-gray-400 mt-1 uppercase">${album.photos.length} 張相片</p>
                         </div>
                     </div>`;
             });
             html += '</div>';
-            return html;
+            container.innerHTML = html;
+            container.querySelectorAll('.album-card').forEach((c, i) => setTimeout(() => c.classList.add('show'), i * 30));
         }
 
-        function viewAlbum(index, shouldScroll = true) {
+        function viewAlbum(index) {
             const album = allAlbums[index];
             if (!album) return;
-            if (currentViewedAlbumId === null) lastHomeScrollPos = window.scrollY;
-
-            currentPhotos = album.photos; 
+            lastHomeScrollPos = window.scrollY;
+            currentPhotos = album.photos;
             currentViewedAlbumId = album.id;
-            sessionStorage.setItem('CURRENT_ALBUM_INDEX', index);
             
             document.getElementById('albums-container').classList.add('hidden-view');
             document.getElementById('photos-view').classList.remove('hidden-view');
             document.getElementById('album-divider').classList.remove('hidden');
             document.getElementById('current-album-name').innerText = album.name;
 
-            const gridContainer = document.getElementById('photos-grid-container');
-            gridContainer.innerHTML = ''; 
-            const photoGrid = document.createElement('div');
-            photoGrid.className = "photo-grid";
-            const currentCoverUrl = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
+            const grid = document.createElement('div');
+            grid.className = "photo-grid";
+            const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
 
             album.photos.forEach((photo, pIdx) => {
-                const isCover = (currentCoverUrl === photo.url) || (!currentCoverUrl && pIdx === 0);
+                const isCover = (customCover === photo.url) || (!customCover && pIdx === 0);
                 const item = document.createElement('div');
                 item.className = `photo-item ${isCover ? 'is-current-cover' : ''}`;
                 item.onclick = () => openLightbox(pIdx);
-                item.innerHTML = `
-                    <img src="${photo.url}" onload="this.classList.add('loaded')" loading="lazy">
-                    <button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn"><i class="fas fa-bookmark"></i></button>
-                `;
-                photoGrid.appendChild(item);
+                item.innerHTML = `<img src="${photo.url}" onload="this.classList.add('loaded')" loading="lazy"><button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn"><i class="fas fa-bookmark"></i></button>`;
+                grid.appendChild(item);
             });
-            gridContainer.appendChild(photoGrid);
-            if (shouldScroll) window.scrollTo(0, 0);
+            const pgContainer = document.getElementById('photos-grid-container');
+            pgContainer.innerHTML = '';
+            pgContainer.appendChild(grid);
+            window.scrollTo(0, 0);
         }
 
         function backToHome() {
+            if (aiAudio) { aiAudio.pause(); aiAudio = null; }
+            document.getElementById('ai-section').classList.add('hidden');
             currentViewedAlbumId = null;
-            sessionStorage.removeItem('CURRENT_ALBUM_INDEX');
             document.getElementById('photos-view').classList.add('hidden-view');
             document.getElementById('albums-container').classList.remove('hidden-view');
             document.getElementById('album-divider').classList.add('hidden');
-            document.getElementById('current-album-name').innerText = '';
             window.scrollTo(0, lastHomeScrollPos);
         }
 
@@ -393,58 +498,30 @@
             document.getElementById('config-site-title').value = SITE_TITLE;
             document.getElementById('config-modal').classList.add('modal-active');
         }
-
         function closeConfigModal() { document.getElementById('config-modal').classList.remove('modal-active'); }
-        
         function saveSystemConfig() {
             const api = document.getElementById('config-api-url').value.trim();
             const title = document.getElementById('config-site-title').value.trim();
-            
-            if (api && !api.startsWith('https://script.google.com/')) {
-                return alert("請輸入正確的 Google Script 網址");
-            }
-            
-            SCRIPT_URL = api;
-            SITE_TITLE = title;
+            SCRIPT_URL = api; SITE_TITLE = title;
             localStorage.setItem('GAS_SCRIPT_URL', api);
             localStorage.setItem('GAS_SITE_TITLE', title);
-            
-            applySiteTitle();
-            closeConfigModal();
-            showToast("正在連接並更新相簿...");
-            fetchAlbums(false);
+            applySiteTitle(); closeConfigModal(); fetchAlbums(false);
         }
-        
-        function clearAllSettings() { 
-            if (confirm("確定清除所有設定與快取？")) { 
-                localStorage.clear(); 
-                sessionStorage.clear(); 
-                location.reload(); 
-            } 
-        }
-
+        function clearAllSettings() { if (confirm("確定清除？")) { localStorage.clear(); location.reload(); } }
         function setAsCover(url, e) {
             e.stopPropagation();
             localStorage.setItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`, url);
             showToast("封面已更新");
-            document.querySelectorAll('.photo-item').forEach(i => {
-                i.classList.toggle('is-current-cover', i.querySelector('img').src === url);
-            });
+            document.querySelectorAll('.photo-item').forEach(i => i.classList.toggle('is-current-cover', i.querySelector('img').src === url));
             renderAlbumsGrid();
         }
-
         function showToast(m) {
             const t = document.getElementById('toast');
-            if (t) {
-                t.innerText = m; t.style.display = 'block';
-                setTimeout(() => t.style.display = 'none', 2500);
-            }
+            t.innerText = m; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2000);
         }
-
         function openShareModal() {
-            const baseUrl = window.location.origin + window.location.pathname;
-            // 分享連結使用 Hash 模式：這能確保接收者重整時不會觸發閃爍問題
-            const shareUrl = `${baseUrl}#sid=${btoa(SCRIPT_URL)}`;
+            const shareUrl = `${window.location.origin + window.location.pathname}#sid=${btoa(SCRIPT_URL)}`;
             document.getElementById('share-link-input').value = shareUrl;
             const qr = document.getElementById('qrcode'); qr.innerHTML = "";
             new QRCode(qr, { text: shareUrl, width: 160, height: 160 });
@@ -454,9 +531,8 @@
         function copyShareLink() {
             const input = document.getElementById('share-link-input');
             input.select(); document.execCommand('copy');
-            showToast("分享連結已複製");
+            showToast("連結已複製");
         }
-
         function openLightbox(i) { currentIndex = i; updateLightboxContent(); document.getElementById('lightbox').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
         function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); document.body.style.overflow = 'auto'; }
         function updateLightboxContent() {
@@ -470,13 +546,11 @@
         }
         function prevPhoto() { currentIndex = (currentIndex > 0) ? currentIndex - 1 : currentPhotos.length - 1; updateLightboxContent(); }
         function nextPhoto() { currentIndex = (currentIndex < currentPhotos.length - 1) ? currentIndex + 1 : 0; updateLightboxContent(); }
-
         function setupTouchEvents() {
-            let startX = 0;
-            const content = document.getElementById('lightbox-content');
-            content.addEventListener('touchstart', e => startX = e.touches[0].clientX);
-            content.addEventListener('touchend', e => {
-                const diff = e.changedTouches[0].clientX - startX;
+            let sX = 0; const c = document.getElementById('lightbox-content');
+            c.addEventListener('touchstart', e => sX = e.touches[0].clientX);
+            c.addEventListener('touchend', e => {
+                const diff = e.changedTouches[0].clientX - sX;
                 if (Math.abs(diff) > 50) diff > 0 ? prevPhoto() : nextPhoto();
             });
         }
@@ -489,8 +563,8 @@
             });
         }
         function showConfigWarning() { 
-            const container = document.getElementById('albums-container');
-            if (container) container.innerHTML = `<div class="text-center py-20 text-gray-400 bg-gray-50 rounded-3xl"><i class="fas fa-plug mb-4 text-3xl"></i><p>尚未設定 API 連結</p></div>`; 
+            const c = document.getElementById('albums-container');
+            if (c) c.innerHTML = `<div class="text-center py-20 text-gray-400 bg-gray-50 rounded-3xl"><p>請點擊右上方齒輪設定 API</p></div>`; 
         }
     </script>
 </body>
