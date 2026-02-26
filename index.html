@@ -39,90 +39,120 @@
         }
         
         @media (min-width: 768px) {
-            .photo-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+            .photo-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+            }
         }
         
         @media (min-width: 1024px) {
-            .photo-grid { grid-template-columns: repeat(6, 1fr); gap: 12px; }
+            .photo-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 12px;
+            }
         }
 
         .photo-item {
             aspect-ratio: 1 / 1;
             position: relative;
             overflow: hidden;
-            background-color: #f8f9fa;
+            background-color: #f1f3f4;
             cursor: pointer;
-            border-radius: 4px;
         }
 
         .photo-item img {
-            width: 100%; height: 100%; object-fit: cover;
-            opacity: 0; transition: opacity 0.3s ease;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .photo-item img.loaded { opacity: 1; }
-
-        .album-card {
-            opacity: 0; transform: translateY(10px);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .album-card.show { animation: cardFadeIn 0.3s ease-out forwards; }
-
-        @keyframes cardFadeIn { to { opacity: 1; transform: translateY(0); } }
 
         .set-cover-btn {
-            position: absolute; top: 8px; right: 8px;
-            background: rgba(255, 255, 255, 0.9); color: #1a73e8;
-            width: 32px; height: 32px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; transform: translateY(-5px); transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #1a73e8;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 10;
         }
 
-        .photo-item:hover .set-cover-btn { opacity: 1; transform: translateY(0); }
-        .is-current-cover .set-cover-btn { background: #1a73e8; color: white; opacity: 1; transform: translateY(0); }
+        .photo-item:hover .set-cover-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .is-current-cover .set-cover-btn {
+            background: #1a73e8;
+            color: white;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (hover: hover) {
+            .photo-item:hover img {
+                transform: scale(1.08);
+            }
+        }
 
         .modal-active { display: flex !important; }
-        .hidden-view { display: none !important; }
+        
+        #lightbox {
+            transition: opacity 0.3s ease;
+        }
+
+        #lightbox-img {
+            user-select: none;
+            -webkit-user-drag: none;
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         main { flex: 1; }
 
+        .btn-success {
+            background-color: #10b981 !important;
+            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39) !important;
+        }
+
         #toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: #323232; color: white; padding: 12px 24px; border-radius: 50px;
-            font-size: 14px; z-index: 200; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        .animate-pulse { animation: pulse 1.5s infinite; }
-        
-        .skeleton-card { border-radius: 2rem; background: #f1f3f4; aspect-ratio: 1/1; }
-
-        /* AI Feature Styles */
-        .ai-summary-box {
-            background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
-            border: 1px solid #e0eaff;
-            border-radius: 1.5rem;
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .ai-summary-box::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 4px; height: 100%;
-            background: #1a73e8;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #323232;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body class="bg-white">
 
+    <!-- 頂部導覽列 -->
     <nav class="navbar sticky top-0 z-50 flex items-center justify-between px-4 py-3 md:px-8">
         <div class="flex items-center gap-2">
             <div class="flex items-center gap-2 text-lg md:text-xl font-medium text-gray-800">
@@ -141,51 +171,23 @@
         </div>
     </nav>
 
+    <!-- 主內容區 -->
     <main class="max-w-[1600px] mx-auto p-4 md:p-8 w-full">
         <div id="breadcrumb" class="mb-6 text-sm flex items-center gap-2 text-gray-500 overflow-x-auto whitespace-nowrap pb-2 md:pb-0 no-scrollbar">
-            <button class="hover:text-blue-600 flex items-center gap-1 transition-colors shrink-0" onclick="backToHome()">
+            <button class="hover:text-blue-600 flex items-center gap-1" onclick="loadAlbums()">
                 <i class="fas fa-home text-xs"></i> 所有相簿
             </button>
-            <span id="album-divider" class="hidden text-gray-300 shrink-0">/</span>
-            <span id="current-album-name" class="font-bold text-gray-900 whitespace-normal"></span>
+            <span id="album-divider" class="hidden text-gray-300">/</span>
+            <span id="current-album-name" class="font-bold text-gray-900 break-words"></span>
         </div>
 
-        <div id="main-view">
-            <!-- AI Summary Section -->
-            <div id="ai-section" class="hidden mb-8">
-                <div class="ai-summary-box shadow-sm">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex items-center gap-2 text-blue-700 font-bold">
-                            <i class="fas fa-sparkles"></i>
-                            <span>✨ AI 相簿隨筆</span>
-                        </div>
-                        <div id="ai-audio-controls" class="hidden flex items-center gap-2">
-                            <button onclick="playAiSpeech()" class="text-blue-600 hover:bg-blue-50 p-2 rounded-full transition" title="播放語音">
-                                <i id="speaker-icon" class="fas fa-volume-up"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <p id="ai-summary-text" class="text-gray-700 italic leading-relaxed text-sm md:text-base">
-                        正在整理思緒中...
-                    </p>
-                </div>
-            </div>
-
-            <div id="albums-container">
-                <div id="skeleton-screen" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">
-                    <div class="animate-pulse"><div class="skeleton-card mb-4"></div><div class="h-4 bg-gray-100 rounded w-2/3 mx-auto"></div></div>
-                    <div class="animate-pulse"><div class="skeleton-card mb-4"></div><div class="h-4 bg-gray-100 rounded w-2/3 mx-auto"></div></div>
-                </div>
-            </div>
-            
-            <div id="photos-view" class="hidden-view">
-                <div class="mb-6 flex justify-end">
-                    <button onclick="generateAiSummary()" id="ai-btn" class="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 font-medium">
-                        <i class="fas fa-magic"></i>
-                        ✨ 生成回憶隨筆
-                    </button>
-                </div>
-                <div id="photos-grid-container"></div>
+        <div id="gallery-container" class="fade-in">
+            <!-- 初始骨架 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div class="aspect-square bg-gray-100 rounded-2xl animate-pulse"></div>
+                <div class="aspect-square bg-gray-100 rounded-2xl animate-pulse"></div>
+                <div class="aspect-square bg-gray-100 rounded-2xl animate-pulse"></div>
+                <div class="aspect-square bg-gray-100 rounded-2xl animate-pulse"></div>
             </div>
         </div>
     </main>
@@ -194,303 +196,138 @@
         Copyright © 新北市汐止區崇德國民小學
     </footer>
 
-    <!-- 設定視窗 -->
+    <!-- 系統設定彈窗 -->
     <div id="config-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl transform transition-all scale-100">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-gray-900">系統設定</h3>
-                <button onclick="closeConfigModal()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:bg-gray-100 rounded-full transition"><i class="fas fa-times"></i></button>
+                <button onclick="closeConfigModal()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:bg-gray-100 rounded-full transition">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
+            
             <div class="space-y-5">
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">網頁標題</label>
-                    <input type="text" id="config-site-title" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-700">
+                    <input type="text" id="config-site-title" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition text-gray-700">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">API 連結 (GAS URL)</label>
-                    <input type="text" id="config-api-url" placeholder="https://script.google.com/..." class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 text-sm">
+                    <input type="text" id="config-api-url" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition text-gray-700 text-sm">
                 </div>
+                
                 <div class="pt-6 flex flex-col gap-3">
-                    <button onclick="saveSystemConfig()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl hover:bg-blue-700 transition font-bold shadow-lg shadow-blue-200">儲存變更</button>
+                    <button id="btn-save-settings" onclick="saveSystemConfig()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl hover:bg-blue-700 transition font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
+                        <span>儲存變更</span>
+                    </button>
                     <button onclick="clearAllSettings()" class="w-full bg-transparent text-red-500 py-2 rounded-xl hover:bg-red-50 transition font-medium text-sm">清除所有本地設定</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 分享視窗 -->
+    <!-- 分享彈窗 -->
     <div id="share-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl max-w-[380px] w-full p-8 shadow-2xl text-center">
-            <h3 class="text-xl font-bold mb-2">分享相簿連結</h3>
+        <div class="bg-white rounded-3xl max-w-[360px] w-full p-8 shadow-2xl text-center">
+            <h3 class="text-xl font-bold mb-6">分享您的相簿</h3>
             <div id="qrcode" class="mb-6 flex justify-center p-4 bg-white border border-gray-100 rounded-2xl shadow-inner inline-block mx-auto"></div>
+            
             <div class="flex items-center gap-2 p-1.5 bg-gray-50 rounded-xl border border-gray-100 mb-6">
-                <input type="text" id="share-link-input" readonly class="flex-1 bg-transparent border-0 px-3 py-2 text-sm text-gray-700 outline-none truncate">
-                <button id="btn-copy-link" onclick="copyShareLink()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold">複製</button>
+                <input type="text" id="share-link-input" readonly 
+                       class="flex-1 bg-transparent border-0 px-3 py-2 text-sm text-gray-700 outline-none font-medium truncate">
+                <button id="btn-copy-link" onclick="copyShareLink()" 
+                        class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-sm shrink-0">
+                    複製
+                </button>
             </div>
-            <button onclick="closeShareModal()" class="text-gray-400 text-sm">關閉視窗</button>
+            
+            <button onclick="closeShareModal()" class="text-gray-400 text-sm hover:underline">關閉視窗</button>
         </div>
     </div>
 
-    <!-- 燈箱視窗 -->
+    <!-- 燈箱 -->
     <div id="lightbox" class="fixed inset-0 z-[100] hidden flex flex-col bg-black select-none">
         <div class="flex justify-between items-center p-4 text-white z-[110] bg-gradient-to-b from-black/80 to-transparent">
             <div class="flex items-center gap-3">
-                <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20"><i class="fas fa-arrow-left"></i></button>
+                <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition"><i class="fas fa-arrow-left"></i></button>
                 <div class="flex flex-col">
-                    <span id="lightbox-title" class="text-sm font-medium leading-tight whitespace-normal max-w-[200px] md:max-w-xl"></span>
+                    <span id="lightbox-title" class="text-sm font-medium leading-tight break-words max-w-[150px] md:max-w-md"></span>
                     <span id="lightbox-counter" class="text-[10px] text-gray-400"></span>
                 </div>
             </div>
-            <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20"><i class="fas fa-times"></i></button>
+            <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition"><i class="fas fa-times"></i></button>
         </div>
-        <button onclick="prevPhoto()" class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 z-[110]"><i class="fas fa-chevron-left text-2xl"></i></button>
-        <div id="lightbox-content" class="flex-1 flex items-center justify-center relative p-2 overflow-hidden">
-            <img id="lightbox-img" src="" class="max-h-full max-w-full object-contain shadow-2xl transition-opacity duration-300">
+        <button onclick="prevPhoto()" class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 transition z-[110]"><i class="fas fa-chevron-left text-2xl"></i></button>
+        <div id="lightbox-content" class="flex-1 flex items-center justify-center relative p-2 md:p-6 overflow-hidden">
+            <img id="lightbox-img" src="" class="max-h-full max-w-full object-contain shadow-2xl transition-all duration-300">
         </div>
-        <button onclick="nextPhoto()" class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 z-[110]"><i class="fas fa-chevron-right text-2xl"></i></button>
+        <button onclick="nextPhoto()" class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/50 transition z-[110]"><i class="fas fa-chevron-right text-2xl"></i></button>
+        <div class="md:hidden p-6 flex justify-center text-white/50 text-xs"><i class="fas fa-arrows-alt-h mr-2"></i> 左右滑動切換照片</div>
     </div>
 
-    <div id="toast"></div>
+    <div id="toast">已更新相簿封面</div>
 
     <script>
-        const apiKey = ""; // 執行環境提供的金鑰
-
-        // 參數解析與存儲
-        (function resolveUrlParameters() {
-            const searchParams = new URLSearchParams(window.location.search);
-            const querySid = searchParams.get('sid');
-            const hashParams = new URLSearchParams(window.location.hash.substring(1));
-            const hashSid = hashParams.get('sid');
-
-            if (querySid) {
-                const cleanPath = window.location.origin + window.location.pathname + '#sid=' + querySid;
-                window.location.replace(cleanPath); 
-                return;
-            }
-
-            if (hashSid) {
-                try {
-                    const decodedUrl = atob(hashSid);
-                    if (decodedUrl.startsWith('https://script.google.com/')) {
-                        localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
-                        window.history.replaceState(null, document.title, window.location.pathname);
-                    }
-                } catch (e) { console.error("SID 解碼失敗", e); }
-            }
-        })();
-
         let SCRIPT_URL = localStorage.getItem('GAS_SCRIPT_URL') || "";
         let SITE_TITLE = localStorage.getItem('GAS_SITE_TITLE') || "智慧雲端相簿";
         let allAlbums = [];
         let currentPhotos = []; 
         let currentIndex = 0;   
         let currentViewedAlbumId = null; 
-        let lastHomeScrollPos = 0;
-        let aiAudio = null;
+        let isGuestMode = false;
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.onload = () => {
+            isGuestMode = handleUrlParameters();
+            if (isGuestMode) {
+                document.getElementById('btn-config').classList.add('hidden');
+            }
             applySiteTitle();
             setupTouchEvents();
             setupKeyboardEvents();
-
             if (!SCRIPT_URL) {
                 showConfigWarning();
-                openConfigModal();
+                if (!isGuestMode) openConfigModal();
             } else {
-                fetchAlbums(true); 
+                loadAlbums();
             }
-        });
+        };
 
-        // Gemini AI 邏輯
-        async function geminiApiCall(userQuery, systemPrompt) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] }
-            };
-
-            for (let i = 0; i < 5; i++) {
-                try {
-                    const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
-                    const result = await response.json();
-                    return result.candidates?.[0]?.content?.parts?.[0]?.text;
-                } catch (e) {
-                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
-                }
+        function handleUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const apiParam = urlParams.get('api');
+            if (apiParam) {
+                SCRIPT_URL = apiParam;
+                return true; 
             }
-            throw new Error("AI 無法回應");
+            return false;
         }
 
-        async function geminiTts(text) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-            const payload = {
-                contents: [{ parts: [{ text: `Say warmly in Traditional Chinese: ${text}` }] }],
-                generationConfig: {
-                    responseModalities: ["AUDIO"],
-                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } } }
-                }
-            };
-
-            try {
-                const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await response.json();
-                const pcmData = result.candidates[0].content.parts[0].inlineData.data;
-                return pcmToWav(pcmData, 24000);
-            } catch (e) {
-                console.error("TTS 失敗", e);
-                return null;
-            }
-        }
-
-        function pcmToWav(base64Pcm, sampleRate) {
-            const binaryString = atob(base64Pcm);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-            const buffer = bytes.buffer;
-            const wavHeader = new ArrayBuffer(44);
-            const view = new DataView(wavHeader);
-            const writeString = (offset, string) => { for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i)); };
-            writeString(0, 'RIFF');
-            view.setUint32(4, 36 + buffer.byteLength, true);
-            writeString(8, 'WAVE');
-            writeString(12, 'fmt ');
-            view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
-            view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true);
-            view.setUint16(32, 2, true); view.setUint16(34, 16, true);
-            writeString(36, 'data');
-            view.setUint32(40, buffer.byteLength, true);
-            return URL.createObjectURL(new Blob([wavHeader, buffer], { type: 'audio/wav' }));
-        }
-
-        async function generateAiSummary() {
-            const albumName = document.getElementById('current-album-name').innerText;
-            const photoNames = currentPhotos.map(p => p.name).join(', ');
-            const aiBtn = document.getElementById('ai-btn');
-            const aiSection = document.getElementById('ai-section');
-            const summaryText = document.getElementById('ai-summary-text');
-            const audioControls = document.getElementById('ai-audio-controls');
-
-            aiBtn.disabled = true;
-            aiBtn.innerHTML = `<i class="fas fa-circle-notch animate-spin"></i> 生成中...`;
-            aiSection.classList.remove('hidden');
-            summaryText.innerText = "Gemini 正在瀏覽您的回憶...";
-            audioControls.classList.add('hidden');
-
-            try {
-                const systemPrompt = "你是一位回憶記錄員。請根據相簿名稱和相片檔名，寫一段 80 字內的繁體中文短評，語氣溫暖。";
-                const text = await geminiApiCall(`相簿：${albumName}。相片：${photoNames}`, systemPrompt);
-                summaryText.innerText = text;
-
-                const audioUrl = await geminiTts(text);
-                if (audioUrl) {
-                    aiAudio = new Audio(audioUrl);
-                    audioControls.classList.remove('hidden');
-                    aiAudio.onended = () => document.getElementById('speaker-icon').className = 'fas fa-volume-up';
-                }
-            } catch (e) {
-                summaryText.innerText = "目前 AI 無法連線。";
-            } finally {
-                aiBtn.disabled = false;
-                aiBtn.innerHTML = `<i class="fas fa-magic"></i> ✨ 生成回憶隨筆`;
-            }
-        }
-
-        function playAiSpeech() {
-            if (!aiAudio) return;
-            const icon = document.getElementById('speaker-icon');
-            if (aiAudio.paused) { aiAudio.play(); icon.className = 'fas fa-pause'; }
-            else { aiAudio.pause(); icon.className = 'fas fa-volume-up'; }
-        }
-
-        // 相簿核心功能
         function applySiteTitle() {
             document.title = SITE_TITLE;
-            const dt = document.getElementById('display-site-title');
-            if (dt) dt.innerText = SITE_TITLE;
+            document.getElementById('display-site-title').innerText = SITE_TITLE;
         }
 
-        async function fetchAlbums(isFirst = false) {
-            if (!SCRIPT_URL) return;
-            const local = localStorage.getItem('LOCAL_ALBUM_CACHE');
-            if (isFirst && local) {
-                try { allAlbums = JSON.parse(local); renderAlbumsGrid(); } catch(e) {}
-            }
-            try {
-                const res = await fetch(`${SCRIPT_URL}?action=getAlbums`);
-                const result = await res.json();
-                if (result.status === "success") {
-                    allAlbums = result.data;
-                    localStorage.setItem('LOCAL_ALBUM_CACHE', JSON.stringify(allAlbums));
-                    if (currentViewedAlbumId === null) renderAlbumsGrid();
+        function setAsCover(photoUrl, event) {
+            if (event) event.stopPropagation();
+            if (!currentViewedAlbumId) return;
+            localStorage.setItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`, photoUrl);
+            showToast("已成功將此照片設為封面");
+            const items = document.querySelectorAll('.photo-item');
+            items.forEach(item => {
+                const img = item.querySelector('img');
+                if (img && img.src === photoUrl) {
+                    item.classList.add('is-current-cover');
+                } else {
+                    item.classList.remove('is-current-cover');
                 }
-            } catch (e) { if (!allAlbums.length) showConfigWarning(); }
-        }
-
-        function renderAlbumsGrid() {
-            const container = document.getElementById('albums-container');
-            if (!container) return;
-            if (allAlbums.length === 0) {
-                container.innerHTML = `<div class="text-center py-20 text-gray-400">目前沒有相簿</div>`;
-                return;
-            }
-            let html = '<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">';
-            allAlbums.forEach((album, i) => {
-                const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
-                const coverUrl = customCover || (album.photos.length > 0 ? album.photos[0].url : '');
-                html += `
-                    <div class="album-card group cursor-pointer" onclick="viewAlbum(${i})">
-                        <div class="aspect-square rounded-[2rem] overflow-hidden bg-gray-50 mb-4 relative shadow-sm group-hover:shadow-xl transition-all">
-                            <img src="${coverUrl}" class="w-full h-full object-cover" onload="this.classList.add('loaded')" loading="lazy">
-                        </div>
-                        <div class="px-2">
-                            <h3 class="font-bold text-gray-900 text-sm md:text-base truncate">${album.name}</h3>
-                            <p class="text-[11px] text-gray-400 mt-1 uppercase">${album.photos.length} 張相片</p>
-                        </div>
-                    </div>`;
             });
-            html += '</div>';
-            container.innerHTML = html;
-            container.querySelectorAll('.album-card').forEach((c, i) => setTimeout(() => c.classList.add('show'), i * 30));
         }
 
-        function viewAlbum(index) {
-            const album = allAlbums[index];
-            if (!album) return;
-            lastHomeScrollPos = window.scrollY;
-            currentPhotos = album.photos;
-            currentViewedAlbumId = album.id;
-            
-            document.getElementById('albums-container').classList.add('hidden-view');
-            document.getElementById('photos-view').classList.remove('hidden-view');
-            document.getElementById('album-divider').classList.remove('hidden');
-            document.getElementById('current-album-name').innerText = album.name;
-
-            const grid = document.createElement('div');
-            grid.className = "photo-grid";
-            const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
-
-            album.photos.forEach((photo, pIdx) => {
-                const isCover = (customCover === photo.url) || (!customCover && pIdx === 0);
-                const item = document.createElement('div');
-                item.className = `photo-item ${isCover ? 'is-current-cover' : ''}`;
-                item.onclick = () => openLightbox(pIdx);
-                item.innerHTML = `<img src="${photo.url}" onload="this.classList.add('loaded')" loading="lazy"><button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn"><i class="fas fa-bookmark"></i></button>`;
-                grid.appendChild(item);
-            });
-            const pgContainer = document.getElementById('photos-grid-container');
-            pgContainer.innerHTML = '';
-            pgContainer.appendChild(grid);
-            window.scrollTo(0, 0);
-        }
-
-        function backToHome() {
-            if (aiAudio) { aiAudio.pause(); aiAudio = null; }
-            document.getElementById('ai-section').classList.add('hidden');
-            currentViewedAlbumId = null;
-            document.getElementById('photos-view').classList.add('hidden-view');
-            document.getElementById('albums-container').classList.remove('hidden-view');
-            document.getElementById('album-divider').classList.add('hidden');
-            window.scrollTo(0, lastHomeScrollPos);
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
         }
 
         function openConfigModal() {
@@ -498,74 +335,168 @@
             document.getElementById('config-site-title').value = SITE_TITLE;
             document.getElementById('config-modal').classList.add('modal-active');
         }
-        function closeConfigModal() { document.getElementById('config-modal').classList.remove('modal-active'); }
+
+        function closeConfigModal() {
+            document.getElementById('config-modal').classList.remove('modal-active');
+        }
+
         function saveSystemConfig() {
-            const api = document.getElementById('config-api-url').value.trim();
-            const title = document.getElementById('config-site-title').value.trim();
-            SCRIPT_URL = api; SITE_TITLE = title;
-            localStorage.setItem('GAS_SCRIPT_URL', api);
-            localStorage.setItem('GAS_SITE_TITLE', title);
-            applySiteTitle(); closeConfigModal(); fetchAlbums(false);
+            const apiVal = document.getElementById('config-api-url').value.trim();
+            const titleVal = document.getElementById('config-site-title').value.trim() || "智慧雲端相簿";
+            const btn = document.getElementById('btn-save-settings');
+
+            if (apiVal && !apiVal.startsWith('https://script.google.com/')) {
+                alert("無效的網址格式");
+                return;
+            }
+
+            SCRIPT_URL = apiVal;
+            SITE_TITLE = titleVal;
+            localStorage.setItem('GAS_SCRIPT_URL', apiVal);
+            localStorage.setItem('GAS_SITE_TITLE', titleVal);
+            
+            allAlbums = [];
+            applySiteTitle();
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-check"></i> <span>儲存成功</span>`;
+            btn.classList.add('btn-success');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                closeConfigModal();
+                loadAlbums();
+            }, 1000);
         }
-        function clearAllSettings() { if (confirm("確定清除？")) { localStorage.clear(); location.reload(); } }
-        function setAsCover(url, e) {
-            e.stopPropagation();
-            localStorage.setItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`, url);
-            showToast("封面已更新");
-            document.querySelectorAll('.photo-item').forEach(i => i.classList.toggle('is-current-cover', i.querySelector('img').src === url));
-            renderAlbumsGrid();
+
+        function clearAllSettings() {
+            if (confirm("⚠️ 確定要清除所有設定（包含手動設定的封面）嗎？")) {
+                localStorage.clear();
+                location.reload();
+            }
         }
-        function showToast(m) {
-            const t = document.getElementById('toast');
-            t.innerText = m; t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 2000);
+
+        async function loadAlbums() {
+            if (!SCRIPT_URL) return;
+            currentViewedAlbumId = null;
+            if (allAlbums && allAlbums.length > 0) {
+                renderAlbums();
+                return;
+            }
+            toggleLoader(true);
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getAlbums`);
+                const result = await response.json();
+                if (result.status === "success") {
+                    allAlbums = result.data;
+                    renderAlbums();
+                }
+            } catch (e) {
+                showConfigWarning();
+            } finally {
+                setTimeout(() => toggleLoader(false), 200);
+            }
         }
+
+        function renderAlbums() {
+            const container = document.getElementById('gallery-container');
+            document.getElementById('album-divider').classList.add('hidden');
+            document.getElementById('current-album-name').innerText = '';
+            
+            if (allAlbums.length === 0) {
+                container.innerHTML = `<div class="text-center py-20 text-gray-400"><i class="fas fa-folder-open text-4xl mb-4"></i><p>尚無相簿</p></div>`;
+                return;
+            }
+
+            let html = `<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-8">`;
+            allAlbums.forEach((album, index) => {
+                const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
+                let coverUrl = customCover || (album.photos.length > 0 ? album.photos[0].url : album.cover);
+
+                html += `
+                    <div onclick="viewAlbum(${index})" class="group cursor-pointer">
+                        <div class="aspect-square rounded-[2rem] overflow-hidden bg-gray-100 mb-4 relative shadow-sm group-hover:shadow-xl transition-all duration-300">
+                            <img src="${coverUrl}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" loading="lazy">
+                        </div>
+                        <div class="px-2 text-center md:text-left">
+                            <h3 class="font-bold text-gray-900 text-sm md:text-base leading-snug break-words">${album.name}</h3>
+                            <p class="text-xs text-gray-400 mt-1">${album.photos.length} 張</p>
+                        </div>
+                    </div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function viewAlbum(index) {
+            const album = allAlbums[index];
+            currentPhotos = album.photos; 
+            currentViewedAlbumId = album.id;
+            const currentCoverUrl = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
+
+            document.getElementById('album-divider').classList.remove('hidden');
+            document.getElementById('current-album-name').innerText = album.name;
+            const container = document.getElementById('gallery-container');
+            
+            let html = `<div class="photo-grid">`;
+            album.photos.forEach((photo, pIdx) => {
+                const isCover = (currentCoverUrl === photo.url) || (!currentCoverUrl && pIdx === 0);
+                html += `
+                    <div class="photo-item ${isCover ? 'is-current-cover' : ''}" onclick="openLightbox(${pIdx})">
+                        <img src="${photo.url}" loading="lazy">
+                        ${!isGuestMode ? `
+                            <button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn" title="設為封面">
+                                <i class="fas fa-bookmark"></i>
+                            </button>
+                        ` : ''}
+                    </div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
         function openShareModal() {
-            const shareUrl = `${window.location.origin + window.location.pathname}#sid=${btoa(SCRIPT_URL)}`;
+            const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            const shareUrl = SCRIPT_URL ? `${baseUrl}?api=${encodeURIComponent(SCRIPT_URL)}` : baseUrl;
             document.getElementById('share-link-input').value = shareUrl;
-            const qr = document.getElementById('qrcode'); qr.innerHTML = "";
-            new QRCode(qr, { text: shareUrl, width: 160, height: 160 });
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, { text: shareUrl, width: 160, height: 160 });
             document.getElementById('share-modal').classList.add('modal-active');
         }
         function closeShareModal() { document.getElementById('share-modal').classList.remove('modal-active'); }
         function copyShareLink() {
             const input = document.getElementById('share-link-input');
-            input.select(); document.execCommand('copy');
-            showToast("連結已複製");
+            const btn = document.getElementById('btn-copy-link');
+            input.select();
+            document.execCommand('copy');
+            btn.innerText = "已複製";
+            setTimeout(() => btn.innerText = "複製", 2000);
         }
-        function openLightbox(i) { currentIndex = i; updateLightboxContent(); document.getElementById('lightbox').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+        function openLightbox(index) { currentIndex = index; updateLightboxContent(); document.getElementById('lightbox').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
         function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); document.body.style.overflow = 'auto'; }
         function updateLightboxContent() {
-            const p = currentPhotos[currentIndex];
+            const photo = currentPhotos[currentIndex];
             const img = document.getElementById('lightbox-img');
             img.style.opacity = "0";
-            document.getElementById('lightbox-title').innerText = p.name;
-            document.getElementById('lightbox-counter').innerText = `${currentIndex + 1} / ${currentPhotos.length}`;
-            img.src = p.url;
-            img.onload = () => img.style.opacity = "1";
+            setTimeout(() => {
+                img.src = photo.url;
+                document.getElementById('lightbox-title').innerText = photo.name;
+                document.getElementById('lightbox-counter').innerText = `${currentIndex + 1} / ${currentPhotos.length}`;
+                img.style.opacity = "1";
+            }, 150);
         }
         function prevPhoto() { currentIndex = (currentIndex > 0) ? currentIndex - 1 : currentPhotos.length - 1; updateLightboxContent(); }
         function nextPhoto() { currentIndex = (currentIndex < currentPhotos.length - 1) ? currentIndex + 1 : 0; updateLightboxContent(); }
         function setupTouchEvents() {
-            let sX = 0; const c = document.getElementById('lightbox-content');
-            c.addEventListener('touchstart', e => sX = e.touches[0].clientX);
-            c.addEventListener('touchend', e => {
-                const diff = e.changedTouches[0].clientX - sX;
-                if (Math.abs(diff) > 50) diff > 0 ? prevPhoto() : nextPhoto();
-            });
+            const content = document.getElementById('lightbox-content');
+            content.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+            content.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; if(touchEndX < touchStartX - 50) nextPhoto(); if(touchEndX > touchStartX + 50) prevPhoto(); }, {passive: true});
         }
-        function setupKeyboardEvents() {
-            window.addEventListener('keydown', e => {
-                if (document.getElementById('lightbox').classList.contains('hidden')) return;
-                if (e.key === "ArrowLeft") prevPhoto();
-                if (e.key === "ArrowRight") nextPhoto();
-                if (e.key === "Escape") closeLightbox();
-            });
-        }
-        function showConfigWarning() { 
-            const c = document.getElementById('albums-container');
-            if (c) c.innerHTML = `<div class="text-center py-20 text-gray-400 bg-gray-50 rounded-3xl"><p>請點擊右上方齒輪設定 API</p></div>`; 
-        }
+        function setupKeyboardEvents() { window.addEventListener('keydown', e => { if(document.getElementById('lightbox').classList.contains('hidden')) return; if(e.key === "ArrowLeft") prevPhoto(); if(e.key === "ArrowRight") nextPhoto(); if(e.key === "Escape") closeLightbox(); }); }
+        function toggleLoader(show) { if(show) document.getElementById('gallery-container').innerHTML = `<div class="flex flex-col items-center justify-center py-32 text-gray-400"><i class="fas fa-circle-notch animate-spin text-4xl text-blue-500 mb-4"></i><p>載入中...</p></div>`; }
+        function showConfigWarning() { document.getElementById('gallery-container').innerHTML = `<div class="text-center py-20 bg-gray-50 rounded-3xl border border-gray-100"><i class="fas fa-plug text-4xl text-gray-300 mb-4"></i><p>未偵測到相簿設定。若您是管理者，請點擊右上角設定。</p></div>`; }
     </script>
 </body>
 </html>
