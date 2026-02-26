@@ -98,12 +98,6 @@
             transform: translateY(0);
         }
 
-        @media (hover: hover) {
-            .photo-item:hover img {
-                transform: scale(1.08);
-            }
-        }
-
         .modal-active { display: flex !important; }
         
         #lightbox {
@@ -149,7 +143,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        /* 骨架動畫 */
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: .5; }
@@ -168,7 +161,7 @@
             </div>
         </div>
         
-        <!-- 管理按鈕組 -->
+        <!-- 管理按鈕組：訪客模式會被 display: none -->
         <div id="toolbar-actions" class="flex items-center gap-1 md:gap-3">
             <button onclick="openShareModal()" id="btn-share" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="分享相簿">
                 <i class="fas fa-share-alt"></i>
@@ -234,15 +227,10 @@
     <!-- 分享彈窗 -->
     <div id="share-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl max-w-[380px] w-full p-8 shadow-2xl text-center">
-            <h3 class="text-xl font-bold mb-2">分享相簿給家長</h3>
-            <p class="text-xs text-gray-400 mb-6">已自動隱藏管理權限與 API 連結</p>
+            <h3 class="text-xl font-bold mb-2">分享相簿連結</h3>
+            <p class="text-xs text-gray-400 mb-6">訪客進入後將自動隱藏 API 連結與管理功能</p>
             
-            <div id="share-loading" class="py-10">
-                <i class="fas fa-circle-notch animate-spin text-3xl text-blue-500"></i>
-                <p class="text-sm text-gray-500 mt-2">正在產生短網址...</p>
-            </div>
-
-            <div id="share-content" class="hidden">
+            <div id="share-content">
                 <div id="qrcode" class="mb-6 flex justify-center p-4 bg-white border border-gray-100 rounded-2xl shadow-inner inline-block mx-auto"></div>
                 <div class="flex items-center gap-2 p-1.5 bg-gray-50 rounded-xl border border-gray-100 mb-6">
                     <input type="text" id="share-link-input" readonly 
@@ -253,12 +241,11 @@
                     </button>
                 </div>
             </div>
-            
             <button onclick="closeShareModal()" class="text-gray-400 text-sm hover:underline">關閉視窗</button>
         </div>
     </div>
 
-    <!-- 燈箱 -->
+    <!-- 燈箱 (Lightbox) -->
     <div id="lightbox" class="fixed inset-0 z-[100] hidden flex flex-col bg-black select-none">
         <div class="flex justify-between items-center p-4 text-white z-[110] bg-gradient-to-b from-black/80 to-transparent">
             <div class="flex items-center gap-3">
@@ -292,10 +279,9 @@
         window.onload = () => {
             isGuestMode = handleUrlParameters();
             
-            // 訪客模式下隱藏管理功能
+            // 訪客模式下徹底隱藏管理功能
             if (isGuestMode) {
-                document.getElementById('btn-share').style.display = 'none';
-                document.getElementById('btn-config').style.display = 'none';
+                document.getElementById('toolbar-actions').style.display = 'none';
             }
             
             applySiteTitle();
@@ -310,27 +296,40 @@
             }
         };
 
+        /**
+         * 處理 URL 參數
+         * 1. 讀取 API 資訊
+         * 2. 隨後立即抹除網址列參數，隱藏 API 連結
+         */
         function handleUrlParameters() {
             const urlParams = new URLSearchParams(window.location.search);
-            
-            // 優先讀取 sid (加密的 API 網址)
+            let foundApi = false;
+
+            // 讀取加密的 sid
             const sid = urlParams.get('sid');
             if (sid) {
                 try {
                     SCRIPT_URL = atob(sid);
-                    return true; // 視為訪客
-                } catch (e) {
-                    console.error("解密失敗", e);
+                    foundApi = true;
+                } catch (e) { console.error("解密失敗", e); }
+            } else {
+                // 讀取傳統 api 參數
+                const apiParam = urlParams.get('api');
+                if (apiParam) {
+                    SCRIPT_URL = apiParam;
+                    foundApi = true;
                 }
             }
-            
-            // 備用 api 參數
-            const apiParam = urlParams.get('api');
-            if (apiParam) {
-                SCRIPT_URL = apiParam;
-                return true; 
+
+            // --- 重要：隱藏網址列 API 連結 ---
+            if (foundApi) {
+                // 使用 history.replaceState 將網址參數移除，只留下純網址
+                const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+                return true; // 標記為訪客模式
             }
-            return false;
+            
+            return false; // 非訪客模式（可能使用本地存儲的 API）
         }
 
         function applySiteTitle() {
@@ -348,7 +347,6 @@
 
         function renderAlbumsByData() {
             if (currentViewedAlbumId) {
-                // 如果目前在相簿內，需要更新封面標籤
                 const items = document.querySelectorAll('.photo-item');
                 const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`);
                 items.forEach(item => {
@@ -493,39 +491,16 @@
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        async function openShareModal() {
-            const modal = document.getElementById('share-modal');
-            const loading = document.getElementById('share-loading');
-            const content = document.getElementById('share-content');
-            
-            modal.classList.add('modal-active');
-            loading.classList.remove('hidden');
-            content.classList.add('hidden');
-
+        function openShareModal() {
             const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             const sid = btoa(SCRIPT_URL);
-            const longUrl = `${baseUrl}?sid=${sid}`;
+            const shareUrl = `${baseUrl}?sid=${sid}`;
             
-            let finalUrl = longUrl;
-
-            // 呼叫後端短網址服務
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=shortenUrl&longUrl=${encodeURIComponent(longUrl)}`);
-                const result = await response.json();
-                if (result.status === "success" && result.shortUrl) {
-                    finalUrl = result.shortUrl;
-                }
-            } catch (e) {
-                console.warn("無法產生短網址，使用加密長網址");
-            }
-
-            document.getElementById('share-link-input').value = finalUrl;
+            document.getElementById('share-link-input').value = shareUrl;
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = "";
-            new QRCode(qrContainer, { text: finalUrl, width: 160, height: 160 });
-            
-            loading.classList.add('hidden');
-            content.classList.remove('hidden');
+            new QRCode(qrContainer, { text: shareUrl, width: 160, height: 160 });
+            document.getElementById('share-modal').classList.add('modal-active');
         }
         
         function closeShareModal() { document.getElementById('share-modal').classList.remove('modal-active'); }
