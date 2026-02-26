@@ -148,6 +148,13 @@
             display: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
+
+        /* 骨架動畫 */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     </style>
 </head>
 <body class="bg-white">
@@ -161,7 +168,7 @@
             </div>
         </div>
         
-        <!-- 分享與設定按鈕，訪客模式下會隱藏 -->
+        <!-- 管理按鈕組 -->
         <div id="toolbar-actions" class="flex items-center gap-1 md:gap-3">
             <button onclick="openShareModal()" id="btn-share" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="分享相簿">
                 <i class="fas fa-share-alt"></i>
@@ -183,7 +190,6 @@
         </div>
 
         <div id="gallery-container" class="fade-in">
-            <!-- 初始骨架 -->
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 <div class="aspect-square bg-gray-100 rounded-2xl animate-pulse"></div>
                 <div class="aspect-square bg-gray-100 rounded-2xl animate-pulse"></div>
@@ -206,7 +212,6 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
             <div class="space-y-5">
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">網頁標題</label>
@@ -216,7 +221,6 @@
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">API 連結 (GAS URL)</label>
                     <input type="text" id="config-api-url" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition text-gray-700 text-sm">
                 </div>
-                
                 <div class="pt-6 flex flex-col gap-3">
                     <button id="btn-save-settings" onclick="saveSystemConfig()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl hover:bg-blue-700 transition font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
                         <span>儲存變更</span>
@@ -229,17 +233,25 @@
 
     <!-- 分享彈窗 -->
     <div id="share-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl max-w-[360px] w-full p-8 shadow-2xl text-center">
-            <h3 class="text-xl font-bold mb-6">分享您的相簿</h3>
-            <div id="qrcode" class="mb-6 flex justify-center p-4 bg-white border border-gray-100 rounded-2xl shadow-inner inline-block mx-auto"></div>
+        <div class="bg-white rounded-3xl max-w-[380px] w-full p-8 shadow-2xl text-center">
+            <h3 class="text-xl font-bold mb-2">分享相簿給家長</h3>
+            <p class="text-xs text-gray-400 mb-6">已自動隱藏管理權限與 API 連結</p>
             
-            <div class="flex items-center gap-2 p-1.5 bg-gray-50 rounded-xl border border-gray-100 mb-6">
-                <input type="text" id="share-link-input" readonly 
-                       class="flex-1 bg-transparent border-0 px-3 py-2 text-sm text-gray-700 outline-none font-medium truncate">
-                <button id="btn-copy-link" onclick="copyShareLink()" 
-                        class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-sm shrink-0">
-                    複製
-                </button>
+            <div id="share-loading" class="py-10">
+                <i class="fas fa-circle-notch animate-spin text-3xl text-blue-500"></i>
+                <p class="text-sm text-gray-500 mt-2">正在產生短網址...</p>
+            </div>
+
+            <div id="share-content" class="hidden">
+                <div id="qrcode" class="mb-6 flex justify-center p-4 bg-white border border-gray-100 rounded-2xl shadow-inner inline-block mx-auto"></div>
+                <div class="flex items-center gap-2 p-1.5 bg-gray-50 rounded-xl border border-gray-100 mb-6">
+                    <input type="text" id="share-link-input" readonly 
+                           class="flex-1 bg-transparent border-0 px-3 py-2 text-sm text-gray-700 outline-none font-medium truncate">
+                    <button id="btn-copy-link" onclick="copyShareLink()" 
+                            class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-sm shrink-0">
+                        複製
+                    </button>
+                </div>
             </div>
             
             <button onclick="closeShareModal()" class="text-gray-400 text-sm hover:underline">關閉視窗</button>
@@ -280,10 +292,10 @@
         window.onload = () => {
             isGuestMode = handleUrlParameters();
             
-            // 如果是訪客模式，隱藏右上角的分享和設定按鈕
+            // 訪客模式下隱藏管理功能
             if (isGuestMode) {
-                document.getElementById('btn-share').classList.add('hidden');
-                document.getElementById('btn-config').classList.add('hidden');
+                document.getElementById('btn-share').style.display = 'none';
+                document.getElementById('btn-config').style.display = 'none';
             }
             
             applySiteTitle();
@@ -298,23 +310,21 @@
             }
         };
 
-        // 參數解析：支援加密過的 sid 參數來隱藏 API 網址
         function handleUrlParameters() {
             const urlParams = new URLSearchParams(window.location.search);
             
-            // 優先檢查加密參數 sid (Secure ID)
+            // 優先讀取 sid (加密的 API 網址)
             const sid = urlParams.get('sid');
             if (sid) {
                 try {
-                    // 解密 Base64 取得原始 API 網址
                     SCRIPT_URL = atob(sid);
-                    return true; // 視為訪客模式
+                    return true; // 視為訪客
                 } catch (e) {
                     console.error("解密失敗", e);
                 }
             }
             
-            // 傳統 api 參數支援
+            // 備用 api 參數
             const apiParam = urlParams.get('api');
             if (apiParam) {
                 SCRIPT_URL = apiParam;
@@ -333,15 +343,25 @@
             if (!currentViewedAlbumId) return;
             localStorage.setItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`, photoUrl);
             showToast("已成功將此照片設為封面");
-            const items = document.querySelectorAll('.photo-item');
-            items.forEach(item => {
-                const img = item.querySelector('img');
-                if (img && img.src === photoUrl) {
-                    item.classList.add('is-current-cover');
-                } else {
-                    item.classList.remove('is-current-cover');
-                }
-            });
+            renderAlbumsByData();
+        }
+
+        function renderAlbumsByData() {
+            if (currentViewedAlbumId) {
+                // 如果目前在相簿內，需要更新封面標籤
+                const items = document.querySelectorAll('.photo-item');
+                const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${currentViewedAlbumId}`);
+                items.forEach(item => {
+                    const img = item.querySelector('img');
+                    if (img && img.src === customCover) {
+                        item.classList.add('is-current-cover');
+                    } else {
+                        item.classList.remove('is-current-cover');
+                    }
+                });
+            } else {
+                renderAlbums();
+            }
         }
 
         function showToast(msg) {
@@ -391,7 +411,7 @@
         }
 
         function clearAllSettings() {
-            if (confirm("⚠️ 確定要清除所有設定（包含手動設定的封面）嗎？")) {
+            if (confirm("⚠️ 確定要清除所有設定嗎？")) {
                 localStorage.clear();
                 location.reload();
             }
@@ -400,10 +420,6 @@
         async function loadAlbums() {
             if (!SCRIPT_URL) return;
             currentViewedAlbumId = null;
-            if (allAlbums && allAlbums.length > 0) {
-                renderAlbums();
-                return;
-            }
             toggleLoader(true);
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=getAlbums`);
@@ -477,18 +493,39 @@
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        function openShareModal() {
+        async function openShareModal() {
+            const modal = document.getElementById('share-modal');
+            const loading = document.getElementById('share-loading');
+            const content = document.getElementById('share-content');
+            
+            modal.classList.add('modal-active');
+            loading.classList.remove('hidden');
+            content.classList.add('hidden');
+
             const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            
-            // 使用 Base64 編碼 API 連結，隱藏原始網址
             const sid = btoa(SCRIPT_URL);
-            const shareUrl = `${baseUrl}?sid=${sid}`;
+            const longUrl = `${baseUrl}?sid=${sid}`;
             
-            document.getElementById('share-link-input').value = shareUrl;
+            let finalUrl = longUrl;
+
+            // 呼叫後端短網址服務
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=shortenUrl&longUrl=${encodeURIComponent(longUrl)}`);
+                const result = await response.json();
+                if (result.status === "success" && result.shortUrl) {
+                    finalUrl = result.shortUrl;
+                }
+            } catch (e) {
+                console.warn("無法產生短網址，使用加密長網址");
+            }
+
+            document.getElementById('share-link-input').value = finalUrl;
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = "";
-            new QRCode(qrContainer, { text: shareUrl, width: 160, height: 160 });
-            document.getElementById('share-modal').classList.add('modal-active');
+            new QRCode(qrContainer, { text: finalUrl, width: 160, height: 160 });
+            
+            loading.classList.add('hidden');
+            content.classList.remove('hidden');
         }
         
         function closeShareModal() { document.getElementById('share-modal').classList.remove('modal-active'); }
@@ -518,13 +555,21 @@
         }
         function prevPhoto() { currentIndex = (currentIndex > 0) ? currentIndex - 1 : currentPhotos.length - 1; updateLightboxContent(); }
         function nextPhoto() { currentIndex = (currentIndex < currentPhotos.length - 1) ? currentIndex + 1 : 0; updateLightboxContent(); }
+        
+        let touchStartX = 0;
+        let touchEndX = 0;
         function setupTouchEvents() {
             const content = document.getElementById('lightbox-content');
             content.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
             content.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; if(touchEndX < touchStartX - 50) nextPhoto(); if(touchEndX > touchStartX + 50) prevPhoto(); }, {passive: true});
         }
         function setupKeyboardEvents() { window.addEventListener('keydown', e => { if(document.getElementById('lightbox').classList.contains('hidden')) return; if(e.key === "ArrowLeft") prevPhoto(); if(e.key === "ArrowRight") nextPhoto(); if(e.key === "Escape") closeLightbox(); }); }
-        function toggleLoader(show) { if(show) document.getElementById('gallery-container').innerHTML = `<div class="flex flex-col items-center justify-center py-32 text-gray-400"><i class="fas fa-circle-notch animate-spin text-4xl text-blue-500 mb-4"></i><p>載入中...</p></div>`; }
+        function toggleLoader(show) { 
+            const container = document.getElementById('gallery-container');
+            if(show) {
+                container.innerHTML = `<div class="flex flex-col items-center justify-center py-32 text-gray-400"><i class="fas fa-circle-notch animate-spin text-4xl text-blue-500 mb-4"></i><p>載入中...</p></div>`;
+            }
+        }
         function showConfigWarning() { document.getElementById('gallery-container').innerHTML = `<div class="text-center py-20 bg-gray-50 rounded-3xl border border-gray-100"><i class="fas fa-plug text-4xl text-gray-300 mb-4"></i><p>未偵測到相簿設定。若您是管理者，請點擊右上角設定。</p></div>`; }
     </script>
 </body>
