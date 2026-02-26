@@ -173,9 +173,11 @@
             <button onclick="refreshData()" id="btn-refresh" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="強制更新資料">
                 <i class="fas fa-sync-alt" id="refresh-icon"></i>
             </button>
+            <!-- 分享按鈕：訪客模式時會隱藏 -->
             <button onclick="openShareModal()" id="btn-share" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="分享相簿">
                 <i class="fas fa-share-alt"></i>
             </button>
+            <!-- 設定按鈕：訪客模式時會隱藏 -->
             <button onclick="openConfigModal()" id="btn-config" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="系統設定">
                 <i class="fas fa-cog"></i>
             </button>
@@ -290,9 +292,13 @@
 
         window.onload = () => {
             isGuestMode = handleUrlParameters();
+            
+            // 如果是訪客模式（透過分享連結進入），隱藏設定與分享按鈕
             if (isGuestMode) {
                 document.getElementById('btn-config').classList.add('hidden');
+                document.getElementById('btn-share').classList.add('hidden');
             }
+            
             applySiteTitle();
             setupTouchEvents();
             setupKeyboardEvents();
@@ -402,7 +408,6 @@
 
             toggleLoader(true);
             try {
-                // 指向 GAS 的請求，加入 nocache 參數確保開發測試準確
                 const response = await fetch(`${SCRIPT_URL}?action=getAlbums&t=${Date.now()}`);
                 const result = await response.json();
                 if (result.status === "success") {
