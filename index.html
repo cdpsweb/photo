@@ -161,6 +161,7 @@
             </div>
         </div>
         
+        <!-- 分享與設定按鈕，訪客模式下會隱藏 -->
         <div id="toolbar-actions" class="flex items-center gap-1 md:gap-3">
             <button onclick="openShareModal()" id="btn-share" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="分享相簿">
                 <i class="fas fa-share-alt"></i>
@@ -278,12 +279,17 @@
 
         window.onload = () => {
             isGuestMode = handleUrlParameters();
+            
+            // 如果是訪客模式，隱藏右上角的分享和設定按鈕
             if (isGuestMode) {
+                document.getElementById('btn-share').classList.add('hidden');
                 document.getElementById('btn-config').classList.add('hidden');
             }
+            
             applySiteTitle();
             setupTouchEvents();
             setupKeyboardEvents();
+            
             if (!SCRIPT_URL) {
                 showConfigWarning();
                 if (!isGuestMode) openConfigModal();
@@ -292,8 +298,23 @@
             }
         };
 
+        // 參數解析：支援加密過的 sid 參數來隱藏 API 網址
         function handleUrlParameters() {
             const urlParams = new URLSearchParams(window.location.search);
+            
+            // 優先檢查加密參數 sid (Secure ID)
+            const sid = urlParams.get('sid');
+            if (sid) {
+                try {
+                    // 解密 Base64 取得原始 API 網址
+                    SCRIPT_URL = atob(sid);
+                    return true; // 視為訪客模式
+                } catch (e) {
+                    console.error("解密失敗", e);
+                }
+            }
+            
+            // 傳統 api 參數支援
             const apiParam = urlParams.get('api');
             if (apiParam) {
                 SCRIPT_URL = apiParam;
@@ -458,14 +479,20 @@
 
         function openShareModal() {
             const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            const shareUrl = SCRIPT_URL ? `${baseUrl}?api=${encodeURIComponent(SCRIPT_URL)}` : baseUrl;
+            
+            // 使用 Base64 編碼 API 連結，隱藏原始網址
+            const sid = btoa(SCRIPT_URL);
+            const shareUrl = `${baseUrl}?sid=${sid}`;
+            
             document.getElementById('share-link-input').value = shareUrl;
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = "";
             new QRCode(qrContainer, { text: shareUrl, width: 160, height: 160 });
             document.getElementById('share-modal').classList.add('modal-active');
         }
+        
         function closeShareModal() { document.getElementById('share-modal').classList.remove('modal-active'); }
+        
         function copyShareLink() {
             const input = document.getElementById('share-link-input');
             const btn = document.getElementById('btn-copy-link');
@@ -474,8 +501,10 @@
             btn.innerText = "已複製";
             setTimeout(() => btn.innerText = "複製", 2000);
         }
+        
         function openLightbox(index) { currentIndex = index; updateLightboxContent(); document.getElementById('lightbox').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
         function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+        
         function updateLightboxContent() {
             const photo = currentPhotos[currentIndex];
             const img = document.getElementById('lightbox-img');
