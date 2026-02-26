@@ -242,13 +242,21 @@
             let sid = urlParams.get('sid');
             if (sid) {
                 try {
-                    SCRIPT_URL = atob(sid);
+                    // 解碼並將 API 連結存入 localStorage
+                    const decodedUrl = atob(sid);
+                    if (decodedUrl.startsWith('https://script.google.com/')) {
+                        SCRIPT_URL = decodedUrl;
+                        localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
+                    }
+                    
+                    // 清理網址列，保持美觀
                     const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                     window.history.replaceState({}, document.title, cleanUrl);
                     return true;
                 } catch (e) { return false; }
             }
-            return false;
+            // 如果網址沒有 sid，但本地有存過，也算是訪客模式（由分享連結進入過的人）
+            return localStorage.getItem('GAS_SCRIPT_URL') !== null;
         }
 
         function applySiteTitle() {
