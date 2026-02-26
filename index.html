@@ -32,7 +32,6 @@
             border-bottom: 1px solid #dadce0;
         }
 
-        /* 優化網格效能 */
         .photo-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -113,6 +112,7 @@
             </div>
         </div>
         
+        <!-- 管理介面容器 -->
         <div id="toolbar-actions" class="flex items-center gap-1 md:gap-3">
             <button onclick="openShareModal()" id="btn-share" class="p-2.5 text-gray-500 hover:bg-gray-100 rounded-full transition" title="分享相簿">
                 <i class="fas fa-share-alt"></i>
@@ -134,7 +134,6 @@
 
         <div id="main-view">
             <div id="albums-container">
-                <!-- 骨架屏 -->
                 <div id="skeleton-screen" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                     <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
                     <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
@@ -223,15 +222,26 @@
         let lastHomeScrollPos = 0;
 
         window.onload = () => {
+            // 優先處理 URL 參數
+            const params = new URLSearchParams(window.location.search);
+            const hasSid = params.has('sid');
+            
             isGuestMode = handleUrlParameters();
-            if (isGuestMode) document.getElementById('toolbar-actions').style.display = 'none';
+            
+            // 只有在網址明確帶有 sid 時才隱藏工具列（代表是點分享連結進來的）
+            if (hasSid) {
+                document.getElementById('toolbar-actions').classList.add('hidden');
+            } else {
+                document.getElementById('toolbar-actions').classList.remove('hidden');
+            }
+
             applySiteTitle();
             setupTouchEvents();
             setupKeyboardEvents();
             
             if (!SCRIPT_URL) {
                 showConfigWarning();
-                if (!isGuestMode) openConfigModal();
+                if (!hasSid) openConfigModal();
             } else {
                 fetchAlbums(true); 
             }
@@ -242,21 +252,17 @@
             let sid = urlParams.get('sid');
             if (sid) {
                 try {
-                    // 解碼並將 API 連結存入 localStorage
                     const decodedUrl = atob(sid);
                     if (decodedUrl.startsWith('https://script.google.com/')) {
                         SCRIPT_URL = decodedUrl;
                         localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
                     }
-                    
-                    // 清理網址列，保持美觀
                     const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                     window.history.replaceState({}, document.title, cleanUrl);
                     return true;
                 } catch (e) { return false; }
             }
-            // 如果網址沒有 sid，但本地有存過，也算是訪客模式（由分享連結進入過的人）
-            return localStorage.getItem('GAS_SCRIPT_URL') !== null;
+            return false;
         }
 
         function applySiteTitle() {
@@ -279,9 +285,7 @@
                 if (result.status === "success") {
                     allAlbums = result.data;
                     localStorage.setItem('LOCAL_ALBUM_CACHE', JSON.stringify(allAlbums));
-                    if (!currentViewedAlbumId) {
-                        renderAlbumsGrid();
-                    }
+                    if (!currentViewedAlbumId) renderAlbumsGrid();
                 }
             } catch (e) {
                 if (!allAlbums.length) showConfigWarning();
@@ -326,10 +330,7 @@
         function viewAlbum(index, shouldScroll = true) {
             const album = allAlbums[index];
             if (!album) return;
-
-            if (currentViewedAlbumId === null) {
-                lastHomeScrollPos = window.scrollY;
-            }
+            if (currentViewedAlbumId === null) lastHomeScrollPos = window.scrollY;
 
             currentPhotos = album.photos; 
             currentViewedAlbumId = album.id;
@@ -342,7 +343,6 @@
 
             const gridContainer = document.getElementById('photos-grid-container');
             gridContainer.innerHTML = ''; 
-
             const photoGrid = document.createElement('div');
             photoGrid.className = "photo-grid";
             const fragment = document.createDocumentFragment();
@@ -361,22 +361,17 @@
             });
             photoGrid.appendChild(fragment);
             gridContainer.appendChild(photoGrid);
-
             if (shouldScroll) window.scrollTo(0, 0);
         }
 
         function backToHome() {
             if (currentViewedAlbumId === null) return; 
-
             currentViewedAlbumId = null;
             sessionStorage.removeItem('CURRENT_ALBUM_INDEX');
-
             document.getElementById('photos-view').classList.add('hidden-view');
             document.getElementById('albums-container').classList.remove('hidden-view');
             document.getElementById('album-divider').classList.add('hidden');
             document.getElementById('current-album-name').innerText = '';
-            document.getElementById('photos-grid-container').innerHTML = '';
-
             window.scrollTo(0, lastHomeScrollPos);
         }
 
