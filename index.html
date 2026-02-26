@@ -134,11 +134,9 @@
 
         <div id="main-view">
             <div id="albums-container">
-                <!-- Skeleton 預設顯示，加快體感載入速度 -->
                 <div id="skeleton-screen" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">
                     <div class="animate-pulse"><div class="skeleton-card mb-4"></div><div class="h-4 bg-gray-100 rounded w-2/3 mx-auto"></div></div>
                     <div class="animate-pulse"><div class="skeleton-card mb-4"></div><div class="h-4 bg-gray-100 rounded w-2/3 mx-auto"></div></div>
-                    <div class="animate-pulse hidden md:block"><div class="skeleton-card mb-4"></div><div class="h-4 bg-gray-100 rounded w-2/3 mx-auto"></div></div>
                     <div class="animate-pulse hidden md:block"><div class="skeleton-card mb-4"></div><div class="h-4 bg-gray-100 rounded w-2/3 mx-auto"></div></div>
                 </div>
             </div>
@@ -153,7 +151,6 @@
         Copyright © 新北市汐止區崇德國民小學
     </footer>
 
-    <!-- 彈窗內容保持不變，邏輯在 Script 優化 -->
     <div id="config-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl">
             <div class="flex justify-between items-center mb-6">
@@ -177,7 +174,6 @@
         </div>
     </div>
 
-    <!-- 分享彈窗 -->
     <div id="share-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl max-w-[380px] w-full p-8 shadow-2xl text-center">
             <h3 class="text-xl font-bold mb-2">分享相簿連結</h3>
@@ -190,7 +186,6 @@
         </div>
     </div>
 
-    <!-- 燈箱內容保持不變 -->
     <div id="lightbox" class="fixed inset-0 z-[100] hidden flex flex-col bg-black select-none">
         <div class="flex justify-between items-center p-4 text-white z-[110] bg-gradient-to-b from-black/80 to-transparent">
             <div class="flex items-center gap-3">
@@ -212,33 +207,56 @@
     <div id="toast"></div>
 
     <script>
+        // 立即處理網址參數，避免在 DOMContentLoaded 觸發重整
         let SCRIPT_URL = localStorage.getItem('GAS_SCRIPT_URL') || "";
         let SITE_TITLE = localStorage.getItem('GAS_SITE_TITLE') || "智慧雲端相簿";
+        
+        function handleUrlParameters() {
+            // 使用 sessionStorage 防止同一個 Session 中重複執行歷史狀態變更
+            if (sessionStorage.getItem('SID_PROCESSED')) return;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const sid = urlParams.get('sid');
+            
+            if (sid) {
+                try {
+                    const decodedUrl = atob(sid);
+                    if (decodedUrl.startsWith('https://script.google.com/')) {
+                        if (localStorage.getItem('GAS_SCRIPT_URL') !== decodedUrl) {
+                            localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
+                            SCRIPT_URL = decodedUrl;
+                        }
+                        // 清理網址參數
+                        const cleanUrl = window.location.origin + window.location.pathname;
+                        window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+                        sessionStorage.setItem('SID_PROCESSED', 'true');
+                    }
+                } catch (e) { console.warn("SID 解析跳過"); }
+            }
+        }
+        
+        // 執行網址處理
+        handleUrlParameters();
+
         let allAlbums = [];
         let currentPhotos = []; 
         let currentIndex = 0;   
         let currentViewedAlbumId = null; 
         let lastHomeScrollPos = 0;
 
-        // 初始化：優先處理網址與 UI
         window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const sid = params.get('sid');
             
-            // 1. 處理網址參數 (不重整，僅清理)
-            handleUrlParameters();
-            
-            // 2. 立即套用 UI 標題
             applySiteTitle();
             setupTouchEvents();
             setupKeyboardEvents();
 
-            // 3. 處理訪客模式顯示
-            if (sid) {
-                document.getElementById('toolbar-actions').classList.add('hidden');
+            if (sid || !document.getElementById('btn-config')) {
+                const toolbar = document.getElementById('toolbar-actions');
+                if (toolbar) toolbar.classList.add('hidden');
             }
 
-            // 4. 開始抓取數據
             if (!SCRIPT_URL) {
                 showConfigWarning();
                 if (!sid) openConfigModal();
@@ -247,59 +265,31 @@
             }
         });
 
-        function handleUrlParameters() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const sid = urlParams.get('sid');
-            
-            if (sid) {
-                try {
-                    const decodedUrl = atob(sid);
-                    if (decodedUrl.startsWith('https://script.google.com/')) {
-                        // 只有不同才寫入
-                        if (localStorage.getItem('GAS_SCRIPT_URL') !== decodedUrl) {
-                            localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
-                            SCRIPT_URL = decodedUrl;
-                        }
-                        
-                        // 【關鍵優化】使用 replaceState 移除參數，但不引發重整
-                        // 僅在網址含有查詢字串時清理一次
-                        if (window.location.search) {
-                            const cleanUrl = window.location.origin + window.location.pathname;
-                            window.history.replaceState({path: cleanUrl}, '', cleanUrl);
-                        }
-                    }
-                } catch (e) { console.warn("SID 解析跳過"); }
-            }
-        }
-
         function applySiteTitle() {
             document.title = SITE_TITLE;
-            document.getElementById('display-site-title').innerText = SITE_TITLE;
+            const displayTitle = document.getElementById('display-site-title');
+            if (displayTitle) displayTitle.innerText = SITE_TITLE;
         }
 
         async function fetchAlbums(isFirstLoad = false) {
             if (!SCRIPT_URL) return;
             
-            // 優先從本地快取渲染，達到「秒開」效果
             const localData = localStorage.getItem('LOCAL_ALBUM_CACHE');
             if (isFirstLoad && localData) {
-                allAlbums = JSON.parse(localData);
-                renderAlbumsGrid();
-                checkAndRestoreState();
+                try {
+                    allAlbums = JSON.parse(localData);
+                    renderAlbumsGrid();
+                    checkAndRestoreState();
+                } catch(e) { localStorage.removeItem('LOCAL_ALBUM_CACHE'); }
             }
 
             try {
-                // 背景靜默更新數據
                 const response = await fetch(`${SCRIPT_URL}?action=getAlbums`);
                 const result = await response.json();
                 if (result.status === "success") {
                     allAlbums = result.data;
                     localStorage.setItem('LOCAL_ALBUM_CACHE', JSON.stringify(allAlbums));
-                    
-                    // 如果用戶還在首頁，靜態更新 UI
-                    if (currentViewedAlbumId === null) {
-                        renderAlbumsGrid();
-                    }
+                    if (currentViewedAlbumId === null) renderAlbumsGrid();
                 }
             } catch (e) {
                 if (!allAlbums.length) showConfigWarning();
@@ -315,6 +305,7 @@
 
         function renderAlbumsGrid() {
             const container = document.getElementById('albums-container');
+            if (!container) return;
             container.innerHTML = '';
             const grid = document.createElement('div');
             grid.className = "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8";
@@ -400,7 +391,6 @@
                 return alert("請輸入正確的 Google Script 網址");
             }
             
-            // 立即反饋：顯示 skeleton 並關閉彈窗
             SCRIPT_URL = api;
             SITE_TITLE = title;
             localStorage.setItem('GAS_SCRIPT_URL', api);
@@ -408,16 +398,14 @@
             
             applySiteTitle();
             closeConfigModal();
-            showToast("正在連接 API 並取得相簿...");
+            showToast("正在連接 API...");
             
-            // 顯示 Skeleton
             document.getElementById('albums-container').innerHTML = `
                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                     <div class="animate-pulse"><div class="skeleton-card mb-4"></div></div>
                     <div class="animate-pulse"><div class="skeleton-card mb-4"></div></div>
                 </div>`;
             
-            // 異步執行
             fetchAlbums(false);
         }
         
@@ -441,8 +429,10 @@
 
         function showToast(m) {
             const t = document.getElementById('toast');
-            t.innerText = m; t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 2500);
+            if (t) {
+                t.innerText = m; t.style.display = 'block';
+                setTimeout(() => t.style.display = 'none', 2500);
+            }
         }
 
         function openShareModal() {
@@ -460,7 +450,6 @@
             showToast("分享連結已複製");
         }
 
-        // 燈箱邏輯
         function openLightbox(i) { currentIndex = i; updateLightboxContent(); document.getElementById('lightbox').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
         function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); document.body.style.overflow = 'auto'; }
         function updateLightboxContent() {
@@ -493,7 +482,8 @@
             });
         }
         function showConfigWarning() { 
-            document.getElementById('albums-container').innerHTML = `<div class="text-center py-20 text-gray-400 bg-gray-50 rounded-3xl"><i class="fas fa-plug mb-4 text-3xl"></i><p>尚未設定 API 連結</p></div>`; 
+            const container = document.getElementById('albums-container');
+            if (container) container.innerHTML = `<div class="text-center py-20 text-gray-400 bg-gray-50 rounded-3xl"><i class="fas fa-plug mb-4 text-3xl"></i><p>尚未設定 API 連結</p></div>`; 
         }
     </script>
 </body>
