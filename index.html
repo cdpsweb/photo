@@ -37,7 +37,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 2px;
-            content-visibility: auto; /* 僅渲染可見區域 */
+            content-visibility: auto;
         }
         
         @media (min-width: 768px) {
@@ -125,24 +125,22 @@
 
     <main class="max-w-[1600px] mx-auto p-4 md:p-8 w-full">
         <div id="breadcrumb" class="mb-6 text-sm flex items-center gap-2 text-gray-500 overflow-x-auto whitespace-nowrap pb-2 md:pb-0 no-scrollbar">
-            <button class="hover:text-blue-600 flex items-center gap-1 transition-colors" onclick="backToHome()">
+            <button class="hover:text-blue-600 flex items-center gap-1 transition-colors shrink-0" onclick="backToHome()">
                 <i class="fas fa-home text-xs"></i> 所有相簿
             </button>
-            <span id="album-divider" class="hidden text-gray-300">/</span>
-            <span id="current-album-name" class="font-bold text-gray-900 break-words"></span>
+            <span id="album-divider" class="hidden text-gray-300 shrink-0">/</span>
+            <span id="current-album-name" class="font-bold text-gray-900 whitespace-normal"></span>
         </div>
 
-        <!-- 視圖切換容器 -->
         <div id="main-view">
-            <!-- 所有相簿首頁容器 -->
             <div id="albums-container">
+                <!-- 骨架屏 -->
                 <div id="skeleton-screen" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                     <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
                     <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
                 </div>
             </div>
             
-            <!-- 單個相簿內容容器 (初始隱藏) -->
             <div id="photos-view" class="hidden-view">
                 <div id="photos-grid-container"></div>
             </div>
@@ -192,13 +190,13 @@
         </div>
     </div>
 
-    <!-- 燈箱 (Lightbox) -->
+    <!-- 燈箱 -->
     <div id="lightbox" class="fixed inset-0 z-[100] hidden flex flex-col bg-black select-none">
         <div class="flex justify-between items-center p-4 text-white z-[110] bg-gradient-to-b from-black/80 to-transparent">
             <div class="flex items-center gap-3">
                 <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20"><i class="fas fa-arrow-left"></i></button>
                 <div class="flex flex-col">
-                    <span id="lightbox-title" class="text-sm font-medium leading-tight truncate max-w-[200px]"></span>
+                    <span id="lightbox-title" class="text-sm font-medium leading-tight whitespace-normal max-w-[200px] md:max-w-xl"></span>
                     <span id="lightbox-counter" class="text-[10px] text-gray-400"></span>
                 </div>
             </div>
@@ -273,7 +271,6 @@
                 if (result.status === "success") {
                     allAlbums = result.data;
                     localStorage.setItem('LOCAL_ALBUM_CACHE', JSON.stringify(allAlbums));
-                    // 如果目前不在相簿內，就重新繪製列表
                     if (!currentViewedAlbumId) {
                         renderAlbumsGrid();
                     }
@@ -290,7 +287,6 @@
             }
         }
 
-        // 核心優化：渲染首頁列表並保存到固定容器
         function renderAlbumsGrid() {
             const container = document.getElementById('albums-container');
             container.innerHTML = '';
@@ -309,8 +305,8 @@
                         <img src="${coverUrl}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" onload="this.classList.add('loaded')" loading="lazy">
                     </div>
                     <div class="px-2 text-center md:text-left">
-                        <h3 class="font-bold text-gray-900 text-sm md:text-base leading-snug truncate">${album.name}</h3>
-                        <p class="text-xs text-gray-400 mt-1">${album.photos.length} 張相片</p>
+                        <h3 class="font-bold text-gray-900 text-sm md:text-base leading-tight whitespace-normal">${album.name}</h3>
+                        <p class="text-[11px] text-gray-400 mt-1.5 uppercase tracking-wide font-medium">${album.photos.length} 張相片</p>
                     </div>`;
                 fragment.appendChild(card);
                 requestAnimationFrame(() => setTimeout(() => card.classList.add('show'), i * 30));
@@ -319,12 +315,10 @@
             container.appendChild(grid);
         }
 
-        // 切換到相簿視圖 (不刪除首頁節點)
         function viewAlbum(index, shouldScroll = true) {
             const album = allAlbums[index];
             if (!album) return;
 
-            // 記錄首頁滾動位置
             if (currentViewedAlbumId === null) {
                 lastHomeScrollPos = window.scrollY;
             }
@@ -333,14 +327,13 @@
             currentViewedAlbumId = album.id;
             sessionStorage.setItem('CURRENT_ALBUM_INDEX', index);
             
-            // UI 切換
             document.getElementById('albums-container').classList.add('hidden-view');
             document.getElementById('photos-view').classList.remove('hidden-view');
             document.getElementById('album-divider').classList.remove('hidden');
             document.getElementById('current-album-name').innerText = album.name;
 
             const gridContainer = document.getElementById('photos-grid-container');
-            gridContainer.innerHTML = ''; // 相簿內頁照片較多，點進去時才渲染
+            gridContainer.innerHTML = ''; 
 
             const photoGrid = document.createElement('div');
             photoGrid.className = "photo-grid";
@@ -364,23 +357,18 @@
             if (shouldScroll) window.scrollTo(0, 0);
         }
 
-        // 核心優化：點擊「所有相簿」瞬間跳回
         function backToHome() {
-            if (currentViewedAlbumId === null) return; // 本來就在首頁
+            if (currentViewedAlbumId === null) return; 
 
             currentViewedAlbumId = null;
             sessionStorage.removeItem('CURRENT_ALBUM_INDEX');
 
-            // 僅做 CSS 隱藏/顯示切換，極速！
             document.getElementById('photos-view').classList.add('hidden-view');
             document.getElementById('albums-container').classList.remove('hidden-view');
             document.getElementById('album-divider').classList.add('hidden');
             document.getElementById('current-album-name').innerText = '';
-
-            // 釋放相簿內頁內存
             document.getElementById('photos-grid-container').innerHTML = '';
 
-            // 恢復滾動位置
             window.scrollTo(0, lastHomeScrollPos);
         }
 
@@ -392,7 +380,6 @@
                 if (item.querySelector('img').src === photoUrl) item.classList.add('is-current-cover');
                 else item.classList.remove('is-current-cover');
             });
-            // 同步首頁封面
             renderAlbumsGrid();
         }
 
