@@ -208,26 +208,32 @@
 
     <script>
         /**
-         * 【深度修正】精準控制網址清理
-         * 解決手動重整頁面時，因為無意義的 replaceState 導致的閃爍
+         * 【根本解決】自動重整/閃爍問題
+         * 1. 只有當網址真的含有 ?sid= 時才進入邏輯。
+         * 2. 使用 sessionStorage 鎖定，確保「清理網址」的操作在本次瀏覽中只發生一次。
+         * 3. 手動重整時，網址已無 sid 且鎖已啟用，將完全跳過 replaceState，徹底消除閃爍。
          */
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
             const sid = urlParams.get('sid');
+            const hasBeenProcessed = sessionStorage.getItem('APP_URL_CLEANED');
             
-            // 只有當網址列真的存在 sid 參數時，才進行處理
-            if (sid && sid.trim() !== "") {
+            // 只有「有參數」且「本次對話尚未清理過」才執行
+            if (sid && !hasBeenProcessed) {
                 try {
                     const decodedUrl = atob(sid);
                     if (decodedUrl.startsWith('https://script.google.com/')) {
                         localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
                         
-                        // 處理完畢後，清理網址。僅在 sid 存在時執行，避免首頁重整時重複觸發
+                        // 標記已清理，防止之後任何重整動作觸發二次處理
+                        sessionStorage.setItem('APP_URL_CLEANED', 'true');
+                        
+                        // 清理網址參數
                         const cleanUrl = window.location.origin + window.location.pathname;
                         window.history.replaceState(null, '', cleanUrl);
                     }
                 } catch (e) {
-                    console.error("SID 解析失效", e);
+                    console.error("SID 處理失敗", e);
                 }
             }
         })();
@@ -249,8 +255,10 @@
 
             if (!SCRIPT_URL) {
                 showConfigWarning();
-                const hasSidInUrl = new URLSearchParams(window.location.search).has('sid');
-                if (!hasSidInUrl) openConfigModal();
+                // 只有網址真的沒 sid 且沒 API 才開設定，避免干擾 sid 處理
+                if (!new URLSearchParams(window.location.search).has('sid')) {
+                    openConfigModal();
+                }
             } else {
                 fetchAlbums(true); 
             }
@@ -265,7 +273,7 @@
         async function fetchAlbums(isFirstLoad = false) {
             if (!SCRIPT_URL) return;
             
-            // 優先渲染快取，減少空白感與閃爍
+            // 優先渲染快取，防止 API 延遲導致的閃爍
             const localData = localStorage.getItem('LOCAL_ALBUM_CACHE');
             if (isFirstLoad && localData) {
                 try {
@@ -284,7 +292,7 @@
                     allAlbums = result.data;
                     localStorage.setItem('LOCAL_ALBUM_CACHE', JSON.stringify(allAlbums));
                     
-                    // 僅在目前為首頁視圖時才執行 Grid 更新，避免干擾相簿內部瀏覽
+                    // 僅在首頁時更新 Grid，避免在查看相簿時畫面被刷新
                     if (currentViewedAlbumId === null) {
                         renderAlbumsGrid();
                     }
@@ -305,11 +313,10 @@
             const container = document.getElementById('albums-container');
             if (!container) return;
             
-            // 如果內容沒變，則不重複操作 DOM 以減少閃爍
             const gridHTML = generateAlbumsGridHTML();
+            // 比對 HTML 是否有變，減少不必要的 DOM 操作
             if (container.innerHTML !== gridHTML) {
                 container.innerHTML = gridHTML;
-                // 加入顯示動畫
                 const cards = container.querySelectorAll('.album-card');
                 cards.forEach((card, i) => {
                     setTimeout(() => card.classList.add('show'), i * 30);
