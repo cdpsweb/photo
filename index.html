@@ -74,6 +74,19 @@
             opacity: 1;
         }
 
+        .album-card {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .album-card.show {
+            animation: cardFadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes cardFadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .set-cover-btn {
             position: absolute;
             top: 8px;
@@ -106,14 +119,6 @@
         }
 
         .modal-active { display: flex !important; }
-        
-        .fade-in {
-            animation: fadeIn 0.2s ease-out forwards;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -171,9 +176,9 @@
             <span id="current-album-name" class="font-bold text-gray-900 break-words"></span>
         </div>
 
-        <div id="gallery-container" class="fade-in">
-            <!-- 初始加載骨架屏 -->
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+        <div id="gallery-container">
+            <!-- 骨架屏 -->
+            <div id="skeleton-screen" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                 <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
                 <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
                 <div class="space-y-3"><div class="aspect-square bg-gray-50 rounded-[2rem] animate-pulse"></div><div class="h-4 bg-gray-50 rounded w-2/3 mx-auto"></div></div>
@@ -297,7 +302,6 @@
         async function loadAlbums(isFirstLoad = false) {
             if (!SCRIPT_URL) return;
             
-            // 如果是點擊「所有相簿」按鈕跳回首頁，清除狀態
             if (!isFirstLoad) {
                 sessionStorage.removeItem('CURRENT_ALBUM_INDEX');
                 currentViewedAlbumId = null;
@@ -307,7 +311,7 @@
             if (isFirstLoad && localData) {
                 allAlbums = JSON.parse(localData);
                 renderAlbums();
-                checkAndRestoreState(); // 檢查是否需要跳轉回之前的相簿
+                checkAndRestoreState();
             } else {
                 toggleLoader(true);
             }
@@ -318,8 +322,6 @@
                 if (result.status === "success") {
                     allAlbums = result.data;
                     localStorage.setItem('LOCAL_ALBUM_CACHE', JSON.stringify(allAlbums));
-                    
-                    // 只有在首頁模式才重新渲染，避免在看相簿時被刷掉
                     if (!currentViewedAlbumId) {
                         renderAlbums();
                         if (isFirstLoad) checkAndRestoreState();
@@ -332,14 +334,14 @@
             }
         }
 
-        // 檢查並恢復之前的瀏覽狀態
         function checkAndRestoreState() {
             const savedIndex = sessionStorage.getItem('CURRENT_ALBUM_INDEX');
             if (savedIndex !== null && allAlbums[savedIndex]) {
-                viewAlbum(parseInt(savedIndex), false); // false 表示不滾動到頂部，維持原本位置感
+                viewAlbum(parseInt(savedIndex), false);
             }
         }
 
+        // 優化渲染邏輯：分段載入避免阻塞
         function renderAlbums() {
             const container = document.getElementById('gallery-container');
             document.getElementById('album-divider').classList.add('hidden');
@@ -350,13 +352,29 @@
                 return;
             }
 
-            let html = `<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">`;
-            allAlbums.forEach((album, index) => {
-                const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
-                let coverUrl = customCover || (album.photos.length > 0 ? album.photos[0].url : '');
-                
-                html += `
-                    <div onclick="viewAlbum(${index})" class="group cursor-pointer">
+            // 清空容器並建立 Grid
+            container.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.className = "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8";
+            container.appendChild(grid);
+
+            // 分段渲染機制
+            const chunkSize = 12;
+            let currentOffset = 0;
+
+            function renderChunk() {
+                const end = Math.min(currentOffset + chunkSize, allAlbums.length);
+                const fragment = document.createDocumentFragment();
+
+                for (let i = currentOffset; i < end; i++) {
+                    const album = allAlbums[i];
+                    const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
+                    let coverUrl = customCover || (album.photos.length > 0 ? album.photos[0].url : '');
+                    
+                    const card = document.createElement('div');
+                    card.className = "album-card group cursor-pointer";
+                    card.onclick = () => viewAlbum(i);
+                    card.innerHTML = `
                         <div class="aspect-square rounded-[2rem] overflow-hidden bg-gray-50 mb-4 relative shadow-sm group-hover:shadow-xl transition-all duration-300">
                             <img src="${coverUrl}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" 
                                  onload="this.classList.add('loaded')" loading="lazy">
@@ -365,10 +383,24 @@
                             <h3 class="font-bold text-gray-900 text-sm md:text-base leading-snug truncate">${album.name}</h3>
                             <p class="text-xs text-gray-400 mt-1">${album.photos.length} 張相片</p>
                         </div>
-                    </div>`;
-            });
-            html += `</div>`;
-            container.innerHTML = html;
+                    `;
+                    fragment.appendChild(card);
+                    
+                    // 異步觸發進場動畫
+                    requestAnimationFrame(() => {
+                        setTimeout(() => card.classList.add('show'), (i - currentOffset) * 50);
+                    });
+                }
+
+                grid.appendChild(fragment);
+                currentOffset = end;
+
+                if (currentOffset < allAlbums.length) {
+                    requestAnimationFrame(renderChunk);
+                }
+            }
+
+            renderChunk();
         }
 
         function viewAlbum(index, shouldScroll = true) {
@@ -377,31 +409,38 @@
 
             currentPhotos = album.photos; 
             currentViewedAlbumId = album.id;
-            
-            // 儲存目前相簿索引到 Session
             sessionStorage.setItem('CURRENT_ALBUM_INDEX', index);
-
             const currentCoverUrl = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
 
             document.getElementById('album-divider').classList.remove('hidden');
             document.getElementById('current-album-name').innerText = album.name;
             const container = document.getElementById('gallery-container');
             
-            let html = `<div class="photo-grid">`;
+            // 相簿內照片也採用 DocumentFragment 渲染優化性能
+            container.innerHTML = '';
+            const photoGrid = document.createElement('div');
+            photoGrid.className = "photo-grid";
+            
+            const fragment = document.createDocumentFragment();
             album.photos.forEach((photo, pIdx) => {
                 const isCover = (currentCoverUrl === photo.url) || (!currentCoverUrl && pIdx === 0);
-                html += `
-                    <div class="photo-item ${isCover ? 'is-current-cover' : ''}" onclick="openLightbox(${pIdx})">
-                        <img src="${photo.url}" onload="this.classList.add('loaded')" loading="lazy">
-                        ${!isGuestMode ? `
-                            <button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn" title="設為封面">
-                                <i class="fas fa-bookmark"></i>
-                            </button>
-                        ` : ''}
-                    </div>`;
+                const item = document.createElement('div');
+                item.className = `photo-item ${isCover ? 'is-current-cover' : ''}`;
+                item.onclick = () => openLightbox(pIdx);
+                item.innerHTML = `
+                    <img src="${photo.url}" onload="this.classList.add('loaded')" loading="lazy">
+                    ${!isGuestMode ? `
+                        <button onclick="setAsCover('${photo.url}', event)" class="set-cover-btn" title="設為封面">
+                            <i class="fas fa-bookmark"></i>
+                        </button>
+                    ` : ''}
+                `;
+                fragment.appendChild(item);
             });
-            html += `</div>`;
-            container.innerHTML = html;
+            
+            photoGrid.appendChild(fragment);
+            container.appendChild(photoGrid);
+
             if (shouldScroll) window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
