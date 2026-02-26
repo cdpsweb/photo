@@ -151,6 +151,7 @@
         Copyright © 新北市汐止區崇德國民小學
     </footer>
 
+    <!-- 設定視窗 -->
     <div id="config-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl">
             <div class="flex justify-between items-center mb-6">
@@ -174,6 +175,7 @@
         </div>
     </div>
 
+    <!-- 分享視窗 -->
     <div id="share-modal" class="fixed inset-0 bg-black/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl max-w-[380px] w-full p-8 shadow-2xl text-center">
             <h3 class="text-xl font-bold mb-2">分享相簿連結</h3>
@@ -186,6 +188,7 @@
         </div>
     </div>
 
+    <!-- 燈箱視窗 -->
     <div id="lightbox" class="fixed inset-0 z-[100] hidden flex flex-col bg-black select-none">
         <div class="flex justify-between items-center p-4 text-white z-[110] bg-gradient-to-b from-black/80 to-transparent">
             <div class="flex items-center gap-3">
@@ -208,11 +211,39 @@
 
     <script>
         /**
-         * 【最終解決方案：非阻塞延遲清理】
-         * 1. 不再使用立即執行函式在頁面最頂端修改網址（避免干擾瀏覽器加載週期）。
-         * 2. 在 DOM 加載後，確認網址中確實有 sid 參數才進行處理。
-         * 3. 處理完成後，「不立即」修改網址，而是等待應用程式穩定後才用非阻塞方式清理。
+         * 【全新設計模式：Hash 錨點參數法】
+         * 1. 使用 window.location.hash (#) 傳遞 sid，完全避免 replaceState 觸發重整。
+         * 2. 如果舊有的 ?sid= 存在，將其轉換為 hash 並「安靜」重導向（僅限第一次）。
          */
+        
+        // --- 核心邏輯：參數處理 ---
+        (function resolveUrlParameters() {
+            const searchParams = new URLSearchParams(window.location.search);
+            const querySid = searchParams.get('sid');
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const hashSid = hashParams.get('sid');
+
+            // 如果有傳統 query 參數，將其轉為 hash 模式並「乾淨」地重載網址
+            if (querySid) {
+                const cleanPath = window.location.origin + window.location.pathname + '#sid=' + querySid;
+                window.location.replace(cleanPath); 
+                return;
+            }
+
+            // 處理 Hash 中的 sid
+            if (hashSid) {
+                try {
+                    const decodedUrl = atob(hashSid);
+                    if (decodedUrl.startsWith('https://script.google.com/')) {
+                        localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
+                        // 清理 Hash：這步操作在任何瀏覽器中都不會觸發重整或閃爍
+                        window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+                    }
+                } catch (e) { console.error("SID Decode Error", e); }
+            }
+        })();
+
+        // 全域變數
         let SCRIPT_URL = localStorage.getItem('GAS_SCRIPT_URL') || "";
         let SITE_TITLE = localStorage.getItem('GAS_SITE_TITLE') || "智慧雲端相簿";
         let allAlbums = [];
@@ -221,46 +252,16 @@
         let currentViewedAlbumId = null; 
         let lastHomeScrollPos = 0;
 
-        function handleIncomingSid() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const sid = urlParams.get('sid');
-            
-            if (sid) {
-                try {
-                    const decodedUrl = atob(sid);
-                    if (decodedUrl.startsWith('https://script.google.com/')) {
-                        localStorage.setItem('GAS_SCRIPT_URL', decodedUrl);
-                        SCRIPT_URL = decodedUrl;
-                        
-                        // 關鍵：延遲清理網址。不在加載當下清理，避免瀏覽器認為要同步重整
-                        // 使用 setTimeout 確保這是在主執行緒任務完成後才執行的「微任務」
-                        setTimeout(() => {
-                            const cleanUrl = window.location.origin + window.location.pathname;
-                            if (window.location.search.includes('sid=')) {
-                                window.history.replaceState(null, '', cleanUrl);
-                            }
-                        }, 500); 
-                    }
-                } catch (e) {
-                    console.error("SID 處理失敗", e);
-                }
-            }
-        }
-
         // 初始化
         window.addEventListener('DOMContentLoaded', () => {
-            // 先處理 SID 邏輯
-            handleIncomingSid();
-            
             applySiteTitle();
             setupTouchEvents();
             setupKeyboardEvents();
 
             if (!SCRIPT_URL) {
                 showConfigWarning();
-                // 只有在真的沒 SID 也沒 API 的情況下才彈窗
-                const params = new URLSearchParams(window.location.search);
-                if (!params.has('sid')) {
+                // 只有沒設定時才自動開設定
+                if (!window.location.hash.includes('sid=')) {
                     openConfigModal();
                 }
             } else {
@@ -277,15 +278,14 @@
         async function fetchAlbums(isFirstLoad = false) {
             if (!SCRIPT_URL) return;
             
+            // 讀取快取
             const localData = localStorage.getItem('LOCAL_ALBUM_CACHE');
             if (isFirstLoad && localData) {
                 try {
                     allAlbums = JSON.parse(localData);
                     renderAlbumsGrid();
                     checkAndRestoreState();
-                } catch(e) { 
-                    localStorage.removeItem('LOCAL_ALBUM_CACHE'); 
-                }
+                } catch(e) { localStorage.removeItem('LOCAL_ALBUM_CACHE'); }
             }
 
             try {
@@ -294,9 +294,7 @@
                 if (result.status === "success") {
                     allAlbums = result.data;
                     localStorage.setItem('LOCAL_ALBUM_CACHE', JSON.stringify(allAlbums));
-                    if (currentViewedAlbumId === null) {
-                        renderAlbumsGrid();
-                    }
+                    if (currentViewedAlbumId === null) renderAlbumsGrid();
                 }
             } catch (e) {
                 if (!allAlbums.length) showConfigWarning();
@@ -325,6 +323,7 @@
         }
 
         function generateAlbumsGridHTML() {
+            if (allAlbums.length === 0) return `<div class="text-center py-20 text-gray-400">目前沒有相簿</div>`;
             let html = '<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">';
             allAlbums.forEach((album, i) => {
                 const customCover = localStorage.getItem(`ALBUM_CUSTOM_COVER_${album.id}`);
@@ -412,9 +411,7 @@
             
             applySiteTitle();
             closeConfigModal();
-            showToast("正在連接 API...");
-            
-            document.getElementById('albums-container').innerHTML = `<div class="animate-pulse flex space-x-4 p-8 justify-center"><div class="h-4 bg-gray-200 rounded w-1/2"></div></div>`;
+            showToast("正在連接並更新相簿...");
             fetchAlbums(false);
         }
         
@@ -446,7 +443,8 @@
 
         function openShareModal() {
             const baseUrl = window.location.origin + window.location.pathname;
-            const shareUrl = `${baseUrl}?sid=${btoa(SCRIPT_URL)}`;
+            // 分享連結使用 Hash 模式：這能確保接收者重整時不會觸發閃爍問題
+            const shareUrl = `${baseUrl}#sid=${btoa(SCRIPT_URL)}`;
             document.getElementById('share-link-input').value = shareUrl;
             const qr = document.getElementById('qrcode'); qr.innerHTML = "";
             new QRCode(qr, { text: shareUrl, width: 160, height: 160 });
